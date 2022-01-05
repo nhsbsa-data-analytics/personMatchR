@@ -1,0 +1,43 @@
+Package: PersonMatchR
+Type: Package
+Title: Matches individuals across two datasets
+Version: 0.1.0
+Authors@R:
+    c(person(given = "DALL",
+           family = "NHSBSA",
+           role = c("aut","cre"),
+           email = "nhsbsa.dall@nhs.net"
+		   ),
+		   person(given = "Steven",
+			      family = "Buckley",
+            role = "ctb",
+            email = "stven.Buckley@nhs.net"
+       ),
+       person(given = "Adnan",
+			      family = "Shroufi",
+            role = "ctb",
+            email = "adnan.shroufi@nhs.net"
+       ),
+       person(given = "Kayoung",
+			  family = "Goffe",
+			  role = "ctb",
+			  email = "kayoung.goffe1@nhs.net"
+			  ),
+			  person(given = "Adam",
+			  family = "Ivison",
+			  role = "ctb",
+			  email = "adam.ivison@nhs.net"
+			  )
+			  )
+Description: Helper package for matching individuals across datasets
+License: Apache License (>= 2)
+Encoding: UTF-8
+LazyData: true
+URL: https://github.com/nhsbsa-data-analytics/PersonMatchR
+Depends: 
+    R (>= 3.2.0)
+Imports: 
+    stringr,
+    dplyr,
+    stringdist
+RoxygenNote: 7.1.2
