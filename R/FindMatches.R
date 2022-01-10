@@ -42,23 +42,30 @@ FindMatches <- function(df1, df2) {
                   JW_FORENAME = 1-stringdist::stringdist(FORENAME.x, FORENAME.y, method = "jw"),
                   JW_POSTCODE = 1-stringdist::stringdist(POSTCODE.x, POSTCODE.y, method = "jw"),
                   ED_DOB = stringdist::stringdist(DOB.x, DOB.y, method = "lv")
+    ) %>%
+    # score matches
+    select(ID.x, ID.y, JW_SURNAME, JW_FORENAME, JW_POSTCODE, ED_DOB) %>%
+    dplyr::mutate(MATCH_TYPE = case_when((JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
+                                         (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
+                                         (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
+                                         (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+                                         (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+                                         (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
+                                         TRUE ~ "No Match"
     )
+    ) %>%
+    # filter to only confident matches
+    dplyr::filter(MATCH_TYPE != "No Match")
 
-  # score matches
-  df_combined <- df_combined %>%
-    dplyr::mutate(MATCH_OUTCOME = case_when((JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ 1,
-                                            (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ 2,
-                                            (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ 3,
-                                            (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ 4,
-                                            (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ 5,
-                                            (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ 6,
-                                            TRUE ~ -1
-    )
-    )
+  # identify the number of potential matches
+  df_match_count <- df_combined %>%
+    dplyr::group_by(ID.x) %>%
+    dplyr::summarise(MATCH_COUNT = n()) %>%
+    dplyr::ungroup()
 
-  # filter to only confident matches
-  df_combined <- df_combined %>%
-    dplyr::filter(MATCH_OUTCOME != -1)
+  # link the datasets back together
+  df_combined <- dplyr::inner_join(df_combined, df_match_count, by = "ID.x") %>%
+    dplyr::select(ID.x, MATCH_COUNT, ID.y, MATCH_TYPE)
 
   # return result
   return(df_combined)
