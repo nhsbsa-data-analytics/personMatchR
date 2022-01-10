@@ -12,7 +12,7 @@
 FormatName <- function(strName) {
 
   # remove non alphanumeric characters and convert to upper case
-  strNameFormat <- toupper(str_replace_all(strName, "[^[:alpha:]]", ""))
+  strNameFormat <- toupper(stringr::str_replace_all(strName, "[^[:alpha:]]", ""))
 
   # return formatted string
   return(strNameFormat)

@@ -38,10 +38,10 @@ FindMatches <- function(df1, df2) {
 
   # perform string matching
   df_combined <- df_combined %>%
-    dplyr::mutate(JW_SURNAME = 1-stringdist(SURNAME.x, SURNAME.y, method = "jw"),
-                  JW_FORENAME = 1-stringdist(FORENAME.x, FORENAME.y, method = "jw"),
-                  JW_POSTCODE = 1-stringdist(POSTCODE.x, POSTCODE.y, method = "jw"),
-                  ED_DOB = stringdist(DOB.x, DOB.y, method = "lv")
+    dplyr::mutate(JW_SURNAME = 1-stringdist::stringdist(SURNAME.x, SURNAME.y, method = "jw"),
+                  JW_FORENAME = 1-stringdist::stringdist(FORENAME.x, FORENAME.y, method = "jw"),
+                  JW_POSTCODE = 1-stringdist::stringdist(POSTCODE.x, POSTCODE.y, method = "jw"),
+                  ED_DOB = stringdist::stringdist(DOB.x, DOB.y, method = "lv")
     )
 
   # score matches
@@ -59,4 +59,7 @@ FindMatches <- function(df1, df2) {
   # filter to only confident matches
   df_combined <- df_combined %>%
     dplyr::filter(MATCH_OUTCOME != -1)
+
+  # return result
+  return(df_combined)
 }

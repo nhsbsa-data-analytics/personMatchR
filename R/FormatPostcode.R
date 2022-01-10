@@ -12,7 +12,8 @@
 FormatPostcode <- function(strPostcode) {
 
   # remove non alphanumeric characters and convert to upper case
-  strPostcodeFormat <- toupper(str_replace_all(strPostcode, "[^[:alnum:]]", ""))
+  strPostcodeFormat <- toupper(
+    stringr::str_replace_all(strPostcode, "[^[:alnum:]]", ""))
 
   # handle known common input errors (0 & O / I & 1 / L & 1 / 5 & S )
   # valid UK postcodes will be between 5-7 characters and following set patterns on letter and number characters
@@ -22,13 +23,13 @@ FormatPostcode <- function(strPostcode) {
     # check letter positions
     for(i in c(1,2,6,7)){
       x <- substr(strPostcodeFormat,i,i)
-      if (str_detect(x,"[^[:alpha:]]")){
+      if (stringr::str_detect(x,"[^[:alpha:]]")){
         substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
     }
     # check number positions
     for(i in c(3,5)){
       x <- substr(strPostcodeFormat,i,i)
-      if (str_detect(x,"[^[:digit:]]")){
+      if (stringr::str_detect(x,"[^[:digit:]]")){
         substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
     }
   }
@@ -38,13 +39,13 @@ FormatPostcode <- function(strPostcode) {
     # check letter positions
     for(i in c(1,5,6)){
       x <- substr(strPostcodeFormat,i,i)
-      if (str_detect(x,"[^[:alpha:]]")){
+      if (stringr::str_detect(x,"[^[:alpha:]]")){
         substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
     }
     # check number positions
     for(i in c(4)){
       x <- substr(strPostcodeFormat,i,i)
-      if (str_detect(x,"[^[:digit:]]")){
+      if (stringr::str_detect(x,"[^[:digit:]]")){
         substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
     }
   }
@@ -54,13 +55,13 @@ FormatPostcode <- function(strPostcode) {
     # check letter positions
     for(i in c(1,4,5)){
       x <- substr(strPostcodeFormat,i,i)
-      if (str_detect(x,"[^[:alpha:]]")){
+      if (stringr::str_detect(x,"[^[:alpha:]]")){
         substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
     }
     # check number positions
     for(i in c(2,3)){
       x <- substr(strPostcodeFormat,i,i)
-      if (str_detect(x,"[^[:digit:]]")){
+      if (stringr::str_detect(x,"[^[:digit:]]")){
         substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
     }
   }
