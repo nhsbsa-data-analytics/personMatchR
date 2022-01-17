@@ -11,6 +11,9 @@
 #' FormatDOB(dob)
 FormatDOB <- function(dob) {
 
+  #handle missing variables
+  if(is.na(dob)) {return(dob)}
+
   # convert to character string in format YYYYMMDD
   strDOBFormat <- format(as.Date(dob),'%Y%m%d')
 

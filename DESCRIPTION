@@ -36,8 +36,8 @@ LazyData: true
 URL: https://github.com/nhsbsa-data-analytics/PersonMatchR
 Depends: 
     R (>= 3.2.0)
-Imports: 
-    stringr,
-    dplyr,
-    stringdist
 RoxygenNote: 7.1.2
+Imports: 
+    dplyr,
+    stringr,
+    stringdist

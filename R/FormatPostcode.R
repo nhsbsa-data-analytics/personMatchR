@@ -11,6 +11,9 @@
 #' FormatName(strPostcode)
 FormatPostcode <- function(strPostcode) {
 
+  #handle missing variables
+  if(is.na(strPostcode)) {return(strPostcode)}
+
   # remove non alphanumeric characters and convert to upper case
   strPostcodeFormat <- toupper(
     stringr::str_replace_all(strPostcode, "[^[:alnum:]]", ""))
