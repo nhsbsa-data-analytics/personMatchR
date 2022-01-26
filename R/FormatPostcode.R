@@ -1,6 +1,7 @@
-#' FormatPostcode
-#' Format the postcode strings prior to matching
-#' Formatting includes conversion to upper case and removal of non alphanumeric characters
+#' Format the postcode strings prior to matchin
+#'
+#' Formatting includes conversion to upper case and removal of
+#' non alphanumeric characters
 #'
 #' @param strPostcode A string field to be cleansed
 #'
@@ -8,68 +9,42 @@
 #' @export
 #'
 #' @examples
-#' FormatName(strPostcode)
-FormatPostcode <- function(strPostcode) {
+#' format_postcode(postcode)
+format_postcode <- function(postcode) {
 
   #handle missing variables
-  if(is.na(strPostcode)) {return(strPostcode)}
+  if(is.na(postcode)) {return(postcode)}
 
   # remove non alphanumeric characters and convert to upper case
-  strPostcodeFormat <- toupper(
-    stringr::str_replace_all(strPostcode, "[^[:alnum:]]", ""))
+  postcode <- toupper(stringr::str_replace_all(postcode, "[^[:alnum:]]", ""))
 
   # handle known common input errors (0 & O / I & 1 / L & 1 / 5 & S )
-  # valid UK postcodes will be between 5-7 characters and following set patterns on letter and number characters
+  # valid UK postcodes will be between 5-7 characters and
+  # following set patterns on letter and number characters
 
   # 7 digit postcode format: AA9*9AA
-  if(nchar(strPostcodeFormat) == 7) {
-    # check letter positions
-    for(i in c(1,2,6,7)){
-      x <- substr(strPostcodeFormat,i,i)
-      if (stringr::str_detect(x,"[^[:alpha:]]")){
-        substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
-    }
-    # check number positions
-    for(i in c(3,5)){
-      x <- substr(strPostcodeFormat,i,i)
-      if (stringr::str_detect(x,"[^[:digit:]]")){
-        substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
-    }
+  if(nchar(postcode) == 7) {
+    postcode = fix_homoglyph(postcode, 1, "character")
+    postcode = fix_homoglyph(postcode, 2, "character")
+    postcode = fix_homoglyph(postcode, 3, "number")
+    postcode = fix_homoglyph(postcode, 4, "character")
+    postcode = fix_homoglyph(postcode, 6, "character")
   }
 
   # 6 digit postcode format: A**9AA
-  if(nchar(strPostcodeFormat) == 6) {
-    # check letter positions
-    for(i in c(1,5,6)){
-      x <- substr(strPostcodeFormat,i,i)
-      if (stringr::str_detect(x,"[^[:alpha:]]")){
-        substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
-    }
-    # check number positions
-    for(i in c(4)){
-      x <- substr(strPostcodeFormat,i,i)
-      if (stringr::str_detect(x,"[^[:digit:]]")){
-        substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
-    }
+  if(nchar(postcode) == 6) {
+    postcode = fix_homoglyph(postcode, 1, "character")
+    postcode = fix_homoglyph(postcode, 4, "number")
+    postcode = fix_homoglyph(postcode, 5, "character")
+    postcode = fix_homoglyph(postcode, 6, "character")
   }
 
   # 5 digit postcode format: A99AA
-  if(nchar(strPostcodeFormat) == 5) {
-    # check letter positions
-    for(i in c(1,4,5)){
-      x <- substr(strPostcodeFormat,i,i)
-      if (stringr::str_detect(x,"[^[:alpha:]]")){
-        substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
-    }
-    # check number positions
-    for(i in c(2,3)){
-      x <- substr(strPostcodeFormat,i,i)
-      if (stringr::str_detect(x,"[^[:digit:]]")){
-        substr(strPostcodeFormat,i,i) <- FixHomoglyph(x)}
-    }
+  if(nchar(postcode) == 5) {
+    postcode = fix_homoglyph(postcode, 1, "character")
+    postcode = fix_homoglyph(postcode, 2, "number")
+    postcode = fix_homoglyph(postcode, 3, "number")
+    postcode = fix_homoglyph(postcode, 4, "character")
+    postcode = fix_homoglyph(postcode, 5, "character")
   }
-
-
-  # return formatted string
-  return(strPostcodeFormat)
 }

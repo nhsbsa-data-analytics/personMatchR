@@ -1,22 +1,20 @@
-#' FormatDOB
+#' Format a DOB
+#'
 #' Format the date of birth prior to matching
 #' Convert to a string representation in the format YYYYMMDD
 #'
-#' @param dob A field to be cleansed
+#' @param dob A date of birth date field to be cleansed
 #'
 #' @return A cleansed string
+#'
 #' @export
 #'
 #' @examples
-#' FormatDOB(dob)
-FormatDOB <- function(dob) {
+#' format_dob(dob)
+format_dob <- function(dob){
 
-  #handle missing variables
-  if(is.na(dob)) {return(dob)}
-
-  # convert to character string in format YYYYMMDD
-  strDOBFormat <- format(as.Date(dob),'%Y%m%d')
-
-  # return formatted string
-  return(strDOBFormat)
+  # Convert dob to character if it isn't NA
+  ifelse(is.na(dob), dob, format(as.Date(dob), '%Y%m%d'))
 }
+
+#format_dob <- function(x) ifelse(is.na(x), x, format(as.Date(x), '%Y%m%d'))

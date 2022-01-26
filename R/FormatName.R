@@ -1,22 +1,21 @@
-#' FormatName
-#' Format the name strings prior to matching
-#' Formatting includes conversion to upper case and removal of non alphabetic characters
+#' Formatting either a Forename or Surname
 #'
-#' @param strName A string field to be cleansed
+#' Format the name strings prior to matching
+#' Formatting includes conversion to upper case and removal of
+#' non alphabetic characters
+#'
+#' @param str_name A string field to be cleansed
 #'
 #' @return A cleansed string
+#'
 #' @export
 #'
 #' @examples
-#' FormatName(strName)
-FormatName <- function(strName) {
+#' format_name(str_name)
+format_name <- function(str_name) {
 
-  #handle missing variables
-  if(is.na(strName)) {return(strName)}
-
-  # remove non alphanumeric characters and convert to upper case
-  strNameFormat <- toupper(stringr::str_replace_all(strName, "[^[:alpha:]]", ""))
-
-  # return formatted string
-  return(strNameFormat)
+  # Remove non-alphanumeric characters and convert to upper if name isn't NA
+  ifelse(is.na(str_name), str_name, toupper(gsub("[^[:alpha:]]", "", str_name)))
 }
+
+#format_name <- function(x) ifelse(is.na(x), x, toupper(gsub("[^[:alpha:]]", "", x)))
