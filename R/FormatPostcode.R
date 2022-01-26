@@ -23,16 +23,17 @@ format_postcode <- function(postcode) {
   # following set patterns on letter and number characters
 
   # 7 digit postcode format: AA9*9AA
-  if(nchar(postcode) == 7) {
+  if(nchar(postcode) == 7){
     postcode = fix_homoglyph(postcode, 1, "character")
     postcode = fix_homoglyph(postcode, 2, "character")
     postcode = fix_homoglyph(postcode, 3, "number")
-    postcode = fix_homoglyph(postcode, 4, "character")
+    postcode = fix_homoglyph(postcode, 5, "number")
     postcode = fix_homoglyph(postcode, 6, "character")
+    postcode = fix_homoglyph(postcode, 7, "character")
   }
 
   # 6 digit postcode format: A**9AA
-  if(nchar(postcode) == 6) {
+  if(nchar(postcode) == 6){
     postcode = fix_homoglyph(postcode, 1, "character")
     postcode = fix_homoglyph(postcode, 4, "number")
     postcode = fix_homoglyph(postcode, 5, "character")
@@ -40,7 +41,7 @@ format_postcode <- function(postcode) {
   }
 
   # 5 digit postcode format: A99AA
-  if(nchar(postcode) == 5) {
+  if(nchar(postcode) == 5){
     postcode = fix_homoglyph(postcode, 1, "character")
     postcode = fix_homoglyph(postcode, 2, "number")
     postcode = fix_homoglyph(postcode, 3, "number")
