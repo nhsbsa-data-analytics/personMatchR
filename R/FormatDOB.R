@@ -33,20 +33,9 @@ format_dob <- function(dob){
   }else{
 
     # Attribute arbitrary day for other records
-    dob = as.Date('1900-01-01')
-
+    dob = NA
   }
 
-  # Check if date in future dates
-  if(dob > Sys.Date()){
-
-    # If so, change century then format as character
-    dob = format(dob, "19%y%m%d")
-
-  }else{
-
-    # If not formmat as character
-    dob = format(dob, format = '%Y%m%d')
-
-  }
+  # Change date to character is it isnt NA
+  if(is.na(dob) == F){dob = format(dob, format = '%Y%m%d')}
 }
