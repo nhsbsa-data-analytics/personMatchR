@@ -13,10 +13,12 @@
 format_postcode <- function(postcode) {
 
   #handle missing variables
-  if(is.na(postcode)) {return(postcode)}
+  if(is.na(postcode)){
+    return(postcode)
+  }
 
-  # remove non alphanumeric characters and convert to upper case
-  postcode <- toupper(stringr::str_replace_all(postcode, "[^[:alnum:]]", ""))
+  # Replace non-alpha chracters and remove spaces and uppercase
+  postcode = toupper(stringr::str_replace_all(postcode, "[^[:alnum:]]", ""))
 
   # handle known common input errors (0 & O / I & 1 / L & 1 / 5 & S )
   # valid UK postcodes will be between 5-7 characters and
@@ -24,28 +26,29 @@ format_postcode <- function(postcode) {
 
   # 7 digit postcode format: AA9*9AA
   if(nchar(postcode) == 7){
-    postcode = fix_homoglyph(postcode, 1, "character")
-    postcode = fix_homoglyph(postcode, 2, "character")
-    postcode = fix_homoglyph(postcode, 3, "number")
-    postcode = fix_homoglyph(postcode, 5, "number")
-    postcode = fix_homoglyph(postcode, 6, "character")
-    postcode = fix_homoglyph(postcode, 7, "character")
+    postcode = fix_homoglyph(postcode, 1, "num_to_char")
+    postcode = fix_homoglyph(postcode, 2, "num_to_char")
+    postcode = fix_homoglyph(postcode, 3, "char_to_num")
+    postcode = fix_homoglyph(postcode, 5, "char_to_num")
+    postcode = fix_homoglyph(postcode, 6, "num_to_char")
+    postcode = fix_homoglyph(postcode, 7, "num_to_char")
   }
 
   # 6 digit postcode format: A**9AA
   if(nchar(postcode) == 6){
-    postcode = fix_homoglyph(postcode, 1, "character")
-    postcode = fix_homoglyph(postcode, 4, "number")
-    postcode = fix_homoglyph(postcode, 5, "character")
-    postcode = fix_homoglyph(postcode, 6, "character")
+    postcode = fix_homoglyph(postcode, 1, "num_to_char")
+    postcode = fix_homoglyph(postcode, 4, "char_to_num")
+    postcode = fix_homoglyph(postcode, 5, "num_to_char")
+    postcode = fix_homoglyph(postcode, 6, "num_to_char")
   }
 
   # 5 digit postcode format: A99AA
   if(nchar(postcode) == 5){
-    postcode = fix_homoglyph(postcode, 1, "character")
-    postcode = fix_homoglyph(postcode, 2, "number")
-    postcode = fix_homoglyph(postcode, 3, "number")
-    postcode = fix_homoglyph(postcode, 4, "character")
-    postcode = fix_homoglyph(postcode, 5, "character")
+    postcode = fix_homoglyph(postcode, 1, "num_to_char")
+    postcode = fix_homoglyph(postcode, 2, "char_to_num")
+    postcode = fix_homoglyph(postcode, 3, "char_to_num")
+    postcode = fix_homoglyph(postcode, 4, "num_to_char")
+    postcode = fix_homoglyph(postcode, 5, "num_to_char")
   }
+  return(postcode)
 }

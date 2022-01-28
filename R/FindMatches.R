@@ -17,18 +17,18 @@ find_matches <- function(df1, df2) {
       SURNAME = format_name(SURNAME),
       FORENAME = format_name(FORENAME),
       DOB = format_dob(DOB),
-      POSTCODE = format_postcode(POSTCODE)
+      POSTCODE = purrr::map_chr(POSTCODE, format_postcode)
       )
 
   # Select and format relevant fields: ID, SURNAME, FORENAME, DOB, POSTCODE
   df2 <- df2 %>%
     dplyr::select(ID, SURNAME, FORENAME, DOB, POSTCODE) %>%
     dplyr::mutate(
-    SURNAME = format_name(SURNAME),
-    FORENAME = format_name(FORENAME),
-    DOB = format_dob(DOB),
-    POSTCODE = format_postcode(POSTCODE)
-    )
+      SURNAME = format_name(SURNAME),
+      FORENAME = format_name(FORENAME),
+      DOB = format_dob(DOB),
+      POSTCODE = purrr::map_chr(POSTCODE, format_postcode)
+      )
 
   # combine the two datasets (basic cross join)
   df_combined <- dplyr::full_join(

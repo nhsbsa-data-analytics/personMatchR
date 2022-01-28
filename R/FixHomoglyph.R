@@ -25,7 +25,7 @@ fix_homoglyph <- function(string, char_pos, character_or_number){
   char = strsplit(string, "")[[1]]
 
   # At selected index position, apply either of the 2 above helper functions
-  if(character_or_number == "character"){
+  if(character_or_number == "char_to_num"){
     char[char_pos] = replace_characters(char[char_pos])
   }else{
     char[char_pos] = replace_numbers(char[char_pos])
