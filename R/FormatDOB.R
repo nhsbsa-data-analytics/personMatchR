@@ -17,55 +17,36 @@ format_dob <- function(dob){
   ifelse(is.na(dob), return(dob), dob)
 
   # Swap slash for hyphen
-  ifelse(grepl("/", dob), gsub("/", "-", dob), dob)
+  if(grepl('/', dob)){dob = gsub('/', '-', dob)}
 
   # If contains letter
   if(!grepl("[a-zA-Z]", dob)){
 
+    # Then use date with month-as-character format
     dob = as.Date(dob, format = '%Y-%m-%d')
 
-    }else if(grepl("[a-zA-Z]", dob)){
+  }else if(grepl("[a-zA-Z]", dob)){
 
-      dob = as.Date(dob, format = '%d-%B-%y')
+    # Or, use date-as-number format
+    dob = as.Date(dob, format = '%d-%B-%y')
 
-    }else{
+  }else{
 
-      dob = as.Date('2000-01-01')
+    # Attribute arbitrary day for other records
+    dob = as.Date('1900-01-01')
 
-    }
+  }
 
-  print(dob)
+  # Check if date in future dates
+  if(dob > Sys.Date()){
 
-  # Change future dates to past
-  ifelse(dob > Sys.Date(), format(dob, "19%y-%m-%d"), format(dob))
+    # If so, change century then format as character
+    dob = format(dob, "19%y%m%d")
 
-  # Convert to character
-  dob = format(dob, format = '%Y%m%d')
+  }else{
 
-  return(dob)
+    # If not formmat as character
+    dob = format(dob, format = '%Y%m%d')
+
+  }
 }
-
-
-ifelse(grepl("/", '27/feb/67'), gsub("/", "-", '27/feb/67'), '27/feb/67')
-
-
-as.Date('27-feb-94', format = '%d-%B-%Y')
-
-format_dob('27/feb/67')
-format_dob('1994/02/12')
-format_dob('27/feb/1994')
-
-
-ifelse("2047-02-27" > Sys.Date(), format("2047-02-27", "19%y-%m-%d"), format("2047-02-27"))
-
-
-z=format_dob('27-feb-47')
-
-test_dataset_b %>%
-  mutate(
-    DOB = format_dob(DOB)
-  )
-
-
-test_dataset_a %>%
-  mutate(TMP = grepl("a-zA-Z", DOB))
