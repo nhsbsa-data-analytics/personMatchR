@@ -2,13 +2,16 @@
 #'
 #' @param df1 A dataframe containing person level information
 #' @param df2 A dataframe containing person level information
+#' @param inc_no_match  TRUE/FALSE(default) argument to specify if non-matches should be flagged
 #'
 #' @return dataframe comprising of all potential matches between two datasets
 #' @export
 #'
 #' @examples
 #' find_matches(df1, df2)
-find_matches <- function(df1, df2) {
+#' find_matches(df1, df2, inc_no_match = TRUE)
+#' find_matches(df1, df2, TRUE)
+find_matches <- function(df1, df2, inc_no_match = FALSE) {
 
   # Select and format relevant fields: ID, SURNAME, FORENAME, DOB, POSTCODE
   df1 <- df1 %>%
@@ -88,6 +91,25 @@ find_matches <- function(df1, df2) {
     dplyr::inner_join(df_match_count, by = "ID.x") %>%
     dplyr::select(ID.x, MATCH_COUNT, ID.y, MATCH_TYPE)
 
+  # if the user has requested non-matches included in the output
+  # append these to the result set
+  if(inc_no_match){
+    # start with all records in the initial data-set
+    df_no_match <- df1 %>%
+      # join to the match results
+      dplyr::select(ID.x = ID)%>%
+      dplyr::left_join(df_match_results, by = "ID.x")%>%
+      # remove anything with a match
+      dplyr::filter(is.na(MATCH_COUNT)) %>%
+      # populate the default values for the non matches
+      dplyr::mutate(MATCH_COUNT = 0,
+                    ID.y = "na",
+                    MATCH_TYPE = "No Match"
+      )
+
+    # combine the data-sets
+    df_match_results <- rbind(df_match_results, df_no_match)
+    }
 
   # return result
   return(df_match_results)
