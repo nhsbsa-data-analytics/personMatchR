@@ -1,4 +1,4 @@
-#' Format the postcode strings prior to matchin
+#' Format the postcode strings prior to matching
 #'
 #' Formatting includes conversion to upper case and removal of
 #' non alphanumeric characters
@@ -13,8 +13,8 @@
 format_postcode <- function(postcode) {
 
   #handle missing variables
-  if(is.na(postcode)){
-    return(postcode)
+  if(is.na(postcode)||is.null(postcode)||postcode==""){
+    return(NA)
   }
 
   # Replace non-alpha chracters and remove spaces and uppercase

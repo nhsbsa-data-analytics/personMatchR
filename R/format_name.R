@@ -14,6 +14,11 @@
 #' format_name(str_name)
 format_name <- function(str_name) {
 
-  # Remove non-alphanumeric characters and convert to upper if name isn't NA
-  ifelse(is.na(str_name), str_name, toupper(gsub("[^[:alpha:]]", "", str_name)))
+  # handle missing variables
+  if(is.na(str_name)||is.null(str_name)||str_name==""){
+    return(NA)
+  }
+
+  # convert string to uppercase remove non alphabetic characters
+  return(toupper(gsub("[^[:alpha:]]", "", str_name)))
 }
