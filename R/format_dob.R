@@ -13,8 +13,10 @@
 #' format_dob(dob)
 format_dob <- function(dob){
 
-  # Return if DOB is NA
-  ifelse(is.na(dob), return(dob), dob)
+  # handle missing variables
+  if(is.na(dob)||is.null(dob)){
+    return(NA)
+  }
 
   # Swap slash for hyphen
   if(grepl('/', dob)){dob = gsub('/', '-', dob)}

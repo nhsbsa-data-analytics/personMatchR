@@ -33,9 +33,9 @@ find_matches <- function(df1, df2) {
   # identify exact matches
   df_exact <- df1 %>%
     # join where all fields match exactly
-    dplyr::inner_join(df2, by = c("SURNAME" = "SURNAME", "FORENAME" = "FORENAME", "DOB" = "DOB", "POSTCODE" = "POSTCODE"), keep = FALSE) %>%
+    dplyr::inner_join(df2, by = c("SURNAME" = "SURNAME", "FORENAME" = "FORENAME", "DOB" = "DOB", "POSTCODE" = "POSTCODE"), keep = FALSE, na_matches = "never") %>%
     # incorporate an additional join allowing the surname and forename to be flipped
-    dplyr::bind_rows(inner_join(df1, df2, by = c("SURNAME" = "FORENAME", "FORENAME" = "SURNAME", "DOB" = "DOB", "POSTCODE" = "POSTCODE"), keep = FALSE)) %>%
+    dplyr::bind_rows(inner_join(df1, df2, by = c("SURNAME" = "FORENAME", "FORENAME" = "SURNAME", "DOB" = "DOB", "POSTCODE" = "POSTCODE"), keep = FALSE, na_matches = "never")) %>%
     # by default all matches are an "exact" match with perfect scores
     dplyr::mutate(JW_SURNAME = 1, JW_FORENAME = 1, JW_POSTCODE = 1, ED_DOB = 0, MATCH_TYPE = 'Exact') %>%
     # select only the key fields

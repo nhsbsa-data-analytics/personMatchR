@@ -13,8 +13,8 @@
 format_postcode <- function(postcode) {
 
   #handle missing variables
-  if(is.na(postcode)){
-    return(postcode)
+  if(is.na(postcode)||is.null(postcode)||postcode==""){
+    return(NA)
   }
 
   # Replace non-alpha chracters and remove spaces and uppercase
