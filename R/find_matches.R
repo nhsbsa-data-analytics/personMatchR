@@ -52,9 +52,9 @@ find_matches <- function(df1, df2) {
     # join the second dataset
     dplyr::full_join(df2, by = character(), suffix = c(".x", ".y")) %>%
     # perform string matching
-    dplyr::mutate(JW_SURNAME = 1-stringdist::stringdist(SURNAME.x, SURNAME.y, method = "jw"),
-                  JW_FORENAME = 1-stringdist::stringdist(FORENAME.x, FORENAME.y, method = "jw"),
-                  JW_POSTCODE = 1-stringdist::stringdist(POSTCODE.x, POSTCODE.y, method = "jw"),
+    dplyr::mutate(JW_SURNAME = stringdist::stringsim(SURNAME.x, SURNAME.y, method = "jw"),
+                  JW_FORENAME = stringdist::stringsim(FORENAME.x, FORENAME.y, method = "jw"),
+                  JW_POSTCODE = stringdist::stringsim(POSTCODE.x, POSTCODE.y, method = "jw"),
                   ED_DOB = stringdist::stringdist(DOB.x, DOB.y, method = "lv")
     ) %>%
     # limit to key fields and score matches
