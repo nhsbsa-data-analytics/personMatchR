@@ -1,4 +1,4 @@
-#' Format the postcode strings prior to matchin
+#' Format the postcode strings prior to matching
 #'
 #' Formatting includes conversion to upper case and removal of
 #' non alphanumeric characters
