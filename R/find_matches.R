@@ -43,10 +43,10 @@ find_matches <- function(df1, df2, inc_no_match = FALSE) {
         "FORENAME" = "FORENAME",
         "DOB" = "DOB",
         "POSTCODE" = "POSTCODE"
-      ),
+        ),
       keep = FALSE,
       na_matches = "never"
-    )
+      )
 
   # Identify 'reverse name' exact matches
   df_exact_rev <- df1 %>%

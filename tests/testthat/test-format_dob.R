@@ -1,5 +1,9 @@
-test_that("Null values are skipped and returned as null", {
+test_that("NA values are skipped and returned as null", {
   expect_equal(format_dob(NA), NA)
+})
+
+test_that("NULL values are skipped and returned as null", {
+  expect_equal(format_dob(NULL), NA)
 })
 
 test_that("Date values return the same date value", {
