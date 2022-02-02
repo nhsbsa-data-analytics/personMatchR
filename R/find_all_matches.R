@@ -3,10 +3,7 @@
 library(dplyr)
 
 # Functions
-source("R/fix_homoglyph.R")
-source("R/format_dob.R")
-source("R/format_name.R")
-source("R/format_postcode.R")
+source("R/format_functions.R")
 
 # Data
 df1 = read.csv("C:/Users/ADNSH/Desktop/TEST_DATA_1000000.csv") %>%
@@ -25,22 +22,16 @@ find_all_matches = function(df1, df2){
   # Initial format of data
   df1 <- df1 %>%
     dplyr::select(ID, SURNAME, FORENAME, DOB, POSTCODE) %>%
-    dplyr::mutate(
-      SURNAME = format_name(SURNAME),
-      FORENAME = format_name(FORENAME),
-      DOB = purrr::map_chr(DOB, format_dob),
-      POSTCODE = purrr::map_chr(POSTCODE, format_postcode)
-    )
+    format_dob() %>%
+    format_name() %>%
+    format_postcode()
 
   # Initial format of data
   df2 <- df2 %>%
     dplyr::select(ID, SURNAME, FORENAME, DOB, POSTCODE) %>%
-    dplyr::mutate(
-      SURNAME = format_name(SURNAME),
-      FORENAME = format_name(FORENAME),
-      DOB = purrr::map_chr(DOB, format_dob),
-      POSTCODE = purrr::map_chr(POSTCODE, format_postcode)
-    )
+    format_dob() %>%
+    format_name() %>%
+    format_postcode()
 
   # Function Start
   print(paste0("Cleaning End: ", Sys.time()))
