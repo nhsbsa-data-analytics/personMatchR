@@ -3,6 +3,10 @@
 #' @param df1 A dataframe containing person level information
 #' @param df2 A dataframe containing person level information
 #' @param inc_no_match  TRUE/FALSE(default) argument to specify if non-matches should be flagged
+#' @param sw_forename proportion weighting value (0.0-1.0) to be applied to the forename part of the match score. Defaults to 0.3.
+#' @param sw_surname proportion weighting value (0.0-1.0) to be applied to the surname part of the match score. Defaults to 0.15.
+#' @param sw_dob proportion weighting value (0.0-1.0) to be applied to the dob part of the match score. Defaults to 0.4.
+#' @param sw_postcode proportion weighting value (0.0-1.0) to be applied to the postcode part of the match score. Defaults to 0.15.
 #'
 #' @return dataframe comprising of all potential matches between two datasets
 #' @export
@@ -11,7 +15,19 @@
 #' find_matches(df1, df2)
 #' find_matches(df1, df2, inc_no_match = TRUE)
 #' find_matches(df1, df2, TRUE)
-find_matches <- function(df1, df2, inc_no_match = FALSE) {
+find_matches <- function(df1, df2, inc_no_match = FALSE, sw_forename = 0.3, sw_surname = 0.15, sw_dob = 0.4, sw_postcode = 0.15) {
+
+  # check if the match score weightings add up to 100% or any of the parameters have been entered as a non numeric value
+  if(!is.numeric(sw_forename) || !is.numeric(sw_surname) || !is.numeric(sw_dob) || !is.numeric(sw_postcode)) {
+    # non numeric value supplied as weighting factor
+    stop("Non numeric value supplied as weighting factor", call. = FALSE)
+  } else if(!dplyr::between(sw_forename,0,1) || !dplyr::between(sw_surname,0,1) || !dplyr::between(sw_dob,0,1) || !dplyr::between(sw_postcode,0,1)){
+    # invalid values applied
+    stop("Individual field score weighting values must be between 0.0 and 1.0", call. = FALSE)
+  }else if((sw_forename + sw_surname + sw_dob + sw_postcode)!=1) {
+    # if the proportions do not equal 100% abort the process and show an error message
+    stop("Supplied score weighting values do not total 100%", call. = FALSE)
+  }
 
   # Select and format relevant fields: ID, SURNAME, FORENAME, DOB, POSTCODE
   df1 <- df1 %>%
@@ -80,9 +96,9 @@ find_matches <- function(df1, df2, inc_no_match = FALSE) {
 
   # Identify a vector of records where an exact match has been identified
   exact_match_list <- df_exact %>%
-    select(ID.x) %>%
-    distinct() %>%
-    pull()
+    dplyr::select(ID.x) %>%
+    dplyr::distinct() %>%
+    dplyr::pull()
 
   # combine the two datasets (basic cross join) for non-exact matches records
   df_combined <- df1 %>%
@@ -99,7 +115,7 @@ find_matches <- function(df1, df2, inc_no_match = FALSE) {
     ) %>%
     # limit to key fields and score matches
     dplyr::select(ID.x, ID.y, JW_SURNAME, JW_FORENAME, JW_POSTCODE, ED_DOB) %>%
-    dplyr::mutate(MATCH_TYPE = case_when(
+    dplyr::mutate(MATCH_TYPE = dplyr::case_when(
       (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 1) ~ "Exact",
       (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 1) ~ "Confident",
       (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB >= 0.75) ~ "Confident",
@@ -115,10 +131,10 @@ find_matches <- function(df1, df2, inc_no_match = FALSE) {
     # DOB attracts the highest weighting 40% as the least likely to change
     # forename attracts a waiting of 30% as this could be shortened
     # surname and DOB attract lowest weighting of 15% each as could be impacted by marriage/relocation
-    dplyr::mutate(MATCH_SCORE = ((ifelse(is.na(JW_FORENAME), 0, JW_FORENAME) * 0.3) +
-                                   (ifelse(is.na(JW_SURNAME), 0, JW_SURNAME) * 0.15) +
-                                   (ifelse(is.na(ED_DOB), 0, ED_DOB) * 0.4) +
-                                   (ifelse(is.na(JW_POSTCODE), 0, JW_POSTCODE) * 0.15)
+    dplyr::mutate(MATCH_SCORE = ((ifelse(is.na(JW_FORENAME), 0, JW_FORENAME) * sw_forename) +
+                                   (ifelse(is.na(JW_SURNAME), 0, JW_SURNAME) * sw_surname) +
+                                   (ifelse(is.na(ED_DOB), 0, ED_DOB) * sw_dob) +
+                                   (ifelse(is.na(JW_POSTCODE), 0, JW_POSTCODE) * sw_postcode)
                                  ))
 
   # combine the exact and confident matches
@@ -127,7 +143,7 @@ find_matches <- function(df1, df2, inc_no_match = FALSE) {
   # identify the number of potential matches
   df_match_count <- df_match_results %>%
     dplyr::group_by(ID.x) %>%
-    dplyr::summarise(MATCH_COUNT = n()) %>%
+    dplyr::summarise(MATCH_COUNT = dplyr::n()) %>%
     dplyr::ungroup()
 
   # link the datasets back together
