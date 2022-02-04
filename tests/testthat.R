@@ -1,4 +1,4 @@
 library(testthat)
-library(PersonMatchR)
+library(personMatchR)
 
-test_check("PersonMatchR")
+test_check("personMatchR")
