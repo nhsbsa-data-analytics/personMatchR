@@ -52,7 +52,7 @@ dob %>%
 DBI::dbDisconnect(con)
 
 #-------------------------------------------------------------------------------
-# Part Two: Generate Forename Lookup
+# Part Two: Generate Forename Lookup using
 
 pds1 <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("DIM", "DALL_PDS_PATIENT_DIM"))
@@ -72,7 +72,7 @@ pds1 <- pds1 %>%
     FORENAME = ifelse(nchar(FORENAME) == 0, NA, FORENAME),
     TMP = 1
   ) %>%
-  filter(ROW <= 100) %>%
+  filter(ROW <= 100000) %>%
   select(DOB_ONE = DOB, FORENAME_ONE = FORENAME, TMP) %>%
   distinct()
 
@@ -85,7 +85,7 @@ pds2 <- pds2 %>%
     FORENAME = ifelse(nchar(FORENAME) == 0, NA, FORENAME),
     TMP = 1
   ) %>%
-  filter(ROW <= 1000) %>%
+  filter(ROW <= 100000) %>%
   select(DOB_TWO = DOB, FORENAME_TWO = FORENAME, TMP, POSTCODE) %>%
   distinct()
 
@@ -102,123 +102,96 @@ output <- calc_db_jw_threshold(
   name_one = FORENAME_ONE,
   name_two = FORENAME_TWO,
   threshold_val = 0.75
-  ) %>%
-  collect()
+  )
 
-
-OUTPUT
-
-calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
-
-  df <- df %>%
-    rename(
-      NAME_ONE = {{ name_one }},
-      NAME_TWO = {{ name_two }}
-      ) %>%
-    select(NAME_ONE, NAME_TWO) %>%
-    mutate(ID = row_number(NAME_ONE))
-
-  one <- df %>%
-    mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(NAME_ONE, '*', ' '))) %>%
-    nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
-    group_by(ID, TOKEN) %>%
-    mutate(TOKEN = paste0(TOKEN, rank(TOKEN_NUMBER))) %>%
-    ungroup() %>%
-    select(ID, NAME_ONE, NUMBER_ONE = TOKEN_NUMBER, TOKEN)
-
-  two <- df %>%
-    mutate(TOKEN_TWO = trimws(REGEXP_REPLACE(NAME_TWO, '*', ' '))) %>%
-    nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_TWO') %>%
-    group_by(ID, TOKEN) %>%
-    mutate(TOKEN = paste0(TOKEN, rank(TOKEN_NUMBER))) %>%
-    ungroup() %>%
-    select(ID, NAME_TWO, NUMBER_TWO = TOKEN_NUMBER, TOKEN)
-
-  cross <- one %>%
-    inner_join(two, by = c("ID", "TOKEN")) %>%
-    group_by(ID) %>%
-    mutate(
-      M = n(),
-      S_ONE = nchar(NAME_ONE),
-      S_TWO = nchar(NAME_TWO),
-      SIM = (1/3) * (((M / S_ONE) + (M / S_TWO) + ((M - 0) / M))),
-      L = case_when(
-        substr(NAME_ONE, 1, 1) != substr(NAME_TWO, 1, 1) ~ 0,
-        substr(NAME_ONE, 1, 4) == substr(NAME_TWO, 1, 4) ~ 4,
-        substr(NAME_ONE, 1, 3) == substr(NAME_TWO, 1, 3) ~ 3,
-        substr(NAME_ONE, 1, 2) == substr(NAME_TWO, 1, 2) ~ 2,
-        substr(NAME_ONE, 1, 1) == substr(NAME_TWO, 1, 1) ~ 1
-      ),
-      JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
-    ) %>%
-    ungroup() %>%
-    distinct() %>%
-    filter(JW_APPROX >= threshold_val) %>%
-    mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
-    filter(JW >= threshold_val) %>%
-    select(NAME_ONE, NAME_TWO, JW) %>%
-    rename(
-      {{ name_one }} = NAME_ONE,
-      {{ name_two }} = NAME_TWO
-      )
-
-  return(cross)
-}
-
-
-
-
-
-
-
-forename_one <- cross %>%
-  mutate(
-    TOKEN_ONE = trimws(REGEXP_REPLACE(FORENAME_ONE, '*', ' ')),
-    S_ONE = nchar(FORENAME_ONE)
-  ) %>%
-  oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
-  group_by(ID, TOKEN) %>%
-  mutate(TOKEN = paste0(TOKEN, rank(TOKEN_NUMBER))) %>%
-  ungroup() %>%
-  select(ID, FORENAME_ONE, NUMBER_ONE = TOKEN_NUMBER, TOKEN)
-
-
-forename_two <- cross %>%
-  mutate(
-    TOKEN_TWO = trimws(REGEXP_REPLACE(FORENAME_TWO, '*', ' ')),
-    S_TWO = nchar(FORENAME_TWO)
-  ) %>%
-  oracle_unnest_tokens(col = 'TOKEN_TWO') %>%
-  group_by(ID, TOKEN) %>%
-  mutate(TOKEN = paste0(TOKEN, rank(TOKEN_NUMBER))) %>%
-  ungroup() %>%
-  select(ID, FORENAME_TWO, NUMBER_TWO = TOKEN_NUMBER, TOKEN)
-
-forename_two
-
-
-
-
-
-
-
-
-
-Sys.time()
 # Write the table back to the DB with indexes
-jw_forename %>%
+output %>%
   compute(
     name = "INT623_PDS_JW_FORENAMES",
     temporary = FALSE
   )
-Sys.time()
 
+# Disconnect
 DBI::dbDisconnect(con)
-
-Sys.time()
 
 #-------------------------------------------------------------------------------
 # Part Three: Implement manual JW
+
+
+
+
+
+
+
+
+
+cross_edit <- cross %>%
+  mutate(ID = row_number(FORENAME_ONE)) %>%
+  rename(
+    NAME_ONE = FORENAME_ONE,
+    NAME_TWO = FORENAME_TWO
+  ) %>%
+  select(ID, NAME_ONE, NAME_TWO)
+
+a <- cross_edit %>%
+  mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(NAME_ONE, '*', ' '))) %>%
+  nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
+  select(ID, NAME_ONE, NUMBER_ONE = TOKEN_NUMBER, TOKEN)
+
+b <- cross_edit %>%
+  mutate(TOKEN_TWO = trimws(REGEXP_REPLACE(NAME_TWO, '*', ' '))) %>%
+  nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_TWO') %>%
+  select(ID, NAME_TWO, NUMBER_TWO = TOKEN_NUMBER, TOKEN)
+
+a %>%
+  inner_join(b, by = c("ID", "TOKEN")) %>%
+  group_by(ID) %>%
+  mutate(
+    # Length of each name required for JW approx
+    S_ONE = nchar(NAME_ONE),
+    S_TWO = nchar(NAME_TWO),
+    # Max Distance Calculation
+    MAX = ifelse(S_ONE >= S_TWO, S_ONE, S_TWO),
+    DIST = floor(MAX / 2) - 1,
+    M = ifelse(abs(NUMBER_ONE - NUMBER_TWO) <= DIST, 1, 0)
+  ) %>%
+  filter(M == 1) %>%
+  ungroup() %>%
+  group_by(ID, TOKEN) %>%
+  mutate(
+    ORDER_ONE = paste0(TOKEN, dense_rank(NUMBER_ONE)),
+    ORDER_TWO = paste0(TOKEN, dense_rank(NUMBER_TWO))
+    ) %>%
+  ungroup() %>%
+  filter(ORDER_ONE == ORDER_TWO) %>%
+  group_by(ID) %>%
+  mutate(
+    M = n(),
+    # Number of transpositions (T) = 0, again to speed up approx calculation
+    SIM = (1/3) * (((M / S_ONE) + (M / S_TWO) + ((M - 0) / M))),
+    # Final JW vaalue, number of shared first four letters
+    L = case_when(
+      substr(NAME_ONE, 1, 1) != substr(NAME_TWO, 1, 1) ~ 0,
+      substr(NAME_ONE, 1, 4) == substr(NAME_TWO, 1, 4) ~ 4,
+      substr(NAME_ONE, 1, 3) == substr(NAME_TWO, 1, 3) ~ 3,
+      substr(NAME_ONE, 1, 2) == substr(NAME_TWO, 1, 2) ~ 2,
+      substr(NAME_ONE, 1, 1) == substr(NAME_TWO, 1, 1) ~ 1
+    ),
+    # 'Real' values impossible to be higher than approx value
+    JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
+  ) %>%
+  ungroup() %>%
+  filter(JW_APPROX >= 0.75) %>%
+  tally()
+
+
+
+
+
+
+
+
+
 
 data <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT623_PDS_JW_FORENAMES"))
@@ -395,9 +368,7 @@ z <- data %>%
   distinct() %>%
   collect()
 
-Sys.time()
-
-select(ID, FORENAME_ONE, TOKEN_ONE = TOKEN_NUMBER, TOKEN)
+#-------------------------------------------------------------------------------
 
 b <- data %>%
   mutate(TOKEN_TWO = trimws(REGEXP_REPLACE(FORENAME_TWO, '*', ' '))) %>%
@@ -490,101 +461,9 @@ Sys.time()
 
 
 
-pds2 <- pds2 %>%
-  select(DOB) %>%
-  distinct()
-
-pds1a <- pds1 %>%
-  select(ID_ONE = ID, FORENAME_ONE = FORENAME) %>%
-  mutate(TMP = 1)
-
-pds2 <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("DIM", "DALL_PDS_PATIENT_DIM_TO_DELETE"))
-
-pds2 <- pds2 %>%
-  filter(NHS_NO_PDS <= 4000000000) %>%
-  format_pds()
-
-pds2a <- pds2 %>%
-  select(ID_TWO = ID, FORENAME_TWO = FORENAME) %>%
-  mutate(TMP = 1)
-
-pds2a %>% tally()
-pds1a %>% tally()
-
-pds1b <- pds1a %>%
-  select(ID_ONE, FORENAME_ONE) %>%
-  mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(FORENAME_ONE, '*', ' '))) %>%
-  oracle_unnest_tokens(col = "TOKEN_ONE") %>%
-  group_by(ID_ONE, TOKEN) %>%
-  mutate(RANK = rank(TOKEN_NUMBER)) %>%
-  ungroup() %>%
-  mutate(TOKEN_ONE = paste0(TOKEN, RANK)) %>%
-  select(-c(RANK, TOKEN)) %>%
-  group_by(ID_ONE) %>%
-  mutate(s1 = max(TOKEN_NUMBER)) %>%
-  ungroup()
-
-pds2b <- pds2a %>%
-  select(ID_TWO, FORENAME_TWO) %>%
-  mutate(TOKEN_TWO = trimws(REGEXP_REPLACE(FORENAME_TWO, '*', ' '))) %>%
-  oracle_unnest_tokens(col = "TOKEN_TWO", drop = F) %>%
-  group_by(ID_TWO, TOKEN) %>%
-  mutate(RANK = rank(TOKEN_NUMBER)) %>%
-  ungroup() %>%
-  mutate(TOKEN_TWO = paste0(TOKEN, RANK)) %>%
-  select(-c(RANK, TOKEN)) %>%
-  group_by(ID_TWO) %>%
-  mutate(s2 = max(TOKEN_NUMBER)) %>%
-  ungroup()
-
-output = pds1b %>%
-  inner_join(pds2b, by = c('TOKEN_ONE' = 'TOKEN_TWO')) %>%
-  group_by(ID_ONE, ID_TWO) %>%
-  mutate(
-    char_dist = floor((max(s1, s2) / 2) - 1),
-    char = ifelse(abs(TOKEN_NUMBER.x - TOKEN_NUMBER.y) <= char_dist, 1, 0),
-    m = sum(char),
-  ) %>%
-  ungroup() %>%
-  group_by(ID_ONE, ID_TWO, char) %>%
-  mutate(
-    m1_order = rank(TOKEN_NUMBER.x),
-    m2_order = rank(TOKEN_NUMBER.y),
-    t = ifelse(m1_order != m2_order & char == 1, 1, 0),
-    t_edit = sum(t)/2
-  ) %>%
-  ungroup() %>%
-  group_by(ID_ONE, ID_TWO) %>%
-  mutate(
-    t_edit = max(t_edit),
-    sim = (1/3) * (((m/s1) + (m/s2) + ((m-t_edit) / m))),
-    p = 0.1,
-    l = case_when(
-      substr(FORENAME_ONE, 1, 1) == substr(FORENAME_TWO, 1, 1) ~ 1,
-      substr(FORENAME_ONE, 1, 2) == substr(FORENAME_TWO, 1, 2) ~ 2,
-      substr(FORENAME_ONE, 1, 3) == substr(FORENAME_TWO, 1, 3) ~ 3,
-      substr(FORENAME_ONE, 1, 4) == substr(FORENAME_TWO, 1, 4) ~ 4,
-      T ~ 0
-    ),
-    JW = sim + (l * p *(1-sim))
-  ) %>%
-  ungroup() %>%
-  select(ID_ONE, FORENAME_ONE, ID_TWO, FORENAME_TWO, JW) %>%
-  distinct()
-
-
-Sys.time()
-output
-Sys.time()
 
 
 
-
-pds2%>% tally()
-
-
-pds4 %>% tally()
 
 exact <- pds1 %>%
   inner_join(
@@ -634,7 +513,7 @@ cross <- full_join(
   x = pds1 %>% mutate(TMP = 1),
   y = pds2 %>% mutate(TMP = 1),
   by = "TMP"
-) %>%
+  ) %>%
   select(-TMP) %>%
   dplyr::filter(
     # Tokens share the same first letter
@@ -647,62 +526,7 @@ cross <- full_join(
       INSTR(FORENAME.x, FORENAME.y) > 1 |
       INSTR(FORENAME.y, FORENAME.x) > 1
   ) %>%
-  dob_substr(., 1,2,3) %>%
-  dob_substr(., 1,2,4) %>%
-  dob_substr(., 1,2,5) %>%
-  dob_substr(., 1,2,6) %>%
-  dob_substr(., 1,2,7) %>%
-  dob_substr(., 1,2,8) %>%
-  dob_substr(., 1,3,4) %>%
-  dob_substr(., 1,3,5) %>%
-  dob_substr(., 1,3,6) %>%
-  dob_substr(., 1,3,7) %>%
-  dob_substr(., 1,3,8) %>%
-  dob_substr(., 1,4,5) %>%
-  dob_substr(., 1,4,6) %>%
-  dob_substr(., 1,4,7) %>%
-  dob_substr(., 1,4,8) %>%
-  dob_substr(., 1,5,6) %>%
-  dob_substr(., 1,5,7) %>%
-  dob_substr(., 1,5,8) %>%
-  dob_substr(., 1,6,7) %>%
-  dob_substr(., 1,6,8) %>%
-  dob_substr(., 1,7,8) %>%
-  dob_substr(., 2,3,4) %>%
-  dob_substr(., 2,3,5) %>%
-  dob_substr(., 2,3,6) %>%
-  dob_substr(., 2,3,7) %>%
-  dob_substr(., 2,3,8) %>%
-  dob_substr(., 2,4,5) %>%
-  dob_substr(., 2,4,6) %>%
-  dob_substr(., 2,4,7) %>%
-  dob_substr(., 2,4,8) %>%
-  dob_substr(., 2,5,6) %>%
-  dob_substr(., 2,5,7) %>%
-  dob_substr(., 2,5,8) %>%
-  dob_substr(., 2,6,7) %>%
-  dob_substr(., 2,6,8) %>%
-  dob_substr(., 2,7,8) %>%
-  dob_substr(., 3,4,5) %>%
-  dob_substr(., 3,4,6) %>%
-  dob_substr(., 3,4,7) %>%
-  dob_substr(., 3,4,8) %>%
-  dob_substr(., 3,5,6) %>%
-  dob_substr(., 3,5,7) %>%
-  dob_substr(., 3,5,8) %>%
-  dob_substr(., 3,6,7) %>%
-  dob_substr(., 3,6,8) %>%
-  dob_substr(., 3,7,8) %>%
-  dob_substr(., 4,5,6) %>%
-  dob_substr(., 4,5,7) %>%
-  dob_substr(., 4,5,8) %>%
-  dob_substr(., 4,6,7) %>%
-  dob_substr(., 4,6,8) %>%
-  dob_substr(., 4,7,8) %>%
-  dob_substr(., 5,6,7) %>%
-  dob_substr(., 5,6,8) %>%
-  dob_substr(., 5,7,8) %>%
-  dob_substr(., 6,7,8)
+  dob_lv_filter()
 
 jw_join <- cross %>%
   select(FORENAME.x, FORENAME.y) %>%
@@ -711,12 +535,7 @@ jw_join <- cross %>%
   filter(JW >= 0.75) %>%
   select(-JW)
 
-# lv_join <- cross %>%
-#   select(DOB.x, DOB.y) %>%
-#   distinct() %>%
-#   mutate(LV = UTL_MATCH.EDIT_DISTANCE_SIMILARITY(DOB.x, DOB.y)) %>%
-#   filter(LV >= 75) %>%
-#   select(-LV)
+
 
 cross_join <- cross %>%
   inner_join(jw_join)

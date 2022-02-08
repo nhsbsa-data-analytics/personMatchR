@@ -136,21 +136,23 @@ name_db_filter <- function(df, name_one, name_two){
     )
 }
 
-#' Applies a filter on either forename or surname to limit cross-join
+#' Calculates two strings JW score, using a JW approximation to limit results
 #'
-#' Only contains name-pair instances that share certain characteristsics
-#' These include same 1st, 2nd or last letter, or being a substring of another
+#' JW can be slow within SQL Developer
+#' A quick JW-approximation can limit results before then applying this
+#' Scores below threshold not returned
 #'
 #' @param df A df to be formatted
 #' @param name_one first name column
 #' @param name_two second name column
+#' @param threshold_val retain only records with JW of a certain score or higher
 #'
-#' @return A df with a filtered name-col to limit post cross-join
+#' @return A df only with name-pairs with a JW value above a threshold
 #'
 #' @export
 #'
 #' @examples
-#' name_db_filter(df, name_one, name_two)
+#' calc_db_jw_threshold(df, name_one, name_two, threshold_val)
 calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
 
   # Rename inputs for convenience & generate ID
@@ -181,7 +183,7 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
     select(ID, NAME_TWO, NUMBER_TWO = TOKEN_NUMBER, TOKEN)
 
   # Join on ID & token (A1, A2 etc) then calculate matching chars
-  cross <- one %>%
+  jw <- one %>%
     inner_join(two, by = c("ID", "TOKEN")) %>%
     group_by(ID) %>%
     mutate(
@@ -208,10 +210,10 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
     # Filter by threshold value
     filter(JW_APPROX >= threshold_val) %>%
     # Now calculate 'real' JW on reduced list of names
-    mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
+    #mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
     # Filter by threshold value
-    filter(JW >= threshold_val) %>%
-    select(NAME_ONE, NAME_TWO, JW) %>%
+    #filter(JW >= threshold_val) %>%
+    #select(NAME_ONE, NAME_TWO, JW) %>%
     # Revert cols to original names
     rename(
       {{ name_one }} := NAME_ONE,
@@ -219,8 +221,5 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
     )
 
   # Return output
-  return(cross)
+  return(jw)
 }
-
-
-
