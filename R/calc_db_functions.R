@@ -1,31 +1,3 @@
-#' Applies a filter on DOB to workaround LV-edit distance runtime
-#'
-#' Format the name strings prior to matching
-#' Df must include cols: DOB_ONE & DOB_TWO
-#'
-#' @param df A df to be formatted
-#' @param sub_one first character index
-#' @param sub_two second character index
-#' @param sub_three third character index
-#'
-#' @return A df with filter applied to DOB
-#'
-#' @export
-#'
-#' @examples
-#' dob_substr(df, sub_one, sub_two, sub_three)
-dob_substr <- function(df, sub_one, sub_two, sub_three){
-
-  df %>%
-    filter(
-      SUBSTR(DOB_ONE, sub_one, 1) == SUBSTR(DOB_TWO, sub_one, 1) |
-        # Tokens share same second letter
-        SUBSTR(DOB_ONE, sub_two, 1) == SUBSTR(DOB_TWO, sub_two, 1) |
-        # Tokens share same second letter
-        SUBSTR(DOB_ONE, sub_three, 1) == SUBSTR(DOB_TWO, sub_three, 1)
-    )
-}
-
 #' Applies all combinations of dob_substr() filters
 #'
 #' Through doing so, it mirrors an edit distance of 2 on an 8-digit string
@@ -39,9 +11,31 @@ dob_substr <- function(df, sub_one, sub_two, sub_three){
 #'
 #' @examples
 #' dob_substr(df, sub_one, sub_two, sub_three)
-dob_lv_filter <- function(df){
+dob_lv_filter <- function(df, dob_col_one, dob_col_two){
 
-  df %>%
+  # Rename df for convenience
+  df <- df %>%
+    rename(
+      DOB_ONE := {{ dob_col_one }},
+      DOB_TWO := {{ dob_col_two }}
+    )
+
+  # Function to apply multiple times
+  dob_substr <- function(df, sub_one, sub_two, sub_three){
+
+    df %>%
+      filter(
+        SUBSTR(DOB_ONE, sub_one, 1) == SUBSTR(DOB_TWO, sub_one, 1) |
+          # Tokens share same second letter
+          SUBSTR(DOB_ONE, sub_two, 1) == SUBSTR(DOB_TWO, sub_two, 1) |
+          # Tokens share same second letter
+          SUBSTR(DOB_ONE, sub_three, 1) == SUBSTR(DOB_TWO, sub_three, 1),
+        DOB_ONE != DOB_TWO
+      )
+  }
+
+  # Apply multiple filters to replicate use case of LV
+  df <- df %>%
     dob_substr(., 1,2,3) %>%
     dob_substr(., 1,2,4) %>%
     dob_substr(., 1,2,5) %>%
@@ -98,6 +92,16 @@ dob_lv_filter <- function(df){
     dob_substr(., 5,6,8) %>%
     dob_substr(., 5,7,8) %>%
     dob_substr(., 6,7,8)
+
+  # Original df names
+  df <- df %>%
+    rename(
+      {{ dob_col_one }} := DOB_ONE,
+      {{ dob_col_two }} := DOB_TWO
+      )
+
+  # Return
+  return(df)
 }
 
 #' Applies a filter on either forename or surname to limit cross-join

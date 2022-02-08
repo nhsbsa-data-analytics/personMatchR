@@ -13,38 +13,42 @@ source("R/format_db_functions.R")
 #-------------------------------------------------------------------------------
 # Part One: DOB Dist lookup table
 
-pds1 <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("DIM", "DALL_PDS_PATIENT_DIM"))
+# Db pds table
+pds <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_PDS"))
 
-pds1 <- pds1 %>%
+# Db eibss table
+eib <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_EIBSS"))
+
+# Format and select dob, tmp for full-join
+pds <- pds %>%
+  mutate(
+    DOB = as.numeric(DOB),
+    TMP = 1
+  ) %>%
   select(DOB_ONE = DOB) %>%
-  mutate(
-    DOB_ONE = as.numeric(TO_CHAR(DOB_ONE, "YYYYMMDD")),
-    DOB_ONE = ifelse(nchar(DOB_ONE) == 0, NA, DOB_ONE),
-    TMP = 1
-  ) %>%
   distinct()
 
-pds2 <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("DIM", "DALL_PDS_PATIENT_DIM_TO_DELETE"))
-
-pds2 <- pds2 %>%
+# Format and select dob, tmp for full-join
+eib <- eib %>%
+  mutate(
+    DOB = as.numeric(DOB),
+    TMP = 1
+  ) %>%
   select(DOB_TWO = DOB) %>%
-  mutate(
-    DOB_TWO = as.numeric(TO_CHAR(DOB_TWO, "YYYYMMDD")),
-    DOB_TWO = ifelse(nchar(DOB_TWO) == 0, NA, DOB_TWO),
-    TMP = 1
-  ) %>%
   distinct()
 
-dob <- pds1 %>%
-  full_join(pds2, by = "TMP") %>%
-  dob_lv_filter()
+# Get dates with LV distance of 2
+dob <- pds %>%
+  full_join(eib, by = "TMP") %>%
+  dob_lv_filter(., DOB_ONE, DOB_TWO) %>%
+  select(-TMP)
 
 # Write the table back to the DB
 dob %>%
   compute(
-    name = "INT623_PDS_NAMES_DIST",
+    name = "INT617_DOB_DIST",
     temporary = FALSE
   )
 
