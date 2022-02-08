@@ -77,7 +77,7 @@ format_db_postcode <- function(df, postcode_col){
       POSTCODE= toupper(REGEXP_REPLACE(POSTCODE, "[^[:alnum:]]", "")),
       POSTCODE = trimws(REGEXP_REPLACE(POSTCODE, '*', ' '))
     ) %>%
-    oracle_unnest_tokens(col = 'POSTCODE') %>%
+    nhsbsaR::oracle_unnest_tokens(col = 'POSTCODE') %>%
     filter(!is.na(TOKEN)) %>%
     group_by(ID) %>%
     mutate(LEN = n()) %>%
@@ -165,7 +165,7 @@ format_db_pds_temp <- function(df){
       POSTCODE = toupper(REGEXP_REPLACE(POSTCODE, "[^[:alnum:]]", "")),
       POSTCODE = trimws(REGEXP_REPLACE(POSTCODE, '*', ' '))
     ) %>%
-    oracle_unnest_tokens(col = 'POSTCODE') %>%
+    nhsbsaR::oracle_unnest_tokens(col = 'POSTCODE') %>%
     filter(!is.na(TOKEN)) %>%
     group_by(ID) %>%
     mutate(LEN = max(TOKEN_NUMBER)) %>%
