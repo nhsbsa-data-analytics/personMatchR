@@ -18,8 +18,8 @@ format_db_name <- function(df, name_col){
   df %>%
     mutate(
       # Remove non-alpha chars and convert emtpy string to NA
-      {{ name_col }} = toupper(REGEXP_REPLACE({{ name_col }}, "[^[:alpha:]]", "")),
-      {{ name_col }} = ifelse(nchar({{ name_col }}) == 0, NA, {{ name_col }})
+      {{ name_col }} := toupper(REGEXP_REPLACE({{ name_col }}, "[^[:alpha:]]", "")),
+      {{ name_col }} := ifelse(nchar({{ name_col }}) == 0, NA, {{ name_col }})
     )
 }
 
@@ -41,8 +41,8 @@ format_db_date <- function(df, date_col){
 
   df %>%
     mutate(
-      DOB = as.numeric(TO_CHAR({{ date_col }}, "YYYYMMDD")),
-      DOB = ifelse(nchar({{ date_col }}) == 0, NA, {{ date_col }})
+      {{ date_col }} := as.numeric(TO_CHAR({{ date_col }}, "YYYYMMDD")),
+      {{ date_col }} := ifelse(nchar({{ date_col }}) == 0, NA, {{ date_col }})
     )
 }
 
