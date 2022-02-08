@@ -147,7 +147,7 @@ format_db_postcode <- function(df, postcode_col){
 #'
 #' @examples
 #' format_db_pds_temp(df)
-format_db_pds_temp = function(df){
+format_db_pds_temp <- function(df){
 
   df <- df %>%
     select(DOB, FORENAME, SURNAME, POSTCODE, ID = NHS_NO_PDS) %>%

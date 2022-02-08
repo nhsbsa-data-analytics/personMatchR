@@ -6,7 +6,9 @@ library(dbplyr)
 # Set up connection to the DB
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
 
-
+# Functions
+source("R/calc_db_functions.R")
+source("R/format_db_functions.R")
 
 #-------------------------------------------------------------------------------
 # Part One: DOB Dist lookup table
@@ -36,63 +38,8 @@ pds2 <- pds2 %>%
   distinct()
 
 dob <- pds1 %>%
-  full_join(pds2, by = "TMP",) %>%
-  dob_substr(., 1,2,3) %>%
-  dob_substr(., 1,2,4) %>%
-  dob_substr(., 1,2,5) %>%
-  dob_substr(., 1,2,6) %>%
-  dob_substr(., 1,2,7) %>%
-  dob_substr(., 1,2,8) %>%
-  dob_substr(., 1,3,4) %>%
-  dob_substr(., 1,3,5) %>%
-  dob_substr(., 1,3,6) %>%
-  dob_substr(., 1,3,7) %>%
-  dob_substr(., 1,3,8) %>%
-  dob_substr(., 1,4,5) %>%
-  dob_substr(., 1,4,6) %>%
-  dob_substr(., 1,4,7) %>%
-  dob_substr(., 1,4,8) %>%
-  dob_substr(., 1,5,6) %>%
-  dob_substr(., 1,5,7) %>%
-  dob_substr(., 1,5,8) %>%
-  dob_substr(., 1,6,7) %>%
-  dob_substr(., 1,6,8) %>%
-  dob_substr(., 1,7,8) %>%
-  dob_substr(., 2,3,4) %>%
-  dob_substr(., 2,3,5) %>%
-  dob_substr(., 2,3,6) %>%
-  dob_substr(., 2,3,7) %>%
-  dob_substr(., 2,3,8) %>%
-  dob_substr(., 2,4,5) %>%
-  dob_substr(., 2,4,6) %>%
-  dob_substr(., 2,4,7) %>%
-  dob_substr(., 2,4,8) %>%
-  dob_substr(., 2,5,6) %>%
-  dob_substr(., 2,5,7) %>%
-  dob_substr(., 2,5,8) %>%
-  dob_substr(., 2,6,7) %>%
-  dob_substr(., 2,6,8) %>%
-  dob_substr(., 2,7,8) %>%
-  dob_substr(., 3,4,5) %>%
-  dob_substr(., 3,4,6) %>%
-  dob_substr(., 3,4,7) %>%
-  dob_substr(., 3,4,8) %>%
-  dob_substr(., 3,5,6) %>%
-  dob_substr(., 3,5,7) %>%
-  dob_substr(., 3,5,8) %>%
-  dob_substr(., 3,6,7) %>%
-  dob_substr(., 3,6,8) %>%
-  dob_substr(., 3,7,8) %>%
-  dob_substr(., 4,5,6) %>%
-  dob_substr(., 4,5,7) %>%
-  dob_substr(., 4,5,8) %>%
-  dob_substr(., 4,6,7) %>%
-  dob_substr(., 4,6,8) %>%
-  dob_substr(., 4,7,8) %>%
-  dob_substr(., 5,6,7) %>%
-  dob_substr(., 5,6,8) %>%
-  dob_substr(., 5,7,8) %>%
-  dob_substr(., 6,7,8)
+  full_join(pds2, by = "TMP") %>%
+  dob_lv_filter()
 
 # Write the table back to the DB
 dob %>%
@@ -105,7 +52,7 @@ dob %>%
 DBI::dbDisconnect(con)
 
 #-------------------------------------------------------------------------------
-# Part Two: Generate Forename Lookup -------------------------------------------
+# Part Two: Generate Forename Lookup
 
 pds1 <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("DIM", "DALL_PDS_PATIENT_DIM"))
@@ -142,55 +89,87 @@ pds2 <- pds2 %>%
   select(DOB_TWO = DOB, FORENAME_TWO = FORENAME, TMP, POSTCODE) %>%
   distinct()
 
-# 1m x 1m = 16.8m cross join height
-jw_forename <- pds2 %>%
-  full_join(pds1, by = "TMP") %>%
-  inner_join(dob) %>%
-  dplyr::filter(
-    # Tokens share the same first letter
-    SUBSTR(FORENAME_ONE, 1, 1) == SUBSTR(FORENAME_TWO, 1, 1) |
-      # Tokens share same second letter
-      SUBSTR(FORENAME_ONE, 2, 1) == SUBSTR(FORENAME_TWO, 2, 1) |
-      # Tokens share same last letter
-      SUBSTR(FORENAME_ONE, LENGTH(FORENAME_ONE), 1) == SUBSTR(FORENAME_TWO, LENGTH(FORENAME_TWO), 1) |
-      # One token is a substring of the other
-      INSTR(FORENAME_ONE, FORENAME_TWO) > 1 |
-      INSTR(FORENAME_TWO, FORENAME_ONE) > 1
-  ) %>%
-  group_by(FORENAME_ONE, FORENAME_TWO) %>%
-  summarise(TMP = sum(TMP)) %>%
-  ungroup() %>%
-  mutate(JW_FORENAME = UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)) %>%
-  filter(JW_FORENAME >= 0.75) %>%
-  collect()
-
-Sys.time()
-
-
 cross <- pds2 %>%
   full_join(pds1, by = "TMP") %>%
   inner_join(dob) %>%
-  dplyr::filter(
-    # Tokens share the same first letter
-    SUBSTR(FORENAME_ONE, 1, 1) == SUBSTR(FORENAME_TWO, 1, 1) |
-      # Tokens share same second letter
-      SUBSTR(FORENAME_ONE, 2, 1) == SUBSTR(FORENAME_TWO, 2, 1) |
-      # Tokens share same last letter
-      SUBSTR(FORENAME_ONE, LENGTH(FORENAME_ONE), 1) == SUBSTR(FORENAME_TWO, LENGTH(FORENAME_TWO), 1) |
-      # One token is a substring of the other
-      INSTR(FORENAME_ONE, FORENAME_TWO) > 1 |
-      INSTR(FORENAME_TWO, FORENAME_ONE) > 1,
-    nchar(FORENAME_ONE) != 1,
-    nchar(FORENAME_TWO) != 1,
-    FORENAME_ONE != FORENAME_TWO
-  ) %>%
+  name_db_filter(FORENAME_ONE, FORENAME_TWO) %>%
   group_by(FORENAME_ONE, FORENAME_TWO) %>%
   summarise(TMP = sum(TMP)) %>%
-  ungroup() %>%
-  mutate(ID = row_number(FORENAME_ONE))
+  ungroup()
+
+output <- calc_db_jw_threshold(
+  df = cross,
+  name_one = FORENAME_ONE,
+  name_two = FORENAME_TWO,
+  threshold_val = 0.75
+  ) %>%
+  collect()
 
 
-cross
+OUTPUT
+
+calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
+
+  df <- df %>%
+    rename(
+      NAME_ONE = {{ name_one }},
+      NAME_TWO = {{ name_two }}
+      ) %>%
+    select(NAME_ONE, NAME_TWO) %>%
+    mutate(ID = row_number(NAME_ONE))
+
+  one <- df %>%
+    mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(NAME_ONE, '*', ' '))) %>%
+    nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
+    group_by(ID, TOKEN) %>%
+    mutate(TOKEN = paste0(TOKEN, rank(TOKEN_NUMBER))) %>%
+    ungroup() %>%
+    select(ID, NAME_ONE, NUMBER_ONE = TOKEN_NUMBER, TOKEN)
+
+  two <- df %>%
+    mutate(TOKEN_TWO = trimws(REGEXP_REPLACE(NAME_TWO, '*', ' '))) %>%
+    nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_TWO') %>%
+    group_by(ID, TOKEN) %>%
+    mutate(TOKEN = paste0(TOKEN, rank(TOKEN_NUMBER))) %>%
+    ungroup() %>%
+    select(ID, NAME_TWO, NUMBER_TWO = TOKEN_NUMBER, TOKEN)
+
+  cross <- one %>%
+    inner_join(two, by = c("ID", "TOKEN")) %>%
+    group_by(ID) %>%
+    mutate(
+      M = n(),
+      S_ONE = nchar(NAME_ONE),
+      S_TWO = nchar(NAME_TWO),
+      SIM = (1/3) * (((M / S_ONE) + (M / S_TWO) + ((M - 0) / M))),
+      L = case_when(
+        substr(NAME_ONE, 1, 1) != substr(NAME_TWO, 1, 1) ~ 0,
+        substr(NAME_ONE, 1, 4) == substr(NAME_TWO, 1, 4) ~ 4,
+        substr(NAME_ONE, 1, 3) == substr(NAME_TWO, 1, 3) ~ 3,
+        substr(NAME_ONE, 1, 2) == substr(NAME_TWO, 1, 2) ~ 2,
+        substr(NAME_ONE, 1, 1) == substr(NAME_TWO, 1, 1) ~ 1
+      ),
+      JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
+    ) %>%
+    ungroup() %>%
+    distinct() %>%
+    filter(JW_APPROX >= threshold_val) %>%
+    mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
+    filter(JW >= threshold_val) %>%
+    select(NAME_ONE, NAME_TWO, JW) %>%
+    rename(
+      {{ name_one }} = NAME_ONE,
+      {{ name_two }} = NAME_TWO
+      )
+
+  return(cross)
+}
+
+
+
+
+
+
 
 forename_one <- cross %>%
   mutate(
@@ -217,47 +196,10 @@ forename_two <- cross %>%
 
 forename_two
 
-Sys.time()
-
-z <- forename_one %>%
-  inner_join(forename_two) %>%
-  group_by(ID) %>%
-  mutate(
-    S_ONE = nchar(FORENAME_ONE),
-    S_TWO = nchar(FORENAME_TWO),
-    MAX = ifelse(S_ONE >= S_TWO, S_ONE, S_TWO),
-    LEN_DIST = floor((MAX / 2) - 1),
-    CHAR_DIST = ifelse(abs(NUMBER_ONE - NUMBER_TWO) <= LEN_DIST, 1, 0)
-  ) %>%
-  ungroup() %>%
-  filter(CHAR_DIST == 1) %>%
-  collect()
 
 
-M = n(),
-S_ONE = nchar(FORENAME_ONE),
-S_TWO = nchar(FORENAME_TWO),
 
-char_dist = floor((max(s1, s2) / 2) - 1),
-SIM = (1/3) * (((M / S_ONE) + (M / S_TWO) + ((M - 0) / M))),
-L = case_when(
-  substr(FORENAME_ONE, 1, 1) != substr(FORENAME_TWO, 1, 1) ~ 0,
-  substr(FORENAME_ONE, 1, 4) == substr(FORENAME_TWO, 1, 4) ~ 4,
-  substr(FORENAME_ONE, 1, 3) == substr(FORENAME_TWO, 1, 3) ~ 3,
-  substr(FORENAME_ONE, 1, 2) == substr(FORENAME_TWO, 1, 2) ~ 2,
-  substr(FORENAME_ONE, 1, 1) == substr(FORENAME_TWO, 1, 1) ~ 1
-),
-JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
-) %>%
-  ungroup() %>%
-  select(ID, FORENAME_ONE, FORENAME_TWO, JW_APPROX) %>%
-  distinct() %>%
-  filter(JW_APPROX >= 0.75) %>%
-  mutate(JW_FORENAME = UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)) %>%
-  filter(JW_FORENAME >= 0.75) %>%
-  collect()
 
-Sys.time()
 
 
 
