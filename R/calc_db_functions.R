@@ -238,3 +238,26 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
   # Return output
   return(jw)
 }
+
+#' More efficient distinct with large number of records
+#'
+#' Generate
+#'
+#' @param df A df to be formatted
+#' @param name_one first name column
+#' @param name_two second name column
+#' @param threshold_val retain only records with JW of a certain score or higher
+#'
+#' @return A df only with name-pairs with a JW value above a threshold
+#'
+#' @export
+#'
+#' @examples
+#' calc_db_jw_threshold(df, name_one, name_two, threshold_val)
+group_by_distinct <- function(df){
+
+  df <- df %>%
+    group_by_all() %>%
+    summarise() %>%
+    ungroup()
+}

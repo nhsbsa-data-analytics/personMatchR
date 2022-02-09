@@ -53,7 +53,7 @@ exact %>%
 DBI::dbDisconnect(con)
 
 #-------------------------------------------------------------------------------
-# Part Two: Generate list of relevant dates and forenames
+# Part Two: Generate list of relevant dates
 
 # Set up connection to the DB
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
@@ -74,9 +74,66 @@ exact <- con %>%
 eib <- eib_db %>%
   anti_join(y = exact, by = "REFERENCE") %>%
   format_db_date(., DOB) %>%
+  select(DOB_ONE = DOB) %>%
+  distinct() %>%
+  mutate(TMP = 1)
+
+# Format and select dob, tmp for full-join
+pds <- pds_db %>%
+  format_db_date(., DOB) %>%
+  select(DOB_TWO = DOB) %>%
+  distinct() %>%
+  mutate(TMP = 1)
+
+# Generate lost of dates
+dob <- eib %>%
+  full_join(pds) %>%
+  dob_lv_filter(., DOB_ONE, DOB_TWO) %>%
+  select(-TMP)
+
+# Write back to db
+dob %>%
+  compute(
+    name = "INT617_DOB_DIST",
+    temporary = FALSE
+  )
+
+# Disconnect
+DBI::dbDisconnect(con)
+
+#-------------------------------------------------------------------------------
+# Part Two: Generate list of relevant forenames
+
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
+# Db pds table
+pds_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_PDS"))
+
+# Db eibss table
+eib_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_EIBSS"))
+
+# Exact matches
+exact <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_EXACT"))
+
+# Relevant DOB Dates
+dob <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_DOB_DIST"))
+
+# Format and select dob, tmp for full-join
+eib <- eib_db %>%
+  anti_join(y = exact, by = "REFERENCE") %>%
+  format_db_date(., DOB) %>%
   format_db_name(., FORENAME) %>%
   mutate(TMP = 1) %>%
-  select(DOB_ONE = DOB, FORENAME_ONE = FORENAME, TMP) %>%
+  inner_join(
+    y = dob %>% select(DOB_ONE),
+    by = c("DOB" = "DOB_ONE")
+    ) %>%
+  select(FORENAME_ONE = FORENAME, TMP) %>%
   distinct()
 
 # Format and select dob, tmp for full-join
@@ -84,18 +141,152 @@ pds <- pds_db %>%
   format_db_date(., DOB) %>%
   format_db_name(., FORENAME) %>%
   mutate(TMP = 1) %>%
-  select(DOB_TWO = DOB, FORENAME_TWO = FORENAME, TMP) %>%
-  distinct()
+  inner_join(
+    y = dob %>% select(DOB_TWO),
+    by = c("DOB" = "DOB_TWO")
+  ) %>%
+  select(FORENAME_TWO = FORENAME, TMP) %>%
+  group_by_distinct()
+
+
+names <- eib %>%
+  full_join(pds) %>%
+  name_db_filter(FORENAME_ONE, FORENAME_TWO) %>%
+  group_by_distinct() %>%
+  tally()
+
+
+
+pds %>% tally()
+
+
+
+
+
+
+
 
 # Distinct DOB left-side
-eib_date <- eib %>%
-  select(DOB_ONE, TMP) %>%
-  distinct()
+eib <- eib %>%
+  select(DOB_ONE) %>%
+  distinct() %>%
+  mutate(TMP = 1)
 
 # Distinct DOB right-side
 pds_date <- pds %>%
-  select(DOB_TWO, TMP) %>%
-  distinct()
+  select(DOB_TWO) %>%
+  distinct() %>%
+  mutate(TMP = 1)
+
+# Generate DOB limitations
+dob <- eib_date %>%
+  full_join(pds_date, by = "TMP") %>%
+
+
+#
+dob %>%
+  inner_join(pds) %>%
+  inner_join(eib) %>%
+
+
+
+pds %>% tally()
+
+Sys.time()
+# Get dates with LV distance of 2
+eib %>%
+  full_join(pds) %>%
+  inner_join(dob) %>%
+  name_db_filter(FORENAME_ONE, FORENAME_TWO) %>%
+  group_by_distinct() %>%
+  tally()
+Sys.time()
+
+calc_db_jw_threshold(
+  df = .,
+  name_one = FORENAME_ONE,
+  name_two = FORENAME_TWO,
+  threshold_val = 0.75
+)
+
+Sys.time()
+# Write the table back to the DB: 1 min
+name_dob %>%
+  compute(
+    name = "INT617_FORENAME_DOB_DIST",
+    temporary = FALSE
+  )
+Sys.time()
+
+# Disconnect
+DBI::dbDisconnect(con)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
+# Db pds table
+pds_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_PDS"))
+
+# Db eibss table
+eib_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_EIBSS"))
+
+# Exact matches
+exact <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_EXACT"))
+
+
+
+# Format and select dob, tmp for full-join
+pds <- pds_db %>%
+  format_db_date(., DOB) %>%
+  format_db_name(., FORENAME) %>%
+  select(DOB_TWO = DOB, FORENAME_TWO = FORENAME) %>%
+  group_by_distinct()
+
+# Distinct DOB left-side
+eib_date <- eib %>%
+  select(DOB_ONE) %>%
+  distinct() %>%
+  mutate(TMP = 1)
+
+# Distinct DOB right-side
+pds_date <- pds %>%
+  select(DOB_TWO) %>%
+  distinct() %>%
+  mutate(TMP = 1)
 
 # Generate DOB limitations
 dob <- eib_date %>%
@@ -103,14 +294,27 @@ dob <- eib_date %>%
   dob_lv_filter(., DOB_ONE, DOB_TWO) %>%
   select(-TMP)
 
+#
+dob %>%
+  inner_join(pds) %>%
+  inner_join(eib) %>%
+  name_db_filter(FORENAME_ONE, FORENAME_TWO) %>%
+  group_by_distinct() %>%
+  tally()
+
+
+pds %>% tally()
+
+Sys.time()
 # Get dates with LV distance of 2
-name_dob <- eib %>%
+eib %>%
   full_join(pds) %>%
   inner_join(dob) %>%
   name_db_filter(FORENAME_ONE, FORENAME_TWO) %>%
-  group_by(DOB_ONE, DOB_TWO, FORENAME_ONE, FORENAME_TWO) %>%
-  summarise(TMP = sum(TMP)) %>%
-  ungroup() %>%
+  group_by_distinct() %>%
+  tally()
+Sys.time()
+
   calc_db_jw_threshold(
     df = .,
     name_one = FORENAME_ONE,
