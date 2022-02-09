@@ -82,7 +82,6 @@ eib <- eib_db %>%
     ) %>%
   select(DOB_ONE = DOB, FORENAME_ONE = FORENAME, TMP)
 
-
 pds <- pds_db %>%
   format_db_name(., FORENAME) %>%
   mutate(
@@ -91,38 +90,24 @@ pds <- pds_db %>%
   ) %>%
   select(DOB_TWO = DOB, FORENAME_TWO = FORENAME, TMP)
 
-pds2 <- pds2 %>%
-  mutate(
-    ROW = rank(NHS_NO_PDS),
-    DOB = as.numeric(TO_CHAR(DOB, "YYYYMMDD")),
-    DOB = ifelse(nchar(DOB) == 0, NA, DOB),
-    FORENAME = toupper(REGEXP_REPLACE(FORENAME, "[^[:alpha:]]", "")),
-    FORENAME = ifelse(nchar(FORENAME) == 0, NA, FORENAME),
-    TMP = 1
-  ) %>%
-  filter(ROW <= 100) %>%
-  select(DOB_TWO = DOB, FORENAME_TWO = FORENAME, TMP, POSTCODE) %>%
-  distinct()
-
-cross <- pds2 %>%
-  full_join(pds1, by = "TMP") %>%
-  inner_join(dob) %>%
+jw <- pds %>%
+  full_join(eib, by = "TMP") %>%
+  inner_join(dob, by = c("DOB_ONE", "DOB_TWO")) %>%
   name_db_filter(FORENAME_ONE, FORENAME_TWO) %>%
   group_by(FORENAME_ONE, FORENAME_TWO) %>%
   summarise(TMP = sum(TMP)) %>%
-  ungroup()
-
-output <- calc_db_jw_threshold(
-  df = cross,
-  name_one = FORENAME_ONE,
-  name_two = FORENAME_TWO,
-  threshold_val = 0.75
-  )
+  ungroup() %>%
+  calc_db_jw_threshold(
+    df = .,
+    name_one = FORENAME_ONE,
+    name_two = FORENAME_TWO,
+    threshold_val = 0.75
+    )
 
 # Write the table back to the DB with indexes
-output %>%
+jw %>%
   compute(
-    name = "INT623_PDS_JW_FORENAMES",
+    name = "INT617_FORENAME_DIST",
     temporary = FALSE
   )
 

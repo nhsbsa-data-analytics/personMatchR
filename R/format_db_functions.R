@@ -41,9 +41,12 @@ format_db_date <- function(df, date_col){
 
   df %>%
     mutate(
-      {{ date_col }} := as.numeric(TO_CHAR({{ date_col }}, "YYYYMMDD")),
-      {{ date_col }} := ifelse(nchar({{ date_col }}) == 0, NA, {{ date_col }})
-    )
+      {{ date_col }} := case_when(
+        REGEXP_INSTR({{ date_col }}, '[A-Z]') == 0 ~ as.numeric({{ date_col }}),
+        REGEXP_INSTR({{ date_col }}, '[A-Z]') == 1 ~ as.numeric(TO_CHAR({{ date_col }}, "YYYYMMDD")),
+        nchar({{ date_col }}) == 0 ~ NA
+        )
+      )
 }
 
 #' Format the postcode strings prior to matching
