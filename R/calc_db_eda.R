@@ -3,9 +3,6 @@
 library(dplyr)
 library(dbplyr)
 
-# Set up connection to the DB
-con <- nhsbsaR::con_nhsbsa(database = "DALP")
-
 # Functions
 source("R/calc_db_functions.R")
 source("R/format_db_functions.R")
@@ -13,37 +10,42 @@ source("R/format_db_functions.R")
 #-------------------------------------------------------------------------------
 # Part One: DOB Dist lookup table
 
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
 # Db pds table
-pds <- con %>%
+pds_db <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_PDS"))
 
 # Db eibss table
-eib <- con %>%
+eib_db <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_EIBSS"))
 
 # Format and select dob, tmp for full-join
-pds <- pds %>%
+pds <- pds_db %>%
   mutate(
     DOB = as.numeric(DOB),
     TMP = 1
   ) %>%
-  select(DOB_ONE = DOB) %>%
+  select(DOB_ONE = DOB, TMP) %>%
   distinct()
 
 # Format and select dob, tmp for full-join
-eib <- eib %>%
+eib <- eib_db %>%
   mutate(
     DOB = as.numeric(DOB),
     TMP = 1
   ) %>%
-  select(DOB_TWO = DOB) %>%
+  select(DOB_TWO = DOB, TMP) %>%
   distinct()
 
 # Get dates with LV distance of 2
 dob <- pds %>%
   full_join(eib, by = "TMP") %>%
-  dob_lv_filter(., DOB_ONE, DOB_TWO) %>%
-  select(-TMP)
+  mutate(LV = UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)) %>%
+  filter(LV <= 2) %>%
+  #dob_lv_filter(., DOB_ONE, DOB_TWO) %>%
+  select(-c(TMP, LV))
 
 # Write the table back to the DB
 dob %>%
@@ -58,27 +60,36 @@ DBI::dbDisconnect(con)
 #-------------------------------------------------------------------------------
 # Part Two: Generate Forename Lookup using
 
-pds1 <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("DIM", "DALL_PDS_PATIENT_DIM"))
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
 
-pds2 <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("DIM", "DALL_PDS_PATIENT_DIM_TO_DELETE"))
+# Db pds table
+pds_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_PDS"))
+
+# Db eibss table
+eib_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_EIBSS"))
 
 dob <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT623_PDS_NAMES_DIST"))
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_DOB_DIST_LV"))
 
-pds1 <- pds1 %>%
+eib <- eib_db %>%
+  format_db_name(., FORENAME) %>%
   mutate(
-    ROW = rank(NHS_NO_PDS),
-    DOB = as.numeric(TO_CHAR(DOB, "YYYYMMDD")),
-    DOB = ifelse(nchar(DOB) == 0, NA, DOB),
-    FORENAME = toupper(REGEXP_REPLACE(FORENAME, "[^[:alpha:]]", "")),
-    FORENAME = ifelse(nchar(FORENAME) == 0, NA, FORENAME),
+    DOB = as.numeric(DOB),
+    TMP = 1
+    ) %>%
+  select(DOB_ONE = DOB, FORENAME_ONE = FORENAME, TMP)
+
+
+pds <- pds_db %>%
+  format_db_name(., FORENAME) %>%
+  mutate(
+    DOB = as.numeric(DOB),
     TMP = 1
   ) %>%
-  filter(ROW <= 100) %>%
-  select(DOB_ONE = DOB, FORENAME_ONE = FORENAME, TMP) %>%
-  distinct()
+  select(DOB_TWO = DOB, FORENAME_TWO = FORENAME, TMP)
 
 pds2 <- pds2 %>%
   mutate(
