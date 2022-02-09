@@ -87,10 +87,26 @@ pds <- pds_db %>%
   select(DOB_TWO = DOB, FORENAME_TWO = FORENAME, TMP) %>%
   distinct()
 
+# Distinct DOB left-side
+eib_date <- eib %>%
+  select(DOB_ONE, TMP) %>%
+  distinct()
+
+# Distinct DOB right-side
+pds_date <- pds %>%
+  select(DOB_TWO, TMP) %>%
+  distinct()
+
+# Generate DOB limitations
+dob <- eib_date %>%
+  full_join(pds_date, by = "TMP") %>%
+  dob_lv_filter(., DOB_ONE, DOB_TWO) %>%
+  select(-TMP)
+
 # Get dates with LV distance of 2
 name_dob <- eib %>%
-  full_join(pds, by = "TMP") %>%
-  dob_lv_filter(., DOB_ONE, DOB_TWO) %>%
+  full_join(pds) %>%
+  inner_join(dob) %>%
   name_db_filter(FORENAME_ONE, FORENAME_TWO) %>%
   group_by(DOB_ONE, DOB_TWO, FORENAME_ONE, FORENAME_TWO) %>%
   summarise(TMP = sum(TMP)) %>%
@@ -100,15 +116,16 @@ name_dob <- eib %>%
     name_one = FORENAME_ONE,
     name_two = FORENAME_TWO,
     threshold_val = 0.75
-  ) %>%
-  seellect(-c(TMP, JW))
+  )
 
+Sys.time()
 # Write the table back to the DB: 1 min
 name_dob %>%
   compute(
     name = "INT617_FORENAME_DOB_DIST",
     temporary = FALSE
   )
+Sys.time()
 
 # Disconnect
 DBI::dbDisconnect(con)

@@ -160,11 +160,14 @@ name_db_filter <- function(df, name_one, name_two){
 calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
 
   # Rename inputs for convenience & generate ID
-  output <- df %>%
+  df <- df %>%
     rename(
       NAME_ONE = {{ name_one }},
       NAME_TWO = {{ name_two }}
-    ) %>%
+    )
+
+  # Generate distinct values and ID
+  output <- df %>%
     select(NAME_ONE, NAME_TWO) %>%
     distinct() %>%
     mutate(ID = row_number(NAME_ONE))
@@ -218,109 +221,14 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
     mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
     # Filter by threshold value
     filter(JW >= threshold_val) %>%
-    select(NAME_ONE, NAME_TWO, JW) %>%
-    # Revert cols to original names
-    rename(
-      {{ name_one }} := NAME_ONE,
-      {{ name_two }} := NAME_TWO
-    )
+    select(NAME_ONE, NAME_TWO, JW)
 
   # Join back to original df
   df <- df %>%
-    inner_join(output)
-
-  # Return output
-  return(jw)
-}
-
-#' Calculates two strings JW score, using a JW approximation to limit results
-#'
-#' JW can be slow within SQL Developer
-#' A quick JW-approximation can limit results before then applying this
-#' Scores below threshold not returned
-#'
-#' @param df A df to be formatted
-#' @param name_one first name column
-#' @param name_two second name column
-#' @param threshold_val retain only records with JW of a certain score or higher
-#'
-#' @return A df only with name-pairs with a JW value above a threshold
-#'
-#' @export
-#'
-#' @examples
-#' calc_db_jw_threshold(df, name_one, name_two, threshold_val)
-calc_db_jw_edit_threshold <- function(df, name_one, name_two, threshold_val){
-
-  # Rename inputs for convenience & generate ID
-  output <- df %>%
-    rename(
-      NAME_ONE = {{ name_one }},
-      NAME_TWO = {{ name_two }}
-    ) %>%
-    select(NAME_ONE, NAME_TWO) %>%
-    distinct() %>%
-    mutate(ID = row_number(NAME_ONE))
-
-  # Tokenise 1st name column
-  one <- df %>%
-    mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(NAME_ONE, '*', ' '))) %>%
-    nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
-    select(ID, NAME_ONE, NUMBER_ONE = TOKEN_NUMBER, TOKEN)
-
-  # Tokenise 2nd name column
-  two <- df %>%
-    mutate(TOKEN_TWO = trimws(REGEXP_REPLACE(NAME_TWO, '*', ' '))) %>%
-    nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_TWO') %>%
-    select(ID, NAME_TWO, NUMBER_TWO = TOKEN_NUMBER, TOKEN)
-
-  # Generate approx JW score (using char_dist unlike previous function)
-  jw <- one %>%
-    inner_join(two, by = c("ID", "TOKEN")) %>%
-    group_by(ID) %>%
-    mutate(
-      # Length of each name required for JW approx
-      S_ONE = nchar(NAME_ONE),
-      S_TWO = nchar(NAME_TWO),
-      # Max Distance Calculation
-      MAX = ifelse(S_ONE >= S_TWO, S_ONE, S_TWO),
-      DIST = floor(MAX / 2) - 1,
-      M = ifelse(abs(NUMBER_ONE - NUMBER_TWO) <= DIST, 1, 0)
-    ) %>%
-    ungroup() %>%
-    filter(M == 1) %>%
-    group_by(ID, TOKEN) %>%
-    mutate(
-      ORDER_ONE = paste0(TOKEN, dense_rank(NUMBER_ONE)),
-      ORDER_TWO = paste0(TOKEN, dense_rank(NUMBER_TWO))
-    ) %>%
-    ungroup() %>%
-    filter(ORDER_ONE == ORDER_TWO) %>%
-    group_by(ID) %>%
-    mutate(
-      M = n(),
-      # Number of transpositions (T) = 0, again to speed up approx calculation
-      SIM = (1/3) * (((M / S_ONE) + (M / S_TWO) + ((M - 0) / M))),
-      # Final JW vaalue, number of shared first four letters
-      L = case_when(
-        substr(NAME_ONE, 1, 1) != substr(NAME_TWO, 1, 1) ~ 0,
-        substr(NAME_ONE, 1, 4) == substr(NAME_TWO, 1, 4) ~ 4,
-        substr(NAME_ONE, 1, 3) == substr(NAME_TWO, 1, 3) ~ 3,
-        substr(NAME_ONE, 1, 2) == substr(NAME_TWO, 1, 2) ~ 2,
-        substr(NAME_ONE, 1, 1) == substr(NAME_TWO, 1, 1) ~ 1
-      ),
-      # 'Real' values impossible to be higher than approx value
-      JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
-    ) %>%
-    ungroup() %>%
-    distinct() %>%
-    # Filter by threshold value
-    filter(JW_APPROX >= threshold_val) %>%
-    # Now calculate 'real' JW on reduced list of names
-    mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
-    # Filter by threshold value
-    filter(JW >= threshold_val) %>%
-    select(NAME_ONE, NAME_TWO, JW) %>%
+    inner_join(
+      y = output,
+      by = c("NAME_ONE" = "NAME_ONE", "NAME_TWO" = "NAME_TWO")
+      ) %>%
     # Revert cols to original names
     rename(
       {{ name_one }} := NAME_ONE,
