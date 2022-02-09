@@ -160,16 +160,17 @@ name_db_filter <- function(df, name_one, name_two){
 calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
 
   # Rename inputs for convenience & generate ID
-  df <- df %>%
+  output <- df %>%
     rename(
       NAME_ONE = {{ name_one }},
       NAME_TWO = {{ name_two }}
     ) %>%
     select(NAME_ONE, NAME_TWO) %>%
+    distinct() %>%
     mutate(ID = row_number(NAME_ONE))
 
   # Split name by character & count token-instances per name (e.d. A1, A2 etc)
-  one <- df %>%
+  one <- output %>%
     mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(NAME_ONE, '*', ' '))) %>%
     nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
     group_by(ID, TOKEN) %>%
@@ -178,7 +179,7 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
     select(ID, NAME_ONE, NUMBER_ONE = TOKEN_NUMBER, TOKEN)
 
   # Split name by character & count token-instances per name (e.d. A1, A2 etc)
-  two <- df %>%
+  two <- output %>%
     mutate(TOKEN_TWO = trimws(REGEXP_REPLACE(NAME_TWO, '*', ' '))) %>%
     nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_TWO') %>%
     group_by(ID, TOKEN) %>%
@@ -224,6 +225,10 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
       {{ name_two }} := NAME_TWO
     )
 
+  # Join back to original df
+  df <- df %>%
+    inner_join(output)
+
   # Return output
   return(jw)
 }
@@ -248,12 +253,13 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
 calc_db_jw_edit_threshold <- function(df, name_one, name_two, threshold_val){
 
   # Rename inputs for convenience & generate ID
-  df <- df %>%
+  output <- df %>%
     rename(
       NAME_ONE = {{ name_one }},
       NAME_TWO = {{ name_two }}
     ) %>%
     select(NAME_ONE, NAME_TWO) %>%
+    distinct() %>%
     mutate(ID = row_number(NAME_ONE))
 
   # Tokenise 1st name column
