@@ -8,7 +8,7 @@ source("R/calc_db_functions.R")
 source("R/format_db_functions.R")
 
 #-------------------------------------------------------------------------------
-# Part One: Exact Matches
+# Part One: Exact Matches & Table Formatting
 
 # Set up connection to the DB
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
@@ -23,19 +23,137 @@ eib_db <- con %>%
 
 # Format EIBBS data
 eib <- eib_db %>%
+  select(REFERENCE, DOB, SURNAME, FORENAME, POSTCODE) %>%
+  format_db_postcode(., POSTCODE) %>%
   format_db_name(., FORENAME) %>%
   format_db_name(., SURNAME) %>%
-  format_db_date(., DOB) %>%
-  format_db_postcode(., POSTCODE) %>%
-  select(REFERENCE, DOB, SURNAME, FORENAME, POSTCODE)
+  format_db_date(., DOB)
 
 # Format PDS data
 pds <-pds_db %>%
+  select(RECORD_ID, DOB, SURNAME, FORENAME, POSTCODE) %>%
+  format_db_postcode(., POSTCODE) %>%
   format_db_name(., FORENAME) %>%
   format_db_name(., SURNAME) %>%
-  format_db_date(., DOB) %>%
-  format_db_postcode(., POSTCODE) %>%
-  select(RECORD_ID, DOB, SURNAME, FORENAME, POSTCODE)
+  format_db_date(., DOB)
+
+# Exact matches
+exact <- eib %>%
+  inner_join(pds) %>%
+  select(REFERENCE, RECORD_ID) %>%
+  distinct()
+
+# Remove exact matches from eib
+eib <- eib %>% anti_join(y = exact)
+
+# Distinct remaining primary DOB
+eib_dob <- eib %>%
+  select(DOB_ONE = DOB) %>%
+  distinct() %>%
+  mutate(TMP = 1)
+
+# Distinct remaining secondary DOB
+pds_dob <- pds %>%
+  select(DOB_TWO = DOB) %>%
+  distinct() %>%
+  mutate(TMP = 1)
+
+# Distinct lookup DOB
+dob <- eib_dob %>%
+  full_join(y = pds_dob) %>%
+  dob_lv_filter(., DOB_ONE, DOB_TWO)
+
+# Remove records with ineligible dates
+pds <- pds %>%
+  inner_join(y = dob %>% select(DOB = DOB_TWO))
+
+# Add join permutations
+eib <- eib %>%
+  calc_join_permutations()
+
+# Add join permutations
+pds <- pds %>%
+  calc_join_permutations()
+
+# Write the table back to the DB: 7 mins
+exact %>%
+  compute(
+    name = "INT617_EXACT",
+    temporary = FALSE
+  )
+
+# Write the table back to the DB: 7 mins
+exact %>%
+  compute(
+    name = "INT617_EIB_PROCESSED",
+    temporary = FALSE
+  )
+
+# Write the table back to the DB: 7 mins
+exact %>%
+  compute(
+    name = "INT617_PDS_PROCESSED",
+    temporary = FALSE
+  )
+
+# Disconnect
+DBI::dbDisconnect(con)
+
+
+
+
+
+
+
+
+
+a <- perm_join(eib, pds, REFERENCE, RECORD_ID, PERM1)
+
+
+perm_join <- function(df1, df2, id_one, id_two, perm_num){
+
+  output <- inner_join(
+      x = df1 %>% select({{ id_one}}, {{ perm_num }}),
+      y = df2 %>% select({{ id_two}}, {{ perm_num }})
+    ) %>%
+    select(-{{ perm_num }})
+  return(output)
+}
+
+
+
+lookup <- perm_join(eib, pds, REFERENCE, RECORD_ID, PERM1) %>%
+  union_all(
+    perm_join(eib, pds, REFERENCE, RECORD_ID, PERM2)
+  ) %>%
+  union_all(
+    perm_join(eib, pds, REFERENCE, RECORD_ID, PERM3)
+  ) %>%
+  union_all(
+    perm_join(eib, pds, REFERENCE, RECORD_ID, PERM4)
+  ) %>%
+  union_all(
+    perm_join(eib, pds, REFERENCE, RECORD_ID, PERM5)
+  ) %>%
+  union_all(
+    perm_join(eib, pds, REFERENCE, RECORD_ID, PERM6)
+  )
+
+
+
+
+
+Sys.time()
+a %>% tally()
+Sys.time()
+
+
+
+
+
+
+
+
 
 # Get Exact Matches
 exact <- eib %>%
@@ -124,19 +242,36 @@ exact <- con %>%
 dob <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_DOB_DIST"))
 
+pds_db
 
 
-
-eib_db %>%
+eib <- eib_db %>%
   select(REFERENCE, DOB, SURNAME, FORENAME, POSTCODE) %>%
   anti_join(y = exact, by = "REFERENCE") %>%
   format_db_date(., DOB) %>%
   format_db_name(., FORENAME) %>%
   format_db_date(., DOB) %>%
-  format_db_postcode(., POSTCODE)
+  format_db_postcode(., POSTCODE) %>%
+  calc_join_permutations()
+
+pds <- pds_db %>%
+  select(RECORD_ID, DOB, SURNAME, FORENAME, POSTCODE) %>%
+  format_db_date(., DOB) %>%
+  format_db_name(., FORENAME) %>%
+  format_db_date(., DOB) %>%
+  format_db_postcode(., POSTCODE) %>%
+  calc_join_permutations()
 
 
+a <- inner_join(
+  x = eib %>% select(REFERENCE, PERM1),
+  y = pds %>% select(RECORD_ID, PERM1)
+)
 
+A
+
+
+substr('JACQUELINE', 10, 10)
 
 # Format and select dob, tmp for full-join
 eib <- eib_db %>%

@@ -67,10 +67,18 @@ format_db_postcode <- function(df, postcode_col){
   # Postcode formatting & Generate Arbitrary ID
   df <- df %>%
     rename({{ postcode_col }} := POSTCODE) %>%
-    mutate(ID = dense_rank(POSTCODE))
+    window_order(POSTCODE) %>%
+    group_by(POSTCODE) %>%
+    mutate(ID = dense_rank(POSTCODE)) %>%
+    ungroup()
+
+  # Just process distinct postcodes
+  output <- df %>%
+    select(ID, POSTCODE) %>%
+    distinct()
 
   # Postcode formatting
-  output <- df %>%
+  output <- output %>%
     select(ID, POSTCODE) %>%
     distinct() %>%
     filter(!is.na(POSTCODE)) %>%
