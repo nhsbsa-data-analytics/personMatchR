@@ -91,6 +91,7 @@ dob <- eib %>%
   dob_lv_filter(., DOB_ONE, DOB_TWO) %>%
   select(-TMP)
 
+
 # Write back to db
 dob %>%
   compute(
@@ -102,7 +103,7 @@ dob %>%
 DBI::dbDisconnect(con)
 
 #-------------------------------------------------------------------------------
-# Part Two: Generate list of relevant forenames
+# Part Three: Generate list of relevant forenames
 
 # Set up connection to the DB
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
@@ -123,197 +124,57 @@ exact <- con %>%
 dob <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_DOB_DIST"))
 
+
+
+
+eib_db %>%
+  select(REFERENCE, DOB, SURNAME, FORENAME, POSTCODE) %>%
+  anti_join(y = exact, by = "REFERENCE") %>%
+  format_db_date(., DOB) %>%
+  format_db_name(., FORENAME) %>%
+  format_db_date(., DOB) %>%
+  format_db_postcode(., POSTCODE)
+
+
+
+
 # Format and select dob, tmp for full-join
 eib <- eib_db %>%
   anti_join(y = exact, by = "REFERENCE") %>%
   format_db_date(., DOB) %>%
   format_db_name(., FORENAME) %>%
-  mutate(TMP = 1) %>%
+  #mutate(TMP = 1) %>%
   inner_join(
     y = dob %>% select(DOB_ONE),
     by = c("DOB" = "DOB_ONE")
     ) %>%
-  select(FORENAME_ONE = FORENAME, TMP) %>%
+  select(FORENAME_ONE = FORENAME, DOB) %>%
   distinct()
 
 # Format and select dob, tmp for full-join
 pds <- pds_db %>%
   format_db_date(., DOB) %>%
   format_db_name(., FORENAME) %>%
-  mutate(TMP = 1) %>%
+  #mutate(TMP = 1) %>%
   inner_join(
     y = dob %>% select(DOB_TWO),
     by = c("DOB" = "DOB_TWO")
   ) %>%
-  select(FORENAME_TWO = FORENAME, TMP) %>%
-  group_by_distinct()
+  select(FORENAME_TWO = FORENAME, DOB) %>%
+  distinct()
 
+# Get distinct forename pairs
+
+
+eib %>% tally()
+pds %>% tally()
 
 names <- eib %>%
-  full_join(pds) %>%
-  name_db_filter(FORENAME_ONE, FORENAME_TWO) %>%
-  group_by_distinct() %>%
-  tally()
-
-
-
-pds %>% tally()
-
-
-
-
-
-
-
-
-# Distinct DOB left-side
-eib <- eib %>%
-  select(DOB_ONE) %>%
-  distinct() %>%
-  mutate(TMP = 1)
-
-# Distinct DOB right-side
-pds_date <- pds %>%
-  select(DOB_TWO) %>%
-  distinct() %>%
-  mutate(TMP = 1)
-
-# Generate DOB limitations
-dob <- eib_date %>%
-  full_join(pds_date, by = "TMP") %>%
-
-
-#
-dob %>%
   inner_join(pds) %>%
-  inner_join(eib) %>%
-
-
-
-pds %>% tally()
-
-Sys.time()
-# Get dates with LV distance of 2
-eib %>%
-  full_join(pds) %>%
-  inner_join(dob) %>%
+  select(FORENAME_ONE, FORENAME_TWO) %>%
   name_db_filter(FORENAME_ONE, FORENAME_TWO) %>%
-  group_by_distinct() %>%
-  tally()
-Sys.time()
-
-calc_db_jw_threshold(
-  df = .,
-  name_one = FORENAME_ONE,
-  name_two = FORENAME_TWO,
-  threshold_val = 0.75
-)
-
-Sys.time()
-# Write the table back to the DB: 1 min
-name_dob %>%
-  compute(
-    name = "INT617_FORENAME_DOB_DIST",
-    temporary = FALSE
-  )
-Sys.time()
-
-# Disconnect
-DBI::dbDisconnect(con)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Set up connection to the DB
-con <- nhsbsaR::con_nhsbsa(database = "DALP")
-
-# Db pds table
-pds_db <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_PDS"))
-
-# Db eibss table
-eib_db <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_EIBSS"))
-
-# Exact matches
-exact <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_EXACT"))
-
-
-
-# Format and select dob, tmp for full-join
-pds <- pds_db %>%
-  format_db_date(., DOB) %>%
-  format_db_name(., FORENAME) %>%
-  select(DOB_TWO = DOB, FORENAME_TWO = FORENAME) %>%
   group_by_distinct()
 
-# Distinct DOB left-side
-eib_date <- eib %>%
-  select(DOB_ONE) %>%
-  distinct() %>%
-  mutate(TMP = 1)
-
-# Distinct DOB right-side
-pds_date <- pds %>%
-  select(DOB_TWO) %>%
-  distinct() %>%
-  mutate(TMP = 1)
-
-# Generate DOB limitations
-dob <- eib_date %>%
-  full_join(pds_date, by = "TMP") %>%
-  dob_lv_filter(., DOB_ONE, DOB_TWO) %>%
-  select(-TMP)
-
-#
-dob %>%
-  inner_join(pds) %>%
-  inner_join(eib) %>%
-  name_db_filter(FORENAME_ONE, FORENAME_TWO) %>%
-  group_by_distinct() %>%
-  tally()
-
-
-pds %>% tally()
-
-Sys.time()
-# Get dates with LV distance of 2
-eib %>%
-  full_join(pds) %>%
-  inner_join(dob) %>%
-  name_db_filter(FORENAME_ONE, FORENAME_TWO) %>%
-  group_by_distinct() %>%
-  tally()
-Sys.time()
 
   calc_db_jw_threshold(
     df = .,
@@ -323,10 +184,19 @@ Sys.time()
   )
 
 Sys.time()
-# Write the table back to the DB: 1 min
-name_dob %>%
+names %>% tally()
+Sys.time()
+
+
+
+
+
+
+# Write the table back to the DB: 6 hours
+Sys.time()
+forenames %>%
   compute(
-    name = "INT617_FORENAME_DOB_DIST",
+    name = "INT617_FORENAME_PAIR",
     temporary = FALSE
   )
 Sys.time()
@@ -355,6 +225,35 @@ exact <- con %>%
 # DOB Distance table
 dob <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_DOB_DIST"))
+
+# DOB Distance table
+names <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_FORENAME_DIST"))
+
+names %>% tally()
+dob
+
+
+
+Sys.time()
+a <- names %>%
+  calc_db_jw_threshold(
+    df = .,
+    name_one = FORENAME_ONE,
+    name_two = FORENAME_TWO,
+    threshold_val = 0.75
+  ) %>%
+  collect()
+Sys.time()
+
+
+
+pds_db %>%
+  inner_join(names %>% select(FORENAME = FORENAME_TWO) %>% distinct()) %>%
+  select(FORENAME) %>%
+  distinct() %>%
+  tally()
+
 
 # Format and select dob, tmp for full-join
 eib <- eib_db %>%
@@ -439,60 +338,6 @@ eib <- eib_db %>%
     TMP
     )
 
-
-# Format PDS data
-pds <-pds_db %>%
-  format_db_name(., FORENAME) %>%
-  format_db_date(., DOB) %>%
-  mutate(TMP = 1) %>%
-  select(
-    RECORD_ID,
-    DOB_TWO = DOB,
-    FORENAME_TWO = DOB,
-    TMP
-    )
-
-eib
-pds
-dob
-names
-
-# Limit cross join by DOB and FORENAME Distance
-eib %>%
-  full_join(pds, by = "TMP") %>%
-  inner_join(dob, by = c("DOB_ONE" = "DOB_ONE", "DOB_TWO" = "DOB_TWO")) %>%
-  inner_join(names, by = c("FORENAME_ONE" = "FORENAME_ONE", "FORENAME_TWO" = "FORENAME_TWO"))
-
-jw %>% tally()
-
-
-# Write the table back to the DB with indexes: 20 minutes
-jw %>%
-  compute(
-    name = "INT617_CROSS_JOIN",
-    temporary = FALSE
-  )
-
-
-
-
-
-
-
-
-
-# DOB Distance table
-jw <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_FORENAME_DIST"))
-
-jw <- jw %>%
-  rename(
-    NAME_ONE = FORENAME_ONE,
-    NAME_TWO = FORENAME_TWO
-  ) %>%
-  mutate(ID = row_number(NAME_ONE))
-
-jw %>% tally()
 
 
 

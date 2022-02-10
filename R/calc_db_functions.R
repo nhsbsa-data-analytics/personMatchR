@@ -140,6 +140,21 @@ name_db_filter <- function(df, name_one, name_two){
     )
 }
 
+calc_join_permutations <- function(df){
+
+  df %>%
+    mutate(
+      PERM1 = paste0(FORENAME, SURNAME, DOB),
+      PERM2 = paste0(FORENAME, POSTCODE, DOB),
+      PERM3 = paste0(SURNAME, POSTCODE, DOB),
+      PERM4 = paste0(substr(FORENAME, 1, 1), substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2)),
+      PERM5 = paste0(substr(FORENAME, 2, 2), substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2)),
+      PERM6 = paste0(SUBSTR(FORENAME, nchar(FORENAME), nchar(FORENAME)), substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2))
+    )
+}
+
+
+
 #' Calculates two strings JW score, using a JW approximation to limit results
 #'
 #' JW can be slow within SQL Developer
@@ -164,16 +179,11 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
     rename(
       NAME_ONE = {{ name_one }},
       NAME_TWO = {{ name_two }}
-    )
-
-  # Generate distinct values and ID
-  output <- df %>%
-    select(NAME_ONE, NAME_TWO) %>%
-    distinct() %>%
+    ) %>%
     mutate(ID = row_number(NAME_ONE))
 
   # Split name by character & count token-instances per name (e.d. A1, A2 etc)
-  one <- output %>%
+  one <- df %>%
     mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(NAME_ONE, '*', ' '))) %>%
     nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
     group_by(ID, TOKEN) %>%
@@ -182,7 +192,7 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
     select(ID, NAME_ONE, NUMBER_ONE = TOKEN_NUMBER, TOKEN)
 
   # Split name by character & count token-instances per name (e.d. A1, A2 etc)
-  two <- output %>%
+  two <- df %>%
     mutate(TOKEN_TWO = trimws(REGEXP_REPLACE(NAME_TWO, '*', ' '))) %>%
     nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_TWO') %>%
     group_by(ID, TOKEN) %>%
@@ -221,14 +231,7 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
     mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
     # Filter by threshold value
     filter(JW >= threshold_val) %>%
-    select(NAME_ONE, NAME_TWO, JW)
-
-  # Join back to original df
-  df <- df %>%
-    inner_join(
-      y = output,
-      by = c("NAME_ONE" = "NAME_ONE", "NAME_TWO" = "NAME_TWO")
-      ) %>%
+    select(NAME_ONE, NAME_TWO, JW) %>%
     # Revert cols to original names
     rename(
       {{ name_one }} := NAME_ONE,
