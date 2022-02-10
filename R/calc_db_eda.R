@@ -24,7 +24,7 @@ eib_db <- con %>%
 # Format EIBBS data
 eib <- eib_db %>%
   select(REFERENCE, DOB, SURNAME, FORENAME, POSTCODE) %>%
-  format_db_postcode(., POSTCODE) %>%
+  format_db_postcode(., POSTCODE)
   format_db_name(., FORENAME) %>%
   format_db_name(., SURNAME) %>%
   format_db_date(., DOB)
@@ -75,6 +75,8 @@ eib <- eib %>%
 pds <- pds %>%
   calc_join_permutations()
 
+Sys.time()
+
 # Write the table back to the DB: 7 mins
 exact %>%
   compute(
@@ -82,15 +84,15 @@ exact %>%
     temporary = FALSE
   )
 
-# Write the table back to the DB: 7 mins
-exact %>%
+# Write the table back to the DB:
+eib %>%
   compute(
     name = "INT617_EIB_PROCESSED",
     temporary = FALSE
   )
 
 # Write the table back to the DB: 7 mins
-exact %>%
+pds %>%
   compute(
     name = "INT617_PDS_PROCESSED",
     temporary = FALSE
@@ -99,7 +101,7 @@ exact %>%
 # Disconnect
 DBI::dbDisconnect(con)
 
-
+Sys.time()
 
 
 
