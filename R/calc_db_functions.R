@@ -160,14 +160,14 @@ calc_permutations <- function(df, forename, surname, postcode, dob){
       PERM2 = paste0({{ forename }}, {{ postcode }}, {{dob}}),
       PERM3 = paste0({{ surname }}, {{ postcode }}, {{ dob }}),
       PERM4 = paste0(
-        substr({{ forename }}, 1, 1),
-        substr({{ surname }}, 1, 2),
-        substr({{ postcode }}, 1, 2)
+        substr({{ forename }}, 1, 3),
+        substr({{ surname }}, 1, 3),
+        substr({{ postcode }}, 1, 3)
         ),
       PERM5 = paste0(
         SUBSTR({{ forename }}, nchar({{ forename }})-2, 3),
-        substr({{ surname }}, 1, 2),
-        substr({{ postcode }}, 1, 2)
+        substr({{ surname }}, 1, 3),
+        substr({{ postcode }}, 1, 3)
         )
     )
 }
@@ -215,10 +215,10 @@ calc_alpha_permutations <- function(df, forename, surname, postcode){
   df <- df %>%
     mutate(
       PERM6 = paste0(
-        substr(ALPHA, 1, 3), substr({{ surname }}, 1, 2), substr({{ postcode }}, 1, 2)
+        substr(ALPHA, 1, 3), substr({{ surname }}, 1, 3), substr({{ postcode }}, 1, 3)
       ),
       PERM7 = paste0(
-        SUBSTR(ALPHA, nchar(ALPHA)-2, 3), substr({{ surname }}, 1, 2), substr({{ postcode }}, 1, 2)
+        SUBSTR(ALPHA, nchar(ALPHA)-2, 3), substr({{ surname }}, 1, 3), substr({{ postcode }}, 1, 3)
       )
     ) %>%
     select(-ALPHA) %>%
