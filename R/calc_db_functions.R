@@ -178,94 +178,53 @@ calc_permutations <- function(df, forename, surname, postcode, dob){
 #' @param forename forename column name
 #' @param surname surname column name
 #' @param postcode postcode column name
-#' @param dob DOB column name
 #'
 #' @return A df with 2 'alphabetical' join permutations added
 #'
 #' @export
 #' calc_alpha_permutations(df, id, forename, surname, postcode)
-calc_alpha_permutations <- function(df, id, forename, surname, postcode){
+calc_alpha_permutations <- function(df, forename, surname, postcode){
 
-  output <- df %>%
-    select({{ id }}, {{ forename }}, {{ surname }}, {{ postcode }}) %>%
-    # Rename for convenience and rename back later
-    rename(
-      ID := {{ id }},
-      FORENAME := {{ forename }},
-      SURNAME := {{ surname }},
-      POSTCODE := {{ postcode }}
-    ) %>%
-    # Tokenise by character
-    mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(FORENAME, '*', ' '))) %>%
-    nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
-    group_by(ID) %>%
-    # Create forward and reverse alphabetical character order
-    mutate(
-      ALPHA = row_number(TOKEN),
-      ALPHA_B = row_number(desc(TOKEN))
-    ) %>%
-    ungroup()
+  # Rename forename
+  df <- df %>% rename(FORENAME := {{ forename }})
 
-  # First 3 alphabetical characters
-  one <- output %>%
-    filter(ALPHA <= 3) %>%
-    select(ID, SURNAME, POSTCODE, TOKEN, ALPHA)
+  ", dplyr::sql(output_cols), "
 
-  # Last 3 alphabetical characters
-  two <- output %>%
-    filter(ALPHA_B <= 3) %>%
-    select(ID, SURNAME, POSTCODE, TOKEN, ALPHA = ALPHA_B)
+  # Connection for inline SQL query
+  db_connection <- df$src$con
 
-  # Pull the DB connections (2)
-  db_connection_one <- one$src$con
-  db_connection_two <- two$src$con
-
-  # Build SQL Query: one
-  sql_query_one <- dbplyr::build_sql(
-    con = db_connection_one,
+  # Build SQL Query
+  sql_query <- dbplyr::build_sql(
+    con = db_connection,
     "
-    SELECT ID, SURNAME, POSTCODE,
-    LISTAGG(TOKEN, '') within group (order by ALPHA) as ALPHA_FORWARD
-    FROM (", dbplyr::sql_render(one), ")
-    GROUP BY ID, SURNAME, POSTCODE"
+    SELECT *
+    FROM   (", dbplyr::sql_render(df), ")  t
+       CROSS JOIN LATERAL (
+         SELECT LISTAGG(SUBSTR(t.forename, LEVEL, 1), NULL) WITHIN GROUP (
+                  ORDER BY NLSSORT(SUBSTR(t.forename, LEVEL, 1), 'NLS_SORT = BINARY_AI')
+                ) AS alpha
+         FROM   DUAL
+         CONNECT BY LEVEL <= LENGTH(t.forename)
+       )"
   )
 
-  # Build SQL Query: two
-  sql_query_two <- dbplyr::build_sql(
-    con = db_connection_two,
-    "
-    SELECT ID, SURNAME, POSTCODE,
-    LISTAGG(TOKEN, '') within group (order by ALPHA) as ALPHA_BACK
-    FROM (", dbplyr::sql_render(two), ")
-    GROUP BY ID, SURNAME, POSTCODE"
-  )
+  # Genertae query outpput
+  df <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query))
 
-  # Query Outputs (2)
-  output_one <- dplyr::tbl(src = db_connection_one, dplyr::sql(sql_query_one))
-  output_two <- dplyr::tbl(src = db_connection_one, dplyr::sql(sql_query_two))
-
-  # Permutation Six
-  output_one <- output_one %>%
-    mutate(PERM6 = paste0(
-      ALPHA_FORWARD, substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2)
-      )) %>%
-    select(ID, PERM6) %>%
-    rename({{ id }} := ID)
-
-  # Permutation Seven
-  output_two <- output_two %>%
-    mutate(PERM7 = paste0(
-      ALPHA_BACK, substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2)
-      )) %>%
-    select(ID, PERM7) %>%
-    rename({{ id }} := ID)
-
-  # Rejoin back to original df then return
+  # Create join permutations
   df <- df %>%
-    left_join(output_one) %>%
-    left_join(output_two)
+    mutate(
+      PERM6 = paste0(
+        substr(ALPHA, 1, 3), substr({{ surname }}, 1, 2), substr({{ postcode }}, 1, 2)
+      ),
+      PERM7 = paste0(
+        SUBSTR(ALPHA, nchar(ALPHA)-2, 3), substr({{ surname }}, 1, 2), substr({{ postcode }}, 1, 2)
+      )
+    ) %>%
+    select(-ALPHA) %>%
+    rename({{ forename }} := FORENAME)
 
-  # Return DF
+  # Return df
   return(df)
 }
 

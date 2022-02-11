@@ -8,7 +8,7 @@ source("R/calc_db_functions.R")
 source("R/format_db_functions.R")
 
 #-------------------------------------------------------------------------------
-# Part One: Exact Matches & Table Formatting
+# Part One: Table Formatting - Required prior due to multiple joins later
 
 # Set up connection to the DB
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
@@ -29,7 +29,7 @@ eib <- eib_db %>%
   format_db_name(., SURNAME) %>%
   format_db_date(., DOB) %>%
   calc_permutations(., FORENAME, SURNAME, POSTCODE, DOB) %>%
-  calc_alpha_permutations(., REFERENCE, FORENAME, SURNAME, POSTCODE)
+  calc_alpha_permutations(., FORENAME, SURNAME, POSTCODE)
 
 # Format PDS data
 pds <-pds_db %>%
@@ -39,25 +39,7 @@ pds <-pds_db %>%
   format_db_name(., SURNAME) %>%
   format_db_date(., DOB) %>%
   calc_permutations(., FORENAME, SURNAME, POSTCODE, DOB) %>%
-  calc_alpha_permutations(., REFERENCE, FORENAME, SURNAME, POSTCODE)
-
-# Exact matches
-exact <- eib %>%
-  inner_join(pds) %>%
-  select(REFERENCE, RECORD_ID) %>%
-  distinct()
-
-# Remove exact matches from eib
-eib <- eib %>% anti_join(y = exact)
-
-Sys.time()
-
-# Write the table back to the DB: 7 mins
-exact %>%
-  compute(
-    name = "INT617_EXACT",
-    temporary = FALSE
-  )
+  calc_alpha_permutations(., FORENAME, SURNAME, POSTCODE)
 
 # Write the table back to the DB:
 eib %>%
@@ -66,14 +48,89 @@ eib %>%
     temporary = FALSE
   )
 
-# Write the table back to the DB: 7 mins
+# Write the table back to the DB: 45 mins
 pds %>%
   compute(
     name = "INT617_PDS_PROCESSED",
     temporary = FALSE
   )
 
-Sys.time()
+# Disconnect
+DBI::dbDisconnect(con)
+
+#-------------------------------------------------------------------------------
+# Part Two: composite joins then scoring
+
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
+# Db pds table
+eib_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_EIB_PROCESSED"))
+
+# Db eibss table
+pds_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_PDS_PROCESSED"))
+
+# Exact matches
+exact <- eib_db %>%
+  select(REFERENCE, DOB, SURNAME, FORENAME, POSTCODE) %>%
+  inner_join(
+    y = pds_db %>% select(RECORD_ID, DOB, SURNAME, FORENAME, POSTCODE)
+  ) %>%
+  select(REFERENCE, RECORD_ID) %>%
+  distinct()
+
+# Remaining records
+eib <- eib_db %>%
+  anti_join(y = exact, by = "REFERENCE")
+
+# Permutation join
+perm_join <- function(df1, df2, id_one, id_two, perm_num){
+
+  output <- inner_join(
+    x = df1 %>% select({{ id_one}}, {{ perm_num }}),
+    y = df2 %>% select({{ id_two}}, {{ perm_num }})
+  ) %>%
+    select(-{{ perm_num }})
+  return(output)
+}
+
+# Get list of lookup pairs
+id_pairs <- perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM1) %>%
+  union_all(
+    perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM2)
+  ) %>%
+  union_all(
+    perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM3)
+  ) %>%
+  #union_all(
+  #  perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM4)
+  #) %>%
+  union_all(
+    perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM5)
+  ) %>%
+  union_all(
+    perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM6)
+  ) %>%
+  union_all(
+    perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM7)
+  ) %>%
+  select(REFERENCE, RECORD_ID) %>%
+  distinct() %>%
+  tally()
+
+
+eib %>% tally()
+
+
+
+
+
+
+
+
+
 
 # Disconnect
 DBI::dbDisconnect(con)
@@ -163,34 +220,9 @@ pds <-pds_db %>%
 a <- perm_join(eib, pds, REFERENCE, RECORD_ID, PERM1)
 
 
-perm_join <- function(df1, df2, id_one, id_two, perm_num){
-
-  output <- inner_join(
-      x = df1 %>% select({{ id_one}}, {{ perm_num }}),
-      y = df2 %>% select({{ id_two}}, {{ perm_num }})
-    ) %>%
-    select(-{{ perm_num }})
-  return(output)
-}
 
 
 
-lookup <- perm_join(eib, pds, REFERENCE, RECORD_ID, PERM1) %>%
-  union_all(
-    perm_join(eib, pds, REFERENCE, RECORD_ID, PERM2)
-  ) %>%
-  union_all(
-    perm_join(eib, pds, REFERENCE, RECORD_ID, PERM3)
-  ) %>%
-  union_all(
-    perm_join(eib, pds, REFERENCE, RECORD_ID, PERM4)
-  ) %>%
-  union_all(
-    perm_join(eib, pds, REFERENCE, RECORD_ID, PERM5)
-  ) %>%
-  union_all(
-    perm_join(eib, pds, REFERENCE, RECORD_ID, PERM6)
-  )
 
 
 
