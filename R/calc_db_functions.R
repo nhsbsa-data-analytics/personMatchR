@@ -134,93 +134,128 @@ name_db_filter <- function(df, name_one, name_two){
         INSTR({{ name_two  }}, {{ name_one  }}) > 1,
       # Deal with single-letter 'names' separately
       nchar({{ name_one  }}) != 1,
-      nchar({{ name_two  }}) != 1,
-      # Remove equal names, score be derived later
-      {{ name_one  }} != {{ name_two  }}
+      nchar({{ name_two  }}) != 1
     )
 }
 
-df_cols <- colnames(eib)
-
-output <- eib %>%
-  mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(FORENAME, '*', ' '))) %>%
-  nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
-  group_by(REFERENCE) %>%
-  mutate(
-    ALPHA = row_number(TOKEN),
-    ALPHA_B = row_number(desc(TOKEN))
-    ) %>%
-  ungroup()
-
-one <- output %>%
-  filter(ALPHA <= 3) %>%
-  select(REFERENCE, SURNAME, POSTCODE, TOKEN, ALPHA)
-
-two <- output %>%
-  filter(ALPHA_B <= 3) %>%
-  select(REFERENCE, SURNAME, POSTCODE, TOKEN, ALPHA = ALPHA_B)
-
-# Pull the DB connection
-db_connection_one <- one$src$con
-db_connection_two <- two$src$con
-
-# Build SQL Query
-sql_query_one <- dbplyr::build_sql(
-  con = db_connection_one,
-  "
-    SELECT REFERENCE, SURNAME, POSTCODE,
-    LISTAGG(TOKEN, '') within group (order by ALPHA) as ALPHA_FORWARD
-    FROM (", dbplyr::sql_render(one), ")
-    GROUP BY REFERENCE, SURNAME, POSTCODE"
-  )
-
-# Build SQL Query
-sql_query_two <- dbplyr::build_sql(
-  con = db_connection_two,
-  "
-    SELECT REFERENCE, SURNAME, POSTCODE,
-    LISTAGG(TOKEN, '') within group (order by ALPHA) as ALPHA_BACK
-    FROM (", dbplyr::sql_render(two), ")
-    GROUP BY REFERENCE, SURNAME, POSTCODE"
-)
-
-# Query Outputs (2)
-output_one <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query_one))
-output_two <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query_two))
-
-output_one
-output_two
-
-# Rejoin back to original df then return
-df <- df %>%
-  select(-POSTCODE) %>%
-  left_join(output, by = "ID") %>%
-  select(-ID) %>%
-  rename(POSTCODE := {{ postcode_col }} )
-return(df)
-
-
-
-
-
-
-
-
-
-calc_join_permutations <- function(df){
+#' Calculates 5 permutations for primary-lookup join prior to match scoring
+#'
+#' @param df A df to be formatted
+#' @param forename forename column name
+#' @param surname surname column name
+#' @param postcode postcode column name
+#' @param dob DOB column name
+#'
+#' @return A df with 5 'basic' join permutations added
+#'
+#' @export
+#'
+#' @examples
+#' calc_permutations(df, forename, surname, postcode, dob)
+calc_permutations <- function(df, forename, surname, postcode, dob){
 
   df %>%
     mutate(
-      PERM1 = paste0(FORENAME, SURNAME, DOB),
-      PERM2 = paste0(FORENAME, POSTCODE, DOB),
-      PERM3 = paste0(SURNAME, POSTCODE, DOB),
-      PERM4 = paste0(substr(FORENAME, 1, 1), substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2)),
-      PERM5 = paste0(substr(FORENAME, 2, 2), substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2)),
-      PERM6 = paste0(SUBSTR(FORENAME, nchar(FORENAME), nchar(FORENAME)), substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2))
+      PERM1 = paste0({{ forename }}, {{ surname }}, {{ dob }}),
+      PERM2 = paste0({{ forename }}, {{ postcode }}, {{dob}}),
+      PERM3 = paste0({{ surname }}, {{ postcode }}, {{ dob }}),
+      PERM4 = paste0(substr({{ forename }}, 1, 1), substr({{ surname }}, 1, 2), substr({{ postcode }}, 1, 2)),
+      PERM5 = paste0(SUBSTR({{ forename }}, nchar({{ forename }})-2, 3), substr({{ surname }}, 1, 2), substr({{ postcode }}, 1, 2))
     )
 }
 
+#' Calculates 2 additional permutations for primary-lookup join prior to scoring
+#'
+#' @param df A df to be formatted
+#' @param forename forename column name
+#' @param surname surname column name
+#' @param postcode postcode column name
+#' @param dob DOB column name
+#'
+#' @return A df with 2 'alphabetical' join permutations added
+#'
+#' @export
+#' calc_alpha_permutations(df, id, forename, surname, postcode)
+calc_alpha_permutations <- function(df, id, forename, surname, postcode){
 
+  output <- df %>%
+    select({{ id }}, {{ forename }}, {{ surname }}, {{ postcode }}) %>%
+    # Rename for convenience and rename back later
+    rename(
+      ID := {{ id }},
+      FORENAME := {{ forename }},
+      SURNAME := {{ surname }},
+      POSTCODE := {{ postcode }}
+    ) %>%
+    # Tokenise by character
+    mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(FORENAME, '*', ' '))) %>%
+    nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
+    group_by(ID) %>%
+    # Create forward and reverse alphabetical character order
+    mutate(
+      ALPHA = row_number(TOKEN),
+      ALPHA_B = row_number(desc(TOKEN))
+    ) %>%
+    ungroup()
+
+  # First 3 alphabetical characters
+  one <- output %>%
+    filter(ALPHA <= 3) %>%
+    select(ID, SURNAME, POSTCODE, TOKEN, ALPHA)
+
+  # Last 3 alphabetical characters
+  two <- output %>%
+    filter(ALPHA_B <= 3) %>%
+    select(ID, SURNAME, POSTCODE, TOKEN, ALPHA = ALPHA_B)
+
+  # Pull the DB connections (2)
+  db_connection_one <- one$src$con
+  db_connection_two <- two$src$con
+
+  # Build SQL Query: one
+  sql_query_one <- dbplyr::build_sql(
+    con = db_connection_one,
+    "
+    SELECT ID, SURNAME, POSTCODE,
+    LISTAGG(TOKEN, '') within group (order by ALPHA) as ALPHA_FORWARD
+    FROM (", dbplyr::sql_render(one), ")
+    GROUP BY ID, SURNAME, POSTCODE"
+  )
+
+  # Build SQL Query: two
+  sql_query_two <- dbplyr::build_sql(
+    con = db_connection_two,
+    "
+    SELECT ID, SURNAME, POSTCODE,
+    LISTAGG(TOKEN, '') within group (order by ALPHA) as ALPHA_BACK
+    FROM (", dbplyr::sql_render(two), ")
+    GROUP BY ID, SURNAME, POSTCODE"
+  )
+
+  # Query Outputs (2)
+  output_one <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query_one))
+  output_two <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query_two))
+
+  # Permutation Six
+  output_one <- output_one %>%
+    mutate(PERM8 = paste0(ALPHA_FORWARD, substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2))) %>%
+    select(ID, PERM8) %>%
+    rename({{ id }} := ID)
+
+  # Permutation Seven
+  output_two <- output_two %>%
+    mutate(PERM7 = paste0(ALPHA_BACK, substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2))) %>%
+    select(ID, PERM7) %>%
+    rename({{ id }} := ID)
+
+  # Rejoin back to original df then return
+  df <- df %>%
+    left_join(output_one) %>%
+    left_join(output_two)
+
+  # Return DF
+  return(df)
+}
 
 #' Calculates two strings JW score, using a JW approximation to limit results
 #'
@@ -314,11 +349,8 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
 #' Generate
 #'
 #' @param df A df to be formatted
-#' @param name_one first name column
-#' @param name_two second name column
-#' @param threshold_val retain only records with JW of a certain score or higher
 #'
-#' @return A df only with name-pairs with a JW value above a threshold
+#' @return A df distinct by all columns
 #'
 #' @export
 #'
