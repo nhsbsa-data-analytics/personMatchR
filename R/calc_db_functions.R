@@ -159,8 +159,16 @@ calc_permutations <- function(df, forename, surname, postcode, dob){
       PERM1 = paste0({{ forename }}, {{ surname }}, {{ dob }}),
       PERM2 = paste0({{ forename }}, {{ postcode }}, {{dob}}),
       PERM3 = paste0({{ surname }}, {{ postcode }}, {{ dob }}),
-      PERM4 = paste0(substr({{ forename }}, 1, 1), substr({{ surname }}, 1, 2), substr({{ postcode }}, 1, 2)),
-      PERM5 = paste0(SUBSTR({{ forename }}, nchar({{ forename }})-2, 3), substr({{ surname }}, 1, 2), substr({{ postcode }}, 1, 2))
+      PERM4 = paste0(
+        substr({{ forename }}, 1, 1),
+        substr({{ surname }}, 1, 2),
+        substr({{ postcode }}, 1, 2)
+        ),
+      PERM5 = paste0(
+        SUBSTR({{ forename }}, nchar({{ forename }})-2, 3),
+        substr({{ surname }}, 1, 2),
+        substr({{ postcode }}, 1, 2)
+        )
     )
 }
 
@@ -233,18 +241,22 @@ calc_alpha_permutations <- function(df, id, forename, surname, postcode){
   )
 
   # Query Outputs (2)
-  output_one <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query_one))
-  output_two <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query_two))
+  output_one <- dplyr::tbl(src = db_connection_one, dplyr::sql(sql_query_one))
+  output_two <- dplyr::tbl(src = db_connection_one, dplyr::sql(sql_query_two))
 
   # Permutation Six
   output_one <- output_one %>%
-    mutate(PERM8 = paste0(ALPHA_FORWARD, substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2))) %>%
+    mutate(PERM8 = paste0(
+      ALPHA_FORWARD, substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2)
+      )) %>%
     select(ID, PERM8) %>%
     rename({{ id }} := ID)
 
   # Permutation Seven
   output_two <- output_two %>%
-    mutate(PERM7 = paste0(ALPHA_BACK, substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2))) %>%
+    mutate(PERM7 = paste0(
+      ALPHA_BACK, substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2)
+      )) %>%
     select(ID, PERM7) %>%
     rename({{ id }} := ID)
 

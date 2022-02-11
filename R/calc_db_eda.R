@@ -24,18 +24,26 @@ eib_db <- con %>%
 # Format EIBBS data
 eib <- eib_db %>%
   select(REFERENCE, DOB, SURNAME, FORENAME, POSTCODE) %>%
-  format_db_postcode(., POSTCODE)
+  format_db_postcode(., POSTCODE) %>%
   format_db_name(., FORENAME) %>%
   format_db_name(., SURNAME) %>%
-  format_db_date(., DOB)
+  format_db_date(., DOB) %>%
+  calc_permutations(., FORENAME, SURNAME, POSTCODE, DOB) %>%
+  calc_alpha_permutations(., REFERENCE, FORENAME, SURNAME, POSTCODE)
+
+
+
+
+
 
 # Format PDS data
 pds <-pds_db %>%
   select(RECORD_ID, DOB, SURNAME, FORENAME, POSTCODE) %>%
-  format_db_postcode(., POSTCODE) %>%
+  # Format_db_postcode removed as too slow with 10m+ rows
   format_db_name(., FORENAME) %>%
   format_db_name(., SURNAME) %>%
-  format_db_date(., DOB)
+  format_db_date(., DOB) %>%
+  calc_join_permutations()
 
 # Exact matches
 exact <- eib %>%
@@ -45,35 +53,6 @@ exact <- eib %>%
 
 # Remove exact matches from eib
 eib <- eib %>% anti_join(y = exact)
-
-# Distinct remaining primary DOB
-eib_dob <- eib %>%
-  select(DOB_ONE = DOB) %>%
-  distinct() %>%
-  mutate(TMP = 1)
-
-# Distinct remaining secondary DOB
-pds_dob <- pds %>%
-  select(DOB_TWO = DOB) %>%
-  distinct() %>%
-  mutate(TMP = 1)
-
-# Distinct lookup DOB
-dob <- eib_dob %>%
-  full_join(y = pds_dob) %>%
-  dob_lv_filter(., DOB_ONE, DOB_TWO)
-
-# Remove records with ineligible dates
-pds <- pds %>%
-  inner_join(y = dob %>% select(DOB = DOB_TWO))
-
-# Add join permutations
-eib <- eib %>%
-  calc_join_permutations()
-
-# Add join permutations
-pds <- pds %>%
-  calc_join_permutations()
 
 Sys.time()
 
@@ -98,10 +77,86 @@ pds %>%
     temporary = FALSE
   )
 
+Sys.time()
+
 # Disconnect
 DBI::dbDisconnect(con)
 
 Sys.time()
+
+
+
+
+
+
+
+
+
+
+
+#-------------------------------------------------------------------------------
+# Part One: Exact Matches & Table Formatting
+
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
+# Db pds table
+pds <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_PDS_PROCESSED"))
+
+# Db eibss table
+eib <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_EIB_PROCESSED"))
+
+
+pds <- pds %>%
+  calc_join_permutations()
+
+eib %>%
+  select(REFERENCE, PERM1) %>%
+  inner_join(
+    pds %>%
+      select(RECORD_ID, PERM1)
+  )
+
+
+# Db pds table
+pds_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_PDS"))
+
+# Db eibss table
+eib_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_EIBSS"))
+
+# Format EIBBS data
+eib <- eib_db %>%
+  select(REFERENCE, DOB, SURNAME, FORENAME, POSTCODE) %>%
+  format_db_postcode(., POSTCODE) %>%
+  format_db_name(., FORENAME) %>%
+  format_db_name(., SURNAME) %>%
+  format_db_date(., DOB)
+
+# Format PDS data
+pds <-pds_db %>%
+  select(RECORD_ID, DOB, SURNAME, FORENAME, POSTCODE) %>%
+  # Format_db_postcode removed as too slow with 10m+ rows
+  format_db_name(., FORENAME) %>%
+  format_db_name(., SURNAME) %>%
+  format_db_date(., DOB) %>%
+  calc_join_permutations()
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
