@@ -49,6 +49,29 @@ format_db_date <- function(df, date_col){
       )
 }
 
+#' Simple and quick format of the postcode strings prior to matching
+#'
+#' To be used with 10m+ rows, where the 'full' function has a long runtime
+#'
+#' @param df A df with postcode to be formatted
+#' @param postcode_col the postcode column to be formatted
+#'
+#' @return A cleansed string
+#' @export
+#'
+#' @examples
+#' format_db_postcode(df, postcode_col)
+format_db_postcode_simple <- function(df, postcode_col){
+
+  # Postcode formatting & Generate Arbitrary ID
+  df <- df %>%
+    mutate(
+      # Format and split postcode
+      {{ postcode_col }} := ifelse(nchar({{ postcode_col }}) == 0, NA, {{ postcode_col }}),
+      {{ postcode_col }} := toupper(REGEXP_REPLACE({{ postcode_col }}, "[^[:alnum:]]", ""))
+    )
+}
+
 #' Format the postcode strings prior to matching
 #'
 #' Formatting includes conversion to upper case and removal of
@@ -134,86 +157,5 @@ format_db_postcode <- function(df, postcode_col){
     left_join(output, by = "ID") %>%
     select(-ID) %>%
     rename(POSTCODE := {{ postcode_col }} )
-  return(df)
-}
-
-#' Temporary convenient function that formats PDS with minimum mutates()
-#'
-#' Formatting includes surname, forename, dob and postcode
-#' Df must contain: DOB, FORENAME, SURNAME, POSTCODE, NHS_NO_PDS
-#'
-#' @param df A df with postcode to be formatted
-#' @param postcode_col the postcode column to be formatted
-#'
-#' @return A cleansed PDS df, ready for matching functions
-#' @export
-#'
-#' @examples
-#' format_db_pds_temp(df)
-format_db_pds_temp <- function(df){
-
-  df <- df %>%
-    select(DOB, FORENAME, SURNAME, POSTCODE, ID = NHS_NO_PDS) %>%
-    mutate(
-      # Remove non-alpha chars and convert emtpy string to NA
-      FORENAME = toupper(REGEXP_REPLACE(FORENAME, "[^[:alpha:]]", "")),
-      FORENAME = ifelse(nchar(FORENAME) == 0, NA, FORENAME),
-      SURNAME = toupper(REGEXP_REPLACE(SURNAME, "[^[:alpha:]]", "")),
-      SURNAME = ifelse(nchar(SURNAME) == 0, NA, SURNAME),
-      # PDS DOB Format
-      DOB = as.numeric(TO_CHAR(DOB, "YYYYMMDD")),
-      DOB = ifelse(nchar(DOB) == 0, NA, DOB),
-      # Format and split postcode
-      POSTCODE = ifelse(nchar(POSTCODE) == 0, NA, POSTCODE),
-      POSTCODE = toupper(REGEXP_REPLACE(POSTCODE, "[^[:alnum:]]", "")),
-      POSTCODE = trimws(REGEXP_REPLACE(POSTCODE, '*', ' '))
-    ) %>%
-    nhsbsaR::oracle_unnest_tokens(col = 'POSTCODE') %>%
-    filter(!is.na(TOKEN)) %>%
-    group_by(ID) %>%
-    mutate(LEN = max(TOKEN_NUMBER)) %>%
-    ungroup() %>%
-    mutate(
-      TOKEN = case_when(
-        # Postcode Length 7
-        LEN == 7 & TOKEN_NUMBER == 1 ~ REPLACE(REPLACE(TOKEN, '5', 'S'), '0', 'O'),
-        LEN == 7 & TOKEN_NUMBER == 2 ~ REPLACE(REPLACE(TOKEN, '5', 'S'), '0', 'O'),
-        LEN == 7 & TOKEN_NUMBER == 3 ~ REPLACE(REPLACE(REPLACE(REPLACE(TOKEN, 'O', '0'), 'I', '1'), 'L', '1'), 'S', '5'),
-        LEN == 7 & TOKEN_NUMBER == 5 ~ REPLACE(REPLACE(REPLACE(REPLACE(TOKEN, 'O', '0'), 'I', '1'), 'L', '1'), 'S', '5'),
-        LEN == 7 & TOKEN_NUMBER == 6 ~ REPLACE(REPLACE(TOKEN, '5', 'S'), '0', 'O'),
-        LEN == 7 & TOKEN_NUMBER == 7 ~ REPLACE(REPLACE(TOKEN, '5', 'S'), '0', 'O'),
-        # Postcode Length 6
-        LEN == 6 & TOKEN_NUMBER == 1 ~ REPLACE(REPLACE(TOKEN, '5', 'S'), '0', 'O'),
-        LEN == 6 & TOKEN_NUMBER == 4 ~ REPLACE(REPLACE(REPLACE(REPLACE(TOKEN, 'O', '0'), 'I', '1'), 'L', '1'), 'S', '5'),
-        LEN == 6 & TOKEN_NUMBER == 5 ~ REPLACE(REPLACE(TOKEN, '5', 'S'), '0', 'O'),
-        LEN == 6 & TOKEN_NUMBER == 6 ~ REPLACE(REPLACE(TOKEN, '5', 'S'), '0', 'O'),
-        # Postode Length 5
-        LEN == 5 & TOKEN_NUMBER == 1 ~ REPLACE(REPLACE(TOKEN, '5', 'S'), '0', 'O'),
-        LEN == 5 & TOKEN_NUMBER == 2 ~ REPLACE(REPLACE(REPLACE(REPLACE(TOKEN, 'O', '0'), 'I', '1'), 'L', '1'), 'S', '5'),
-        LEN == 5 & TOKEN_NUMBER == 3 ~ REPLACE(REPLACE(REPLACE(REPLACE(TOKEN, 'O', '0'), 'I', '1'), 'L', '1'), 'S', '5'),
-        LEN == 5 & TOKEN_NUMBER == 4 ~ REPLACE(REPLACE(TOKEN, '5', 'S'), '0', 'O'),
-        LEN == 5 & TOKEN_NUMBER == 5 ~ REPLACE(REPLACE(TOKEN, '5', 'S'), '0', 'O'),
-        # Postcode Remaining
-        T ~ TOKEN
-      )
-    ) %>%
-    select(-LEN)
-
-  # Pull the DB connection
-  db_connection <- df$src$con
-
-  # Build SQL Query
-  sql_query <- dbplyr::build_sql(
-    con = db_connection,
-    "SELECT
-    ID, DOB, FORENAME, SURNAME,
-    LISTAGG(TOKEN, '') within group (order by TOKEN_NUMBER) as POSTCODE
-    FROM (", dbplyr::sql_render(df), ")
-    GROUP BY
-    ID, DOB, FORENAME, SURNAME"
-  )
-
-  # Return
-  df <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query))
   return(df)
 }

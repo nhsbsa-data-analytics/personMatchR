@@ -31,19 +31,15 @@ eib <- eib_db %>%
   calc_permutations(., FORENAME, SURNAME, POSTCODE, DOB) %>%
   calc_alpha_permutations(., REFERENCE, FORENAME, SURNAME, POSTCODE)
 
-
-
-
-
-
 # Format PDS data
 pds <-pds_db %>%
   select(RECORD_ID, DOB, SURNAME, FORENAME, POSTCODE) %>%
-  # Format_db_postcode removed as too slow with 10m+ rows
+  format_db_postcode_simple(., POSTCODE) %>%
   format_db_name(., FORENAME) %>%
   format_db_name(., SURNAME) %>%
   format_db_date(., DOB) %>%
-  calc_join_permutations()
+  calc_permutations(., FORENAME, SURNAME, POSTCODE, DOB) %>%
+  calc_alpha_permutations(., REFERENCE, FORENAME, SURNAME, POSTCODE)
 
 # Exact matches
 exact <- eib %>%

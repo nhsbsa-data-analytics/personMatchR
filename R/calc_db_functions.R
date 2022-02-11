@@ -246,10 +246,10 @@ calc_alpha_permutations <- function(df, id, forename, surname, postcode){
 
   # Permutation Six
   output_one <- output_one %>%
-    mutate(PERM8 = paste0(
+    mutate(PERM6 = paste0(
       ALPHA_FORWARD, substr(SURNAME, 1, 2), substr(POSTCODE, 1, 2)
       )) %>%
-    select(ID, PERM8) %>%
+    select(ID, PERM6) %>%
     rename({{ id }} := ID)
 
   # Permutation Seven
