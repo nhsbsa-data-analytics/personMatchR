@@ -140,6 +140,73 @@ name_db_filter <- function(df, name_one, name_two){
     )
 }
 
+df_cols <- colnames(eib)
+
+output <- eib %>%
+  mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(FORENAME, '*', ' '))) %>%
+  nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
+  group_by(REFERENCE) %>%
+  mutate(
+    ALPHA = row_number(TOKEN),
+    ALPHA_B = row_number(desc(TOKEN))
+    ) %>%
+  ungroup()
+
+one <- output %>%
+  filter(ALPHA <= 3) %>%
+  select(REFERENCE, SURNAME, POSTCODE, TOKEN, ALPHA)
+
+two <- output %>%
+  filter(ALPHA_B <= 3) %>%
+  select(REFERENCE, SURNAME, POSTCODE, TOKEN, ALPHA = ALPHA_B)
+
+# Pull the DB connection
+db_connection_one <- one$src$con
+db_connection_two <- two$src$con
+
+# Build SQL Query
+sql_query_one <- dbplyr::build_sql(
+  con = db_connection_one,
+  "
+    SELECT REFERENCE, SURNAME, POSTCODE,
+    LISTAGG(TOKEN, '') within group (order by ALPHA) as ALPHA_FORWARD
+    FROM (", dbplyr::sql_render(one), ")
+    GROUP BY REFERENCE, SURNAME, POSTCODE"
+  )
+
+# Build SQL Query
+sql_query_two <- dbplyr::build_sql(
+  con = db_connection_two,
+  "
+    SELECT REFERENCE, SURNAME, POSTCODE,
+    LISTAGG(TOKEN, '') within group (order by ALPHA) as ALPHA_BACK
+    FROM (", dbplyr::sql_render(two), ")
+    GROUP BY REFERENCE, SURNAME, POSTCODE"
+)
+
+# Query Outputs (2)
+output_one <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query_one))
+output_two <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query_two))
+
+output_one
+output_two
+
+# Rejoin back to original df then return
+df <- df %>%
+  select(-POSTCODE) %>%
+  left_join(output, by = "ID") %>%
+  select(-ID) %>%
+  rename(POSTCODE := {{ postcode_col }} )
+return(df)
+
+
+
+
+
+
+
+
+
 calc_join_permutations <- function(df){
 
   df %>%
