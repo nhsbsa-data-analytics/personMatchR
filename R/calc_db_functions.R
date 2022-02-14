@@ -262,45 +262,168 @@ calc_alpha_permutations <- function(df, forename, surname, postcode){
 
 
 
+calc_db_jw_threshold(df, name_one, name_two, threshold_val, col_name){
 
+  # Distinct df to calculate JW scores for
+  output <- df %>%
+    rename(
+      NAME_ONE := {{ name_one }},
+      NAME_TWO := {{ name_two }}
+    ) %>%
+    distinct() %>%
+    mutate(ID = row_number(NAME_ONE))
+
+  # Pull the connection
+  db_connection <- output$src$con
+
+  # Formulate the SQL for tokenising in Oracle
+  sql_query_one <- dbplyr::build_sql(
+    con = db_connection,
+    "
+  SELECT
+    id, name_one,
+    token || row_number() over (partition by id, name_one, token order by id, name_one, token)  as  token
+    FROM  (", dbplyr::sql_render(output), ")  t
+    CROSS JOIN LATERAL (
+    SELECT SUBSTR(t.name_one, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_one)
+    )
+  "
+  )
+
+  # Formulate the SQL for tokenising in Oracle
+  sql_query_two <- dbplyr::build_sql(
+    con = db_connection,
+    "
+  SELECT
+    id, name_two,
+    token || row_number() over (partition by id, name_two, token order by id, name_two, token)  as  token
+    FROM  (", dbplyr::sql_render(output), ")  t
+    CROSS JOIN LATERAL (
+    SELECT SUBSTR(t.name_two, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_two)
+    )
+  "
+  )
+
+  output <- inner_join(
+    x = dplyr::tbl(db_connection, dplyr::sql(sql_query_one)),
+    y = dplyr::tbl(db_connection, dplyr::sql(sql_query_two))
+    )
+
+  output <- output %>%
+    group_by(ID) %>%
+    mutate(
+      # NOTE: char-distance is ignored, as only approx calculation
+      M = n(),
+      # Length of each name required for JW approx
+      S_ONE = nchar(NAME_ONE),
+      S_TWO = nchar(NAME_TWO),
+      # Number of transpositions (T) = 0, again to speed up approx calculation
+      SIM = (1/3) * (((M / S_ONE) + (M / S_TWO) + ((M - 0) / M))),
+      # Final JW value, number of shared first four letters
+      L = case_when(
+        substr(NAME_ONE, 1, 1) != substr(NAME_TWO, 1, 1) ~ 0,
+        substr(NAME_ONE, 1, 4) == substr(NAME_TWO, 1, 4) ~ 4,
+        substr(NAME_ONE, 1, 3) == substr(NAME_TWO, 1, 3) ~ 3,
+        substr(NAME_ONE, 1, 2) == substr(NAME_TWO, 1, 2) ~ 2,
+        substr(NAME_ONE, 1, 1) == substr(NAME_TWO, 1, 1) ~ 1
+      ),
+      # 'Real' values impossible to be higher than approx value
+      JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
+    ) %>%
+    ungroup() %>%
+    distinct() %>%
+    # Filter by threshold value
+    filter(JW_APPROX >= 0.75) %>%
+    mutate(JW_APPROX = 1) %>%
+    select(NAME_ONE, NAME_TWO, JW_APPROX) %>%
+    rename_at("JW_APPROX", ~col_name) %>%
+    rename(
+      {{ name_one }} := NAME_ONE,
+      {{ name_two }} := NAME_TWO
+    )
+
+  df <- df %>%
+    left_join(output)
+
+  return(df)
+}
 
 
 df <- eib %>%
   select(NAME_ONE = FORENAME, NAME_TWO = SURNAME) %>%
-  distinct() %>%
-  mutate(ID = row_number(NAME_ONE))
+  d
 
 # Pull the connection
 db_connection <- df$src$con
 
 # Formulate the SQL for tokenising in Oracle
-sql_query <- dbplyr::build_sql(
+sql_query_one <- dbplyr::build_sql(
   con = db_connection,
   "
-
-  with
-  names as (
   SELECT
-    id, name_one, name_two,
-    token_one || row_number() over (partition by name_one, token_one order by name_one, token_one)  as  token_one
-    FROM  ab  t
+    id, name_one,
+    token || row_number() over (partition by id, name_one, token order by id, name_one, token)  as  token
+    FROM  (", dbplyr::sql_render(df), ")  t
     CROSS JOIN LATERAL (
-    SELECT SUBSTR(t.name_one, LEVEL, 1) as token_one FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_one)
+    SELECT SUBSTR(t.name_one, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_one)
     )
-  )
-
-  SELECT
-    id, name_one, name_two, token_one,
-    token_two || row_number() over (partition by name_two, token_two order by name_two, token_two)  as  count_two
-    FROM  names  t
-    CROSS JOIN LATERAL (
-    SELECT SUBSTR(t.name_two, LEVEL, 1) as token_two FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_two)
-  );
   "
 )
 
-df_edit <- dplyr::tbl(db_connection, dplyr::sql(sql_query)) %>%
-  collect()
+# Formulate the SQL for tokenising in Oracle
+sql_query_two <- dbplyr::build_sql(
+  con = db_connection,
+  "
+  SELECT
+    id, name_two,
+    token || row_number() over (partition by id, name_two, token order by id, name_two, token)  as  token
+    FROM  (", dbplyr::sql_render(df), ")  t
+    CROSS JOIN LATERAL (
+    SELECT SUBSTR(t.name_two, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_two)
+    )
+  "
+)
+
+df_edit <- inner_join(
+  x = dplyr::tbl(db_connection, dplyr::sql(sql_query_one)),
+  y = dplyr::tbl(db_connection, dplyr::sql(sql_query_two))
+  )
+
+df_edit2 <- df_edit %>%
+  group_by(ID) %>%
+  mutate(
+    # NOTE: char-distance is ignored, as only approx calculation
+    M = n(),
+    # Length of each name required for JW approx
+    S_ONE = nchar(NAME_ONE),
+    S_TWO = nchar(NAME_TWO),
+    # Number of transpositions (T) = 0, again to speed up approx calculation
+    SIM = (1/3) * (((M / S_ONE) + (M / S_TWO) + ((M - 0) / M))),
+    # Final JW value, number of shared first four letters
+    L = case_when(
+      substr(NAME_ONE, 1, 1) != substr(NAME_TWO, 1, 1) ~ 0,
+      substr(NAME_ONE, 1, 4) == substr(NAME_TWO, 1, 4) ~ 4,
+      substr(NAME_ONE, 1, 3) == substr(NAME_TWO, 1, 3) ~ 3,
+      substr(NAME_ONE, 1, 2) == substr(NAME_TWO, 1, 2) ~ 2,
+      substr(NAME_ONE, 1, 1) == substr(NAME_TWO, 1, 1) ~ 1
+    ),
+    # 'Real' values impossible to be higher than approx value
+    JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
+  ) %>%
+  ungroup() %>%
+  distinct() %>%
+  # Filter by threshold value
+  filter(JW_APPROX >= 0.75) %>%
+  mutate(JW_APPROX = 1) %>%
+  rename_at("JW_APPROX", ~"JW_FORENAME")
+
+
+
+df_edit2 %>% tally()
+
+
+
+
 
 DF2 <- df_edit %>%
   group_by(FORENAME, TOKEN_ONE) %>%
