@@ -11,28 +11,25 @@
 #'
 #' @examples
 #' dob_substr(df, sub_one, sub_two, sub_three)
-dob_lv_filter <- function(df, dob_col_one, dob_col_two){
+dob_lv_filter <- function(df, dob_one, dob_two){
 
   # Rename df for convenience
   df <- df %>%
-    rename(
-      DOB_ONE := {{ dob_col_one }},
-      DOB_TWO := {{ dob_col_two }}
-    )
+    select({{ dob_one }}, {{ dob_two }}) %>%
+    distinct()
 
   # Function to apply multiple times
   dob_substr <- function(df, sub_one, sub_two, sub_three){
 
     df %>%
       filter(
-        SUBSTR(DOB_ONE, sub_one, 1) == SUBSTR(DOB_TWO, sub_one, 1) |
+        SUBSTR({{ dob_one }}, sub_one, 1) == SUBSTR({{ dob_two }}, sub_one, 1) |
           # Tokens share same second letter
-          SUBSTR(DOB_ONE, sub_two, 1) == SUBSTR(DOB_TWO, sub_two, 1) |
+          SUBSTR({{ dob_one }}, sub_two, 1) == SUBSTR({{ dob_two }}, sub_two, 1) |
           # Tokens share same second letter
-          SUBSTR(DOB_ONE, sub_three, 1) == SUBSTR(DOB_TWO, sub_three, 1),
-        DOB_ONE != DOB_TWO
+          SUBSTR({{ dob_one }}, sub_three, 1) == SUBSTR({{ dob_two }}, sub_three, 1)
       )
-  }
+    }
 
   # Apply multiple filters to replicate use case of LV
   df <- df %>%
@@ -93,13 +90,6 @@ dob_lv_filter <- function(df, dob_col_one, dob_col_two){
     dob_substr(., 5,7,8) %>%
     dob_substr(., 6,7,8)
 
-  # Original df names
-  df <- df %>%
-    rename(
-      {{ dob_col_one }} := DOB_ONE,
-      {{ dob_col_two }} := DOB_TWO
-      )
-
   # Return
   return(df)
 }
@@ -131,12 +121,9 @@ name_db_filter <- function(df, name_one, name_two){
         SUBSTR({{ name_one  }}, LENGTH({{ name_one  }}), 1) == SUBSTR({{ name_two  }}, LENGTH({{ name_two  }}), 1) |
         # One token is a substring of the other
         INSTR({{ name_one  }}, {{ name_two  }}) > 1 |
-        INSTR({{ name_two  }}, {{ name_one  }}) > 1,
-      # Deal with single-letter 'names' separately
-      nchar({{ name_one  }}) != 1,
-      nchar({{ name_two  }}) != 1
+        INSTR({{ name_two  }}, {{ name_one  }}) > 1
     )
-}
+  }
 
 #' Calculates 5 permutations for primary-lookup join prior to match scoring
 #'
@@ -156,19 +143,46 @@ calc_permutations <- function(df, forename, surname, postcode, dob){
 
   df %>%
     mutate(
+      # Perm 1-3 require full match of dob with 2 of forename, surname, postcode
       PERM1 = paste0({{ forename }}, {{ surname }}, {{ dob }}),
       PERM2 = paste0({{ forename }}, {{ postcode }}, {{dob}}),
       PERM3 = paste0({{ surname }}, {{ postcode }}, {{ dob }}),
+      # First char forename, plus 4 chars of surname and postcode
       PERM4 = paste0(
-        substr({{ forename }}, 1, 3),
-        substr({{ surname }}, 1, 3),
-        substr({{ postcode }}, 1, 3)
+        substr({{ forename }}, 1, 1),
+        substr({{ surname }}, 1, 4),
+        substr({{ postcode }}, 1, 4)
         ),
+      # First 3 chars forename, plus 3 chars of surname and postcode
       PERM5 = paste0(
+        substr({{ forename }}, 1, 3),
+        substr({{ surname }}, 1, 2),
+        substr({{ postcode }}, 1, 2)
+      ),
+      # Last 3 chars forename, plus 3 chars of surname and postcode
+      PERM6 = paste0(
         SUBSTR({{ forename }}, nchar({{ forename }})-2, 3),
+        substr({{ surname }}, 1, 2),
+        substr({{ postcode }}, 1, 2)
+      ),
+      # First 3 consonants, plus 3 chars of surname and postcode
+      PERM7 = paste0(
+        substr(REGEXP_REPLACE({{ forename}}, '[AEIOU]', ''), 1, 3),
+        substr({{ surname }}, 1, 2),
+        substr({{ postcode }}, 1, 2)
+      ),
+      # All consonants, plus 4 chars of surname and postcode
+      PERM8 = paste0(
+        REGEXP_REPLACE({{ forename}}, '[AEIOU]', ''),
+        substr({{ surname }}, 1, 2),
+        substr({{ postcode }}, 1, 2)
+      ),
+      # All vowels, plus 3 chars of surname and postcode
+      PERM9 = paste0(
+        REGEXP_REPLACE({{ forename }}, '[B-DF-HJ-NP-TV-Z]', ''),
         substr({{ surname }}, 1, 3),
         substr({{ postcode }}, 1, 3)
-        )
+      )
     )
 }
 
@@ -188,8 +202,6 @@ calc_alpha_permutations <- function(df, forename, surname, postcode){
   # Rename forename
   df <- df %>% rename(FORENAME := {{ forename }})
 
-  ", dplyr::sql(output_cols), "
-
   # Connection for inline SQL query
   db_connection <- df$src$con
 
@@ -208,7 +220,7 @@ calc_alpha_permutations <- function(df, forename, surname, postcode){
        )"
   )
 
-  # Genertae query outpput
+  # Generate query output
   df <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query))
 
   # Create join permutations
@@ -245,6 +257,59 @@ calc_alpha_permutations <- function(df, forename, surname, postcode){
 #'
 #' @examples
 #' calc_db_jw_threshold(df, name_one, name_two, threshold_val)
+#'
+
+
+
+
+
+
+
+df <- eib %>%
+  select(NAME_ONE = FORENAME, NAME_TWO = SURNAME) %>%
+  distinct() %>%
+  mutate(ID = row_number(NAME_ONE))
+
+# Pull the connection
+db_connection <- df$src$con
+
+# Formulate the SQL for tokenising in Oracle
+sql_query <- dbplyr::build_sql(
+  con = db_connection,
+  "
+
+  with
+  names as (
+  SELECT
+    id, name_one, name_two,
+    token_one || row_number() over (partition by name_one, token_one order by name_one, token_one)  as  token_one
+    FROM  ab  t
+    CROSS JOIN LATERAL (
+    SELECT SUBSTR(t.name_one, LEVEL, 1) as token_one FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_one)
+    )
+  )
+
+  SELECT
+    id, name_one, name_two, token_one,
+    token_two || row_number() over (partition by name_two, token_two order by name_two, token_two)  as  count_two
+    FROM  names  t
+    CROSS JOIN LATERAL (
+    SELECT SUBSTR(t.name_two, LEVEL, 1) as token_two FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_two)
+  );
+  "
+)
+
+df_edit <- dplyr::tbl(db_connection, dplyr::sql(sql_query)) %>%
+  collect()
+
+DF2 <- df_edit %>%
+  group_by(FORENAME, TOKEN_ONE) %>%
+  mutate(rank = dense_rank(TOKEN_ONE))
+
+
+
+
+
 calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
 
   # Rename inputs for convenience & generate ID

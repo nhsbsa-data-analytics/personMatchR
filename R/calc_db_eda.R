@@ -47,7 +47,7 @@ eib %>%
     name = "INT617_EIB_PROCESSED",
     temporary = FALSE
   )
-
+Sys.time()
 # Write the table back to the DB: 45 mins
 pds %>%
   compute(
@@ -57,6 +57,8 @@ pds %>%
 
 # Disconnect
 DBI::dbDisconnect(con)
+
+Sys.time()
 
 #-------------------------------------------------------------------------------
 # Part Two: composite joins then scoring
@@ -96,6 +98,13 @@ perm_join <- function(df1, df2, id_one, id_two, perm_num){
   return(output)
 }
 
+# Calc permutations
+eib <- eib %>%
+  calc_permutations(., FORENAME, SURNAME, POSTCODE, DOB)
+
+pds_db <- pds_db %>%
+  calc_permutations(., FORENAME, SURNAME, POSTCODE, DOB)
+
 # Get list of lookup pairs
 id_pairs <- perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM1) %>%
   union_all(
@@ -116,8 +125,19 @@ id_pairs <- perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM1) %>%
   union_all(
     perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM7)
   ) %>%
+  union_all(
+    perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM8)
+  ) %>%
+  union_all(
+    perm_join(eib, pds_db, REFERENCE, RECORD_ID, PERM9)
+  ) %>%
   select(REFERENCE, RECORD_ID) %>%
-  distinct()
+  distinct() %>%
+  tally()
+
+
+
+
 
 
 output <- id_pairs %>%
