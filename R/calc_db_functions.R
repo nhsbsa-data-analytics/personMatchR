@@ -125,7 +125,7 @@ name_db_filter <- function(df, name_one, name_two){
     )
   }
 
-#' Calculates 5 permutations for primary-lookup join prior to match scoring
+#' Calculates 9 permutations for primary-lookup join prior to match scoring
 #'
 #' @param df A df to be formatted
 #' @param forename forename column name
@@ -186,60 +186,6 @@ calc_permutations <- function(df, forename, surname, postcode, dob){
     )
 }
 
-#' Calculates 2 additional permutations for primary-lookup join prior to scoring
-#'
-#' @param df A df to be formatted
-#' @param forename forename column name
-#' @param surname surname column name
-#' @param postcode postcode column name
-#'
-#' @return A df with 2 'alphabetical' join permutations added
-#'
-#' @export
-#' calc_alpha_permutations(df, id, forename, surname, postcode)
-calc_alpha_permutations <- function(df, forename, surname, postcode){
-
-  # Rename forename
-  df <- df %>% rename(FORENAME := {{ forename }})
-
-  # Connection for inline SQL query
-  db_connection <- df$src$con
-
-  # Build SQL Query
-  sql_query <- dbplyr::build_sql(
-    con = db_connection,
-    "
-    SELECT *
-    FROM   (", dbplyr::sql_render(df), ")  t
-       CROSS JOIN LATERAL (
-         SELECT LISTAGG(SUBSTR(t.forename, LEVEL, 1), NULL) WITHIN GROUP (
-                  ORDER BY NLSSORT(SUBSTR(t.forename, LEVEL, 1), 'NLS_SORT = BINARY_AI')
-                ) AS alpha
-         FROM   DUAL
-         CONNECT BY LEVEL <= LENGTH(t.forename)
-       )"
-  )
-
-  # Generate query output
-  df <- dplyr::tbl(src = db_connection, dplyr::sql(sql_query))
-
-  # Create join permutations
-  df <- df %>%
-    mutate(
-      PERM6 = paste0(
-        substr(ALPHA, 1, 3), substr({{ surname }}, 1, 3), substr({{ postcode }}, 1, 3)
-      ),
-      PERM7 = paste0(
-        SUBSTR(ALPHA, nchar(ALPHA)-2, 3), substr({{ surname }}, 1, 3), substr({{ postcode }}, 1, 3)
-      )
-    ) %>%
-    select(-ALPHA) %>%
-    rename({{ forename }} := FORENAME)
-
-  # Return df
-  return(df)
-}
-
 #' Calculates two strings JW score, using a JW approximation to limit results
 #'
 #' JW can be slow within SQL Developer
@@ -258,11 +204,7 @@ calc_alpha_permutations <- function(df, forename, surname, postcode){
 #' @examples
 #' calc_db_jw_threshold(df, name_one, name_two, threshold_val)
 #'
-
-
-
-
-calc_db_jw_threshold(df, name_one, name_two, threshold_val, col_name){
+calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name){
 
   # Distinct df to calculate JW scores for
   output <- df %>%
@@ -276,7 +218,7 @@ calc_db_jw_threshold(df, name_one, name_two, threshold_val, col_name){
   # Pull the connection
   db_connection <- output$src$con
 
-  # Formulate the SQL for tokenising in Oracle
+  # Formulate SQL query one, to split on character
   sql_query_one <- dbplyr::build_sql(
     con = db_connection,
     "
@@ -290,7 +232,7 @@ calc_db_jw_threshold(df, name_one, name_two, threshold_val, col_name){
   "
   )
 
-  # Formulate the SQL for tokenising in Oracle
+  # Formulate SQL query one, to split on character
   sql_query_two <- dbplyr::build_sql(
     con = db_connection,
     "
@@ -331,194 +273,18 @@ calc_db_jw_threshold(df, name_one, name_two, threshold_val, col_name){
       JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
     ) %>%
     ungroup() %>%
-    distinct() %>%
     # Filter by threshold value
-    filter(JW_APPROX >= 0.75) %>%
-    mutate(JW_APPROX = 1) %>%
+    filter(JW_APPROX >= threshold_val) %>%
     select(NAME_ONE, NAME_TWO, JW_APPROX) %>%
+    distinct() %>%
+    mutate(JW_APPROX = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
+    filter(JW_APPROX >= threshold_val) %>%
     rename_at("JW_APPROX", ~col_name) %>%
     rename(
       {{ name_one }} := NAME_ONE,
       {{ name_two }} := NAME_TWO
     )
 
-  df <- df %>%
-    left_join(output)
-
-  return(df)
-}
-
-
-df <- eib %>%
-  select(NAME_ONE = FORENAME, NAME_TWO = SURNAME) %>%
-  d
-
-# Pull the connection
-db_connection <- df$src$con
-
-# Formulate the SQL for tokenising in Oracle
-sql_query_one <- dbplyr::build_sql(
-  con = db_connection,
-  "
-  SELECT
-    id, name_one,
-    token || row_number() over (partition by id, name_one, token order by id, name_one, token)  as  token
-    FROM  (", dbplyr::sql_render(df), ")  t
-    CROSS JOIN LATERAL (
-    SELECT SUBSTR(t.name_one, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_one)
-    )
-  "
-)
-
-# Formulate the SQL for tokenising in Oracle
-sql_query_two <- dbplyr::build_sql(
-  con = db_connection,
-  "
-  SELECT
-    id, name_two,
-    token || row_number() over (partition by id, name_two, token order by id, name_two, token)  as  token
-    FROM  (", dbplyr::sql_render(df), ")  t
-    CROSS JOIN LATERAL (
-    SELECT SUBSTR(t.name_two, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_two)
-    )
-  "
-)
-
-df_edit <- inner_join(
-  x = dplyr::tbl(db_connection, dplyr::sql(sql_query_one)),
-  y = dplyr::tbl(db_connection, dplyr::sql(sql_query_two))
-  )
-
-df_edit2 <- df_edit %>%
-  group_by(ID) %>%
-  mutate(
-    # NOTE: char-distance is ignored, as only approx calculation
-    M = n(),
-    # Length of each name required for JW approx
-    S_ONE = nchar(NAME_ONE),
-    S_TWO = nchar(NAME_TWO),
-    # Number of transpositions (T) = 0, again to speed up approx calculation
-    SIM = (1/3) * (((M / S_ONE) + (M / S_TWO) + ((M - 0) / M))),
-    # Final JW value, number of shared first four letters
-    L = case_when(
-      substr(NAME_ONE, 1, 1) != substr(NAME_TWO, 1, 1) ~ 0,
-      substr(NAME_ONE, 1, 4) == substr(NAME_TWO, 1, 4) ~ 4,
-      substr(NAME_ONE, 1, 3) == substr(NAME_TWO, 1, 3) ~ 3,
-      substr(NAME_ONE, 1, 2) == substr(NAME_TWO, 1, 2) ~ 2,
-      substr(NAME_ONE, 1, 1) == substr(NAME_TWO, 1, 1) ~ 1
-    ),
-    # 'Real' values impossible to be higher than approx value
-    JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
-  ) %>%
-  ungroup() %>%
-  distinct() %>%
-  # Filter by threshold value
-  filter(JW_APPROX >= 0.75) %>%
-  mutate(JW_APPROX = 1) %>%
-  rename_at("JW_APPROX", ~"JW_FORENAME")
-
-
-
-df_edit2 %>% tally()
-
-
-
-
-
-DF2 <- df_edit %>%
-  group_by(FORENAME, TOKEN_ONE) %>%
-  mutate(rank = dense_rank(TOKEN_ONE))
-
-
-
-
-
-calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val){
-
-  # Rename inputs for convenience & generate ID
-  df <- df %>%
-    rename(
-      NAME_ONE = {{ name_one }},
-      NAME_TWO = {{ name_two }}
-    ) %>%
-    mutate(ID = row_number(NAME_ONE))
-
-  # Split name by character & count token-instances per name (e.d. A1, A2 etc)
-  one <- df %>%
-    mutate(TOKEN_ONE = trimws(REGEXP_REPLACE(NAME_ONE, '*', ' '))) %>%
-    nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_ONE') %>%
-    group_by(ID, TOKEN) %>%
-    mutate(TOKEN = paste0(TOKEN, rank(TOKEN_NUMBER))) %>%
-    ungroup() %>%
-    select(ID, NAME_ONE, NUMBER_ONE = TOKEN_NUMBER, TOKEN)
-
-  # Split name by character & count token-instances per name (e.d. A1, A2 etc)
-  two <- df %>%
-    mutate(TOKEN_TWO = trimws(REGEXP_REPLACE(NAME_TWO, '*', ' '))) %>%
-    nhsbsaR::oracle_unnest_tokens(col = 'TOKEN_TWO') %>%
-    group_by(ID, TOKEN) %>%
-    mutate(TOKEN = paste0(TOKEN, rank(TOKEN_NUMBER))) %>%
-    ungroup() %>%
-    select(ID, NAME_TWO, NUMBER_TWO = TOKEN_NUMBER, TOKEN)
-
-  # Join on ID & token (A1, A2 etc) then calculate matching chars
-  jw <- one %>%
-    inner_join(two, by = c("ID", "TOKEN")) %>%
-    group_by(ID) %>%
-    mutate(
-      # NOTE: char-distance is ignored, as only approx calculation
-      M = n(),
-      # Length of each name required for JW approx
-      S_ONE = nchar(NAME_ONE),
-      S_TWO = nchar(NAME_TWO),
-      # Number of transpositions (T) = 0, again to speed up approx calculation
-      SIM = (1/3) * (((M / S_ONE) + (M / S_TWO) + ((M - 0) / M))),
-      # Final JW value, number of shared first four letters
-      L = case_when(
-        substr(NAME_ONE, 1, 1) != substr(NAME_TWO, 1, 1) ~ 0,
-        substr(NAME_ONE, 1, 4) == substr(NAME_TWO, 1, 4) ~ 4,
-        substr(NAME_ONE, 1, 3) == substr(NAME_TWO, 1, 3) ~ 3,
-        substr(NAME_ONE, 1, 2) == substr(NAME_TWO, 1, 2) ~ 2,
-        substr(NAME_ONE, 1, 1) == substr(NAME_TWO, 1, 1) ~ 1
-      ),
-      # 'Real' values impossible to be higher than approx value
-      JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
-    ) %>%
-    ungroup() %>%
-    distinct() %>%
-    # Filter by threshold value
-    filter(JW_APPROX >= threshold_val) %>%
-    # Now calculate 'real' JW on reduced list of names
-    mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
-    # Filter by threshold value
-    filter(JW >= threshold_val) %>%
-    select(NAME_ONE, NAME_TWO, JW) %>%
-    # Revert cols to original names
-    rename(
-      {{ name_one }} := NAME_ONE,
-      {{ name_two }} := NAME_TWO
-    )
-
   # Return output
-  return(jw)
-}
-
-#' More efficient distinct with large number of records
-#'
-#' Generate
-#'
-#' @param df A df to be formatted
-#'
-#' @return A df distinct by all columns
-#'
-#' @export
-#'
-#' @examples
-#' calc_db_jw_threshold(df, name_one, name_two, threshold_val)
-group_by_distinct <- function(df){
-
-  df <- df %>%
-    group_by_all() %>%
-    summarise() %>%
-    ungroup()
+  return(output)
 }
