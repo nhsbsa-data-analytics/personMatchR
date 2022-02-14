@@ -196,6 +196,7 @@ calc_permutations <- function(df, forename, surname, postcode, dob){
 #' @param name_one first name column
 #' @param name_two second name column
 #' @param threshold_val retain only records with JW of a certain score or higher
+#' @param col_name what the name of the new output JW-scored column should be
 #'
 #' @return A df only with name-pairs with a JW value above a threshold
 #'
@@ -213,6 +214,7 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
       NAME_TWO := {{ name_two }}
     ) %>%
     distinct() %>%
+    name_db_filter(., NAME_ONE, NAME_TWO) %>%
     mutate(ID = row_number(NAME_ONE))
 
   # Pull the connection
