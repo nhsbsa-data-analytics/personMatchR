@@ -319,11 +319,11 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
 find_db_matches <- function(
   df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
   df_two, id_two, forename_two, surname_two, dob_two, postcode_two
-){
+  ){
 
   # For convenience rename columns
   df_one <- df_one %>%
-    dplyr::rename(
+    rename(
       ID_ONE := {{ id_one }},
       FORENAME_ONE := {{ forename_one }},
       SURNAME_ONE := {{ surname_one }},
@@ -333,7 +333,7 @@ find_db_matches <- function(
 
   # For convenience rename columns
   df_two <- df_two %>%
-    dplyr::rename(
+    rename(
       ID_TWO := {{ id_two }},
       FORENAME_TWO := {{ forename_two }},
       SURNAME_TWO := {{ surname_two }},
@@ -343,8 +343,8 @@ find_db_matches <- function(
 
   # Exact matches
   exact <- df_one %>%
-    dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
-    dplyr::inner_join(
+    select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
+    inner_join(
       y = df_two %>%
         select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO),
       by = c(
@@ -354,8 +354,8 @@ find_db_matches <- function(
         "POSTCODE_ONE" = "POSTCODE_TWO"
       )
     ) %>%
-    dplyr::distinct() %>%
-    dplyr::mutate(
+    distinct() %>%
+    mutate(
       FORENAME_TWO = FORENAME_ONE,
       SURNAME_TWO = SURNAME_ONE,
       DOB_TWO = DOB_ONE,
@@ -372,98 +372,22 @@ find_db_matches <- function(
   df_one <- df_one %>%
     dplyr::anti_join(y = exact, by = "ID_ONE")
 
-  # Permutation join
-  perm_join <- function(df_one, df_two, id_one, id_two, perm_num){
+  # List of permutation-join columns
+  perm_num <- paste0("PERM", 1:9)
 
-    output <- inner_join(
-      x = df_one %>% dplyr::select({{ id_one}}, {{ perm_num }}),
-      y = df_two %>% dplyr::select({{ id_two}}, {{ perm_num }})
-      ) %>%
-      dplyr::select(-{{ perm_num }})
-    return(output)
-  }
+  # Distinct list of ID perm-join pairs
+  id_pairs <- perm_num %>%
+    purrr::map(~{
 
-  # Get list of lookup pairs
-  id_pairs <- perm_join(
-    df_one = df_one,
-    df_two = df_two,
-    id_one = ID_ONE,
-    id_two = ID_TWO,
-    perm_num = PERM1
-    ) %>%
-    dplyr::union_all(
-      perm_join(
-        df_one = df_one,
-        df_two = df_two,
-        id_one = ID_ONE,
-        id_two = ID_TWO,
-        perm_num = PERM2
-      )
-    ) %>%
-    dplyr::union_all(
-      perm_join(
-        df_one = df_one,
-        df_two = df_two,
-        id_one = ID_ONE,
-        id_two = ID_TWO,
-        perm_num = PERM3
-      )
-    ) %>%
-    dplyr::union_all(
-      perm_join(
-        df_one = df_one,
-        df_two = df_two,
-        id_one = ID_ONE,
-        id_two = ID_TWO,
-        perm_num = PERM4
-      )
-    ) %>%
-    dplyr::union_all(
-      perm_join(
-        df_one = df_one,
-        df_two = df_two,
-        id_one = ID_ONE,
-        id_two = ID_TWO,
-        perm_num = PERM5
-      )
-    ) %>%
-    dplyr::union_all(
-      perm_join(
-        df_one = df_one,
-        df_two = df_two,
-        id_one = ID_ONE,
-        id_two = ID_TWO,
-        perm_num = PERM6
-      )
-    ) %>%
-    dplyr::union_all(
-      perm_join(
-        df_one = df_one,
-        df_two = df_two,
-        id_one = ID_ONE,
-        id_two = ID_TWO,
-        perm_num = PERM7
-      )
-    ) %>%
-    dplyr::union_all(
-      perm_join(
-        df_one = df_one,
-        df_two = df_two,
-        id_one = ID_ONE,
-        id_two = ID_TWO,
-        perm_num = PERM8
-      )
-    ) %>%
-    dplyr::union_all(
-      perm_join(
-        df_one = df_one,
-        df_two = df_two,
-        id_one = ID_ONE,
-        id_two = ID_TWO,
-        perm_num = PERM9
-      )
-    ) %>%
-    dplyr::select(ID_ONE, ID_TWO) %>%
+      df_one %>%
+        select(ID_ONE, {{.x}}) %>%
+        inner_join(
+          df_two %>%
+            select(ID_TWO, {{.x}})
+        ) %>%
+        select(ID_ONE, ID_TWO)
+    }) %>%
+    purrr::reduce(function(x, y) union(x, y)) %>%
     dplyr::distinct()
 
   # Remove Permutation info from matching dfs
@@ -508,7 +432,7 @@ find_db_matches <- function(
       ED_DOB = ifelse(DOB_ONE == DOB_TWO, 0, 2)
     ) %>%
     # limit to key fields and score matches
-    dplyr::mutate(MATCH_TYPE = dplyr::case_when(
+    dplyr::mutate(MATCH_TYPE = case_when(
       (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
       (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
       (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
@@ -516,7 +440,7 @@ find_db_matches <- function(
       (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
       (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
       TRUE ~ "No Match"
-      )
+    )
     ) %>%
     # filter to only confident matches
     dplyr::filter(MATCH_TYPE != "No Match")
@@ -528,7 +452,7 @@ find_db_matches <- function(
     dplyr::mutate(MATCH_COUNT = dplyr::n_distinct(ID_TWO)) %>%
     dplyr::ungroup() %>%
     # Rename back to OG column names
-    dplyr::rename(
+    rename(
       {{ id_one }} := ID_ONE,
       {{ forename_one }} := FORENAME_ONE,
       {{ surname_one }} := SURNAME_ONE,
