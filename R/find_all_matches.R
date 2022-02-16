@@ -226,7 +226,13 @@ find_all_matches = function(
   return(matches)
 }
 
+# Generate output
 output <- find_all_matches(
   df1, ID, FORENAME, SURNAME, DOB, POSTCODE,
   df2, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO
 )
+
+# Disconnect
+DBI::dbDisconnect(con)
+
+#-------------------------------------------------------------------------------
