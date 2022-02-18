@@ -213,7 +213,7 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
       NAME_TWO := {{ name_two }}
     ) %>%
     distinct() %>%
-    name_db_filter(., NAME_ONE, NAME_TWO) %>%
+    #name_db_filter(., NAME_ONE, NAME_TWO) %>%
     mutate(ID = row_number(NAME_ONE))
 
   # Pull the connection
@@ -257,21 +257,18 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
     mutate(
       # NOTE: char-distance is ignored, as only approx calculation
       M = n(),
-      # Length of each name required for JW approx
-      S_ONE = nchar(NAME_ONE),
-      S_TWO = nchar(NAME_TWO),
-      # Number of transpositions (T) = 0, again to speed up approx calculation
-      SIM = (1/3) * (((M / S_ONE) + (M / S_TWO) + ((M - 0) / M))),
+      # Assume max transpositions to speed up approx calculation
+      SIM = (1/3) * ( (M / nchar(NAME_ONE)) + (M / nchar(NAME_TWO)) + 1 ),
       # Final JW value, number of shared first four letters
       L = case_when(
-        substr(NAME_ONE, 1, 1) != substr(NAME_TWO, 1, 1) ~ 0,
         substr(NAME_ONE, 1, 4) == substr(NAME_TWO, 1, 4) ~ 4,
         substr(NAME_ONE, 1, 3) == substr(NAME_TWO, 1, 3) ~ 3,
         substr(NAME_ONE, 1, 2) == substr(NAME_TWO, 1, 2) ~ 2,
-        substr(NAME_ONE, 1, 1) == substr(NAME_TWO, 1, 1) ~ 1
+        T ~ 1
       ),
       # 'Real' values impossible to be higher than approx value
       JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
+      #JW_APPROX = SIM + (4 * 0.1 * (1 - SIM))
     ) %>%
     ungroup() %>%
     # Filter by threshold value
