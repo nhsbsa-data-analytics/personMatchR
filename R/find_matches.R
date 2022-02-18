@@ -18,13 +18,13 @@
 find_matches <- function(df1, df2, inc_no_match = FALSE, sw_forename = 0.3, sw_surname = 0.15, sw_dob = 0.4, sw_postcode = 0.15) {
 
   # check if the match score weightings add up to 100% or any of the parameters have been entered as a non numeric value
-  if(!is.numeric(sw_forename) || !is.numeric(sw_surname) || !is.numeric(sw_dob) || !is.numeric(sw_postcode)) {
+  if (!is.numeric(sw_forename) || !is.numeric(sw_surname) || !is.numeric(sw_dob) || !is.numeric(sw_postcode)) {
     # non numeric value supplied as weighting factor
     stop("Non numeric value supplied as weighting factor", call. = FALSE)
-  } else if(!dplyr::between(sw_forename,0,1) || !dplyr::between(sw_surname,0,1) || !dplyr::between(sw_dob,0,1) || !dplyr::between(sw_postcode,0,1)){
+  } else if (!dplyr::between(sw_forename, 0, 1) || !dplyr::between(sw_surname, 0, 1) || !dplyr::between(sw_dob, 0, 1) || !dplyr::between(sw_postcode, 0, 1)) {
     # invalid values applied
     stop("Individual field score weighting values must be between 0.0 and 1.0", call. = FALSE)
-  }else if((sw_forename + sw_surname + sw_dob + sw_postcode)!=1) {
+  } else if ((sw_forename + sw_surname + sw_dob + sw_postcode) != 1) {
     # if the proportions do not equal 100% abort the process and show an error message
     stop("Supplied score weighting values do not total 100%", call. = FALSE)
   }
@@ -59,10 +59,10 @@ find_matches <- function(df1, df2, inc_no_match = FALSE, sw_forename = 0.3, sw_s
         "FORENAME" = "FORENAME",
         "DOB" = "DOB",
         "POSTCODE" = "POSTCODE"
-        ),
+      ),
       keep = FALSE,
       na_matches = "never"
-      )
+    )
 
   # Identify 'reverse name' exact matches
   df_exact_rev <- df1 %>%
@@ -88,7 +88,7 @@ find_matches <- function(df1, df2, inc_no_match = FALSE, sw_forename = 0.3, sw_s
       JW_FORENAME = 1,
       JW_POSTCODE = 1,
       ED_DOB = 1,
-      MATCH_TYPE = 'Exact',
+      MATCH_TYPE = "Exact",
       MATCH_SCORE = 1
     ) %>%
     # select only the key fields
@@ -123,8 +123,7 @@ find_matches <- function(df1, df2, inc_no_match = FALSE, sw_forename = 0.3, sw_s
       (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 1) ~ "Confident",
       (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB >= 0.75) ~ "Confident",
       TRUE ~ "No Match"
-    )
-    ) %>%
+    )) %>%
     # filter to only confident matches
     dplyr::filter(MATCH_TYPE != "No Match") %>%
     # calculate an overall weighted score
@@ -132,10 +131,10 @@ find_matches <- function(df1, df2, inc_no_match = FALSE, sw_forename = 0.3, sw_s
     # forename attracts a waiting of 30% as this could be shortened
     # surname and DOB attract lowest weighting of 15% each as could be impacted by marriage/relocation
     dplyr::mutate(MATCH_SCORE = ((ifelse(is.na(JW_FORENAME), 0, JW_FORENAME) * sw_forename) +
-                                   (ifelse(is.na(JW_SURNAME), 0, JW_SURNAME) * sw_surname) +
-                                   (ifelse(is.na(ED_DOB), 0, ED_DOB) * sw_dob) +
-                                   (ifelse(is.na(JW_POSTCODE), 0, JW_POSTCODE) * sw_postcode)
-                                 ))
+      (ifelse(is.na(JW_SURNAME), 0, JW_SURNAME) * sw_surname) +
+      (ifelse(is.na(ED_DOB), 0, ED_DOB) * sw_dob) +
+      (ifelse(is.na(JW_POSTCODE), 0, JW_POSTCODE) * sw_postcode)
+    ))
 
   # combine the exact and confident matches
   df_match_results <- rbind(df_exact, df_combined)
@@ -153,19 +152,20 @@ find_matches <- function(df1, df2, inc_no_match = FALSE, sw_forename = 0.3, sw_s
 
   # if the user has requested non-matches included in the output
   # append these to the result set
-  if(inc_no_match){
+  if (inc_no_match) {
     # start with all records in the initial data-set
     df_no_match <- df1 %>%
       # join to the match results
-      dplyr::select(ID.x = ID)%>%
-      dplyr::left_join(df_match_results, by = "ID.x")%>%
+      dplyr::select(ID.x = ID) %>%
+      dplyr::left_join(df_match_results, by = "ID.x") %>%
       # remove anything with a match
       dplyr::filter(is.na(MATCH_COUNT)) %>%
       # populate the default values for the non matches
-      dplyr::mutate(MATCH_COUNT = 0,
-                    ID.y = "na",
-                    MATCH_TYPE = "No Match",
-                    MATCH_SCORE = 0
+      dplyr::mutate(
+        MATCH_COUNT = 0,
+        ID.y = "na",
+        MATCH_TYPE = "No Match",
+        MATCH_SCORE = 0
       )
 
     # combine the data-sets

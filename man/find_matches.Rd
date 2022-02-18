@@ -4,12 +4,30 @@
 \alias{find_matches}
 \title{Find all potential matches between two datasets}
 \usage{
-find_matches(df1, df2)
+find_matches(
+  df1,
+  df2,
+  inc_no_match = FALSE,
+  sw_forename = 0.3,
+  sw_surname = 0.15,
+  sw_dob = 0.4,
+  sw_postcode = 0.15
+)
 }
 \arguments{
 \item{df1}{A dataframe containing person level information}
 
 \item{df2}{A dataframe containing person level information}
+
+\item{inc_no_match}{TRUE/FALSE(default) argument to specify if non-matches should be flagged}
+
+\item{sw_forename}{proportion weighting value (0.0-1.0) to be applied to the forename part of the match score. Defaults to 0.3.}
+
+\item{sw_surname}{proportion weighting value (0.0-1.0) to be applied to the surname part of the match score. Defaults to 0.15.}
+
+\item{sw_dob}{proportion weighting value (0.0-1.0) to be applied to the dob part of the match score. Defaults to 0.4.}
+
+\item{sw_postcode}{proportion weighting value (0.0-1.0) to be applied to the postcode part of the match score. Defaults to 0.15.}
 }
 \value{
 dataframe comprising of all potential matches between two datasets
@@ -19,4 +37,6 @@ Find all potential matches between two datasets
 }
 \examples{
 find_matches(df1, df2)
+find_matches(df1, df2, inc_no_match = TRUE)
+find_matches(df1, df2, TRUE)
 }

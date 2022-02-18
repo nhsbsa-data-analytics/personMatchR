@@ -1,43 +1,42 @@
-#' Format a DOB
+
+#' Convert date to character yyyymmdd format.
 #'
-#' Format the date of birth prior to matching
-#' Convert to a string representation in the format YYYYMMDD
+#' @param dob A vector of type character, integer or numeric with date expressions
 #'
-#' @param dob A date of birth date field to be cleansed
-#'
-#' @return A cleansed string
-#'
+#' @return A formatted date (yyyymmdd)
 #' @export
 #'
 #' @examples
-#' format_dob(dob)
-format_dob <- function(dob){
+#' format_dob(dob = "2019-Mar-21")
+suppressWarnings({
+  format_dob <- function(dob) {
+    # use anytime library
+    # handle missing vlues
+    if(is.na(dob) || is.null(dob)){
+      return (NA)
+    }
 
-  # handle missing variables
-  if(is.na(dob)||is.null(dob)){
-    return(NA)
+    if (!is.na(dob) || !is.null(dob)) {
+      dob_final <- anytime::anydate(dob)
+      # return(format(dob_final, format = "%Y%m%d"))
+    }
+
+    if ((!is.na(dob) || !is.null(dob))
+               & is.na(anytime::anydate(dob))
+               & !is.na(lubridate::dmy(dob))){b
+      dob_final <- lubridate::dmy(dob)
+    }
+
+    if ((!is.na(dob) || !is.null(dob))
+        & is.na(anytime::anydate(dob))
+        & !is.na(lubridate::ydm(dob))){
+      dob_final <- lubridate::ydm(dob)
+    }
+
+    if(is.na(dob_final)){
+      stop("Not a valid date of birth", call. = FALSE)
+    }
+
+    return(format(dob_final, format = "%Y%m%d"))
   }
-
-  # Swap slash for hyphen
-  if(grepl('/', dob)){dob = gsub('/', '-', dob)}
-
-  # If contains letter
-  if(!grepl("[a-zA-Z]", dob)){
-
-    # Then use date with month-as-character format
-    dob = as.Date(dob, format = '%Y-%m-%d')
-
-  }else if(grepl("[a-zA-Z]", dob)){
-
-    # Or, use date-as-number format
-    dob = as.Date(dob, format = '%d-%B-%y')
-
-  }else{
-
-    # Attribute arbitrary day for other records
-    dob = NA
-  }
-
-  # Change date to character is it isnt NA
-  if(is.na(dob) == F){dob = format(dob, format = '%Y%m%d')}
-}
+})

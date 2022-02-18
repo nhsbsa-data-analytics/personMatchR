@@ -6,10 +6,106 @@ test_that("NULL values are skipped and returned as null", {
   expect_equal(format_dob(NULL), NA)
 })
 
-test_that("Date values return the same date value", {
+test_that("YMD", {
   # define test dates
-  test_value <- as.Date("25-12-2021","%d-%m-%Y")
-  expected_results <- "20211225"
+  test_value <- "2004-03-21"
+  expected_results <- "20040321"
   # run function
   expect_equal(format_dob(test_value), expected_results)
 })
+
+test_that("YMD_Char", {
+  # define test dates
+  test_value <- "2004-Mar-21"
+  expected_results <- "20040321"
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
+
+test_that("YMD", {
+  # define test dates
+  test_value <- "2004/03/21"
+  expected_results <- "20040321"
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
+
+
+test_that("YDM", {
+  # define test dates
+  test_value <- "2004/21/03"
+  expected_results <- "20040321"
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
+
+test_that("YDM_Char", {
+  # define test dates
+  test_value <- "2004/21/Mar"
+  expected_results <- "20040321"
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
+
+test_that("YMD_Char", {
+  # define test dates
+  test_value <- "2004/March/21"
+  expected_results <- "20040321"
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
+
+test_that("MDY", {
+  # define test dates
+  test_value <- "03/07/2021"
+  expected_results <- "20210307"
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
+
+
+test_that("MDY_Char", {
+  # define test dates
+  test_value <- "July/03/2021"
+  expected_results <- "20210703"
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
+
+test_that("DMY", {
+  # define test dates
+  test_value <- "21-03-2005"
+  expected_results <- "20050321"
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
+
+
+test_that("DMY_Char", {
+  # define test dates
+  test_value <- "21-Mar-2005"
+  expected_results <- "20050321"
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
+
+
+
+test_that("DMY", {
+  # define test dates
+  test_value <- "21/03/2005"
+  expected_results <- "20050321"
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
+
+
+test_that("DMY_Char", {
+  # define test dates
+  test_value <- "21/Mar/2005"
+  expected_results <- "20050321"
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
+
+

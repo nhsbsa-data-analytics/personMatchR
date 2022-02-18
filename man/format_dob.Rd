@@ -2,20 +2,19 @@
 % Please edit documentation in R/format_dob.R
 \name{format_dob}
 \alias{format_dob}
-\title{Format a DOB}
+\title{Convert date to character yyyymmdd format.}
 \usage{
 format_dob(dob)
 }
 \arguments{
-\item{dob}{A date of birth date field to be cleansed}
+\item{dob}{A vector of type character, integer or numeric with date expressions}
 }
 \value{
-A cleansed string
+A formatted date (yyyymmdd)
 }
 \description{
-Format the date of birth prior to matching
-Convert to a string representation in the format YYYYMMDD
+Convert date to character yyyymmdd format.
 }
 \examples{
-format_dob(dob)
+format_dob(dob = "2019-Mar-21")
 }
