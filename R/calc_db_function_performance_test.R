@@ -70,3 +70,59 @@ DBI::dbDisconnect(con)
 # 5. With larger numbers, difference may be more
 
 #-------------------------------------------------------------------------------
+# Part Three: Custom DOB Distance Calculation ~10m matches
+
+# Just select dob
+eib <- eib_db %>%
+  select(DOB_ONE = DOB) %>%
+  mutate(TMP = 1)
+
+# Just select dob
+pds <- pds_db %>%
+  select(DOB_TWO = DOB) %>%
+  mutate(
+    TMP = 1,
+    ID = row_number(DOB_TWO)
+  ) %>%
+  #filter(ID <= 90000) %>%
+  select(-ID)
+
+# Full join
+all <- eib %>%
+  full_join(pds) %>%
+  distinct()
+
+# 10.1m distinct forename-pairs
+all %>% tally()
+
+# Time for 'normal' LV calculation: 10.1m = 8mins 33s (513s)
+Sys.time()
+results_one <- all %>%
+  mutate(LV = UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)) %>%
+  filter(LV <= 2) %>%
+  collect()
+Sys.time()
+
+# Time for custom DOB-Dist calculation: 10.1m = 3mins 4s (184s)
+Sys.time()
+results_two <- all %>%
+  dob_lv_filter(., DOB_ONE, DOB_TWO) %>%
+  collect()
+Sys.time()
+
+# Disconnect
+DBI::dbDisconnect(con)
+
+#-------------------------------------------------------------------------------
+# Part Four: Custom Date-Dist function - Summary
+
+# 1. There are less dob-combinaations that name-combinations
+# 2. Date-Dist is similar, although *not* identical, to LV, thus outputs vary
+# 3. Date-dist in effect is 6 identical characters
+# 4. LV dist of 2 can instances or 5 (or even 4) identical chars, due to swaps
+# 5 Date-Dist is a 'tighter' control  as a result
+# 6. Date-Dist took 184s for 10.1m dob-pairs
+# 7. LV took 513s for 10.1m dob-pairs
+# 8. Date-Dist took 36% of the time that LV did
+
+#-------------------------------------------------------------------------------
