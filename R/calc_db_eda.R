@@ -11,7 +11,7 @@ source("R/format_db_functions.R")
 # Part One: Table Formatting - Required prior due to multiple joins later
 
 # Set up connection to the DB
-con <- nhsbsaR::con_nhsbsa(database = "DALP")
+con <- nhsbsaR::con_nhsbsa(database = "DALP", dsn = NULL)
 
 # Db pds table
 pds_db <- con %>%
@@ -33,7 +33,7 @@ eib <- eib_db %>%
 # Format PDS data
 pds <-pds_db %>%
   select(RECORD_ID, DOB, SURNAME, FORENAME, POSTCODE) %>%
-  format_db_postcode_simple(., POSTCODE) %>%
+  format_db_postcode(., POSTCODE) %>%
   format_db_name(., FORENAME) %>%
   format_db_name(., SURNAME) %>%
   format_db_date(., DOB) %>%

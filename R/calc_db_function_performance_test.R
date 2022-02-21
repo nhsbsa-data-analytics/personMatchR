@@ -84,8 +84,9 @@ pds <- pds_db %>%
     TMP = 1,
     ID = row_number(DOB_TWO)
   ) %>%
-  #filter(ID <= 90000) %>%
-  select(-ID)
+  filter(ID <= 90000) %>%
+  select(-ID) %>%
+  distinct()
 
 # Full join
 all <- eib %>%
@@ -120,7 +121,7 @@ DBI::dbDisconnect(con)
 # 2. Date-Dist is similar, although *not* identical, to LV, thus outputs vary
 # 3. Date-dist in effect is 6 identical characters
 # 4. LV dist of 2 can instances or 5 (or even 4) identical chars, due to swaps
-# 5 Date-Dist is a 'tighter' control  as a result
+# 5. Date-Dist is a 'tighter' control  as a result
 # 6. Date-Dist took 184s for 10.1m dob-pairs
 # 7. LV took 513s for 10.1m dob-pairs
 # 8. Date-Dist took 36% of the time that LV did
