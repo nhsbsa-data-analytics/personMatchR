@@ -35,7 +35,7 @@ find_matches <- function(df1, df2, inc_no_match = FALSE, sw_forename = 0.3, sw_s
     dplyr::mutate(
       SURNAME = format_name(SURNAME),
       FORENAME = format_name(FORENAME),
-      DOB = purrr::map_chr(DOB, format_dob),
+      DOB = purrr::map_chr(as.character(DOB), format_dob),
       POSTCODE = purrr::map_chr(POSTCODE, format_postcode)
     )
 
@@ -45,7 +45,7 @@ find_matches <- function(df1, df2, inc_no_match = FALSE, sw_forename = 0.3, sw_s
     dplyr::mutate(
       SURNAME = format_name(SURNAME),
       FORENAME = format_name(FORENAME),
-      DOB = purrr::map_chr(DOB, format_dob),
+      DOB = purrr::map_chr(as.character(DOB), format_dob),
       POSTCODE = purrr::map_chr(POSTCODE, format_postcode)
     )
 
