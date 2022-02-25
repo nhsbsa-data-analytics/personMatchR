@@ -6,22 +6,23 @@ library(dplyr)
 source("R/format_functions.R")
 
 # Data
-df1 = read.csv("C:/Users/ADNSH/Desktop/TEST_DATA_1000000.csv") %>%
-  sample_n(100000)
+df1 = read.csv("C:/Users/ADNSH/Desktop/TEST_DATA_10M.csv") %>%
+  dplyr::sample_n(1000000)
+gc()
 
 # Data
-df2 = read.csv("C:/Users/ADNSH/Desktop/TEST_DATA_1000000.csv") %>%
-  sample_n(100000)
+df2 = read.csv("C:/Users/ADNSH/Desktop/TEST_DATA_10M.csv") %>%
+  dplyr::sample_n(1000000)
+gc()
 
 df2 <- df2 %>%
-  rename(
+  dplyr::rename(
     ID_TWO = ID,
     FORENAME_TWO = FORENAME,
     SURNAME_TWO = SURNAME,
     DOB_TWO = DOB,
     POSTCODE_TWO = POSTCODE
   )
-
 
 find_all_matches = function(
   df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
@@ -89,7 +90,7 @@ find_all_matches = function(
           {{ dob_two }},
           {{ postcode_two }}
         ) %>%
-        rename(
+        dplyr::rename(
           {{ forename_one }} := {{ forename_two }},
           {{ surname_one }} := {{ surname_two }},
           {{ dob_one }} := {{ dob_two }},
@@ -114,7 +115,7 @@ find_all_matches = function(
     dplyr::select({{ id_one }}, {{ id_two }}, everything())
 
   # Remove exact matches from primary df
-  df_one <- df_one %>%
+  remain <- df_one %>%
     dplyr::anti_join(y = exact %>% select({{ id_one }}))
 
   # Permutation join function
@@ -137,7 +138,7 @@ find_all_matches = function(
   id_pairs <- lapply(
     X = 1:9,
     FUN = perm_join,
-    df_one = df_one,
+    df_one = remain,
     df_two = df_two,
     id_one = {{ id_one }},
     id_two = {{ id_two }}
@@ -188,7 +189,7 @@ find_all_matches = function(
         )
     ) %>%
     dplyr::filter(ED_DOB <= 2 & JW_FORENAME >= 0.75) %>%
-    distinct()
+    dplyr::distinct()
 
   # Filter permutation output by feasible date-pair list
   cross <- id_pairs %>%
@@ -222,6 +223,26 @@ find_all_matches = function(
   matches <- match %>%
     rbind(exact)
 
+  # Non-matches
+  non_matches <- df_one %>%
+    dplyr::anti_join(y = matches %>% dplyr::select({{ id_one }})) %>%
+    dplyr::mutate(
+      {{ id_two}} := NA,
+      {{ forename_two }} := NA,
+      {{ surname_two }} := NA,
+      {{ dob_two }} := NA,
+      {{ postcode_two }} := NA,
+      JW_SURNAME = NA,
+      JW_FORENAME = NA,
+      JW_POSTCODE = NA,
+      ED_DOB = NA,
+      MATCH_TYPE = "No Match"
+    )
+
+  # Add the non-matches
+  matches <- matches %>%
+    rbind(non_matches)
+
   # return result
   return(matches)
 }
@@ -232,7 +253,7 @@ output <- find_all_matches(
   df2, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO
 )
 
-# Disconnect
-DBI::dbDisconnect(con)
+# Check match type count
+table(output$MATCH_TYPE)
 
 #-------------------------------------------------------------------------------

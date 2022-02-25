@@ -15,7 +15,7 @@
 format_name <- function(df, name){
 
   df %>%
-    mutate(
+    dplyr::mutate(
       # Remove non-alpha chars and convert emtpy string to NA
       {{ name }} := toupper(gsub("[^[:alpha:]]", "", {{ name }})),
       {{ name }} := ifelse({{ name }} == "", NA, {{ name }})
@@ -38,7 +38,7 @@ format_name <- function(df, name){
 format_dob <- function(df, dob){
 
   df %>%
-    mutate(
+    dplyr::mutate(
       # Remove hyphens and upper case
       {{ dob }} := gsub('/', '-', {{ dob }}),
       {{ dob }} := toupper({{ dob }}),
@@ -80,21 +80,21 @@ format_postcode = function(df, id, postcode){
 
   # Process df
   df %>%
-    mutate(
+    dplyr::mutate(
       {{ postcode }} := toupper(gsub("[^[:alnum:]]", "", {{ postcode }}))
     ) %>%
     tidytext::unnest_characters(., 'CHAR', {{ postcode }}, to_lower = F) %>%
-    mutate(NUM = ifelse(grepl("[1-9]", CHAR), 1, 0)) %>%
-    group_by({{ id }}) %>%
+    dplyr::mutate(NUM = ifelse(grepl("[1-9]", CHAR), 1, 0)) %>%
+    dplyr::group_by({{ id }}) %>%
     # Determine total chars and char position per postcode
-    mutate(
+    dplyr::mutate(
       ROW = row_number(),
       LEN = max(ROW)
     ) %>%
-    ungroup() %>%
+    dplyr::ungroup() %>%
     # Apply help functions depending on postcode length and char position
-    mutate(
-      CHAR = case_when(
+    dplyr::mutate(
+      CHAR = dplyr::case_when(
         # Postcode Length 7
         LEN == 7 & ROW == 1 ~ replace_number_for_char(CHAR),
         LEN == 7 & ROW == 2 ~ replace_number_for_char(CHAR),
@@ -117,14 +117,14 @@ format_postcode = function(df, id, postcode){
         T ~ CHAR
       )
     ) %>%
-    select(-c(NUM, LEN)) %>%
-    group_by({{ id }}) %>%
+    dplyr::select(-c(NUM, LEN)) %>%
+    dplyr::group_by({{ id }}) %>%
     # Paste split chars into single column
-    mutate({{ postcode }} := paste(CHAR, collapse = "")) %>%
-    ungroup() %>%
+    dplyr::mutate({{ postcode }} := paste(CHAR, collapse = "")) %>%
+    dplyr::ungroup() %>%
     # Select and distinct to remove split-char rows
-    select(-c(CHAR, ROW)) %>%
-    distinct()
+    dplyr::select(-c(CHAR, ROW)) %>%
+    dplyr::distinct()
 }
 
 #' Calculates 9 permutations for primary-lookup join prior to match scoring
@@ -144,42 +144,42 @@ format_postcode = function(df, id, postcode){
 calc_permutations <- function(df, forename, surname, postcode, dob){
 
   df %>%
-    mutate(
+    dplyr::mutate(
       # Perm 1-3 require full match of dob with 2 of forename, surname, postcode
       PERM1 = paste0({{ forename }}, {{ surname }}, {{ dob }}),
       PERM2 = paste0({{ forename }}, {{ postcode }}, {{dob}}),
       PERM3 = paste0({{ surname }}, {{ postcode }}, {{ dob }}),
-      # First char forename, plus 4 chars of surname and postcode
+      # First char forename - 4 chars of surname & postcode
       PERM4 = paste0(
         substr({{ forename }}, 1, 1),
         substr({{ surname }}, 1, 4),
         substr({{ postcode }}, 1, 4)
       ),
-      # First 3 chars forename, plus 3 chars of surname and postcode
+      # First 3 chars forename - 2 chars surname & postcode
       PERM5 = paste0(
         substr({{ forename }}, 1, 3),
         substr({{ surname }}, 1, 2),
         substr({{ postcode }}, 1, 2)
       ),
-      # Last 3 chars forename, plus 3 chars of surname and postcode
+      # Last 3 chars forename - 3 chars of surname & postcode
       PERM6 = paste0(
         substr({{ forename }}, nchar({{ forename }})-2, 3),
-        substr({{ surname }}, 1, 2),
-        substr({{ postcode }}, 1, 2)
+        substr({{ surname }}, 1, 3),
+        substr({{ postcode }}, 1, 3)
       ),
-      # First 3 consonants, plus 3 chars of surname and postcode
+      # First 3 consonants - 3 chars of surname & postcode
       PERM7 = paste0(
         substr(gsub('[AEIOU]', '', {{ forename}}), 1, 3),
-        substr({{ surname }}, 1, 2),
-        substr({{ postcode }}, 1, 2)
+        substr({{ surname }}, 1, 3),
+        substr({{ postcode }}, 1, 3)
       ),
-      # All consonants, plus 4 chars of surname and postcode
+      # All consonants - 2 chars of surname & postcode
       PERM8 = paste0(
         gsub('[AEIOU]', '', {{ forename}}),
         substr({{ surname }}, 1, 2),
         substr({{ postcode }}, 1, 2)
       ),
-      # All vowels, plus 3 chars of surname and postcode
+      # All vowels - 3 chars of surname & postcode
       PERM9 = paste0(
         gsub('[B-DF-HJ-NP-TV-Z]', '', {{ forename }}),
         substr({{ surname }}, 1, 3),
