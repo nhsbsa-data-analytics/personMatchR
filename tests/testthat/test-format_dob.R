@@ -57,8 +57,8 @@ test_that("YMD_Char", {
 
 test_that("MDY", {
   # define test dates
-  test_value <- "03/07/2021"
-  expected_results <- "20210307"
+  test_value <- "03/13/2021"
+  expected_results <- "20210313"
   # run function
   expect_equal(format_dob(test_value), expected_results)
 })

@@ -8,35 +8,92 @@
 #'
 #' @examples
 #' format_dob(dob = "2019-Mar-21")
-suppressWarnings({
-  format_dob <- function(dob) {
-    # use anytime library
-    # handle missing vlues
-    if(is.na(dob) || is.null(dob)){
-      return (NA)
-    }
+format_dob <- function(dob) {
 
-    if (!is.na(dob) || !is.null(dob)) {
-      dob_final <- anytime::anydate(dob)
-      # return(format(dob_final, format = "%Y%m%d"))
-    }
+  if(is.na(dob) || is.null(dob)){
+    # handle missing values first
+    return (NA)
 
-    if ((!is.na(dob) || !is.null(dob))
-               & is.na(anytime::anydate(dob))
-               & !is.na(lubridate::dmy(dob))){
-      dob_final <- lubridate::dmy(dob)
-    }
+  } else {
 
-    if ((!is.na(dob) || !is.null(dob))
-        & is.na(anytime::anydate(dob))
-        & !is.na(lubridate::ydm(dob))){
-      dob_final <- lubridate::ydm(dob)
-    }
+    # Try to parse using lubridate (returns NA quietly if unable to parse)
+    dob_final <- lubridate::fast_strptime(
+      x = dob,
+      # American way last
+      format = c(
+        # Ymd
+        "%Y-%m-%d",
+        "%Y%m%d",
+        "%Y/%m/%d",
+        "%Y %m %d",
+        "%Y-%b-%d",
+        "%Y%b%d",
+        "%Y/%b/%d",
+        "%Y %b %d",
+        # dmY
+        "%d-%m-%Y",
+        "%d%m%Y",
+        "%d/%m/%Y",
+        "%d %m %Y",
+        "%d-%b-%Y",
+        "%d%b%Y",
+        "%d/%b/%Y",
+        "%d %b %Y",
+        # dmy
+        "%d-%m-%y",
+        "%d%m%y",
+        "%d/%m/%y",
+        "%d %m %y",
+        "%d-%b-%y",
+        "%d%b%y",
+        "%d/%b/%y",
+        "%d %b %y",
+        # ymd
+        "%y-%m-%d",
+        "%y%m%d",
+        "%y/%m/%d",
+        "%y %m %d",
+        "%y-%b-%d",
+        "%y%b%d",
+        "%y/%b/%d",
+        "%y %b %d",
+        # Ydm
+        "%Y-%d-%m",
+        "%Y%d%m",
+        "%Y/%d/%m",
+        "%Y %d %m",
+        "%Y-%d-%b",
+        "%Y%d%b",
+        "%Y/%d/%b",
+        "%Y %d %b",
+        "%y %b %d",
+        # mdY
+        "%m-%d-%Y",
+        "%m%d%Y",
+        "%m/%d/%Y",
+        "%m %d %Y",
+        "%b-%d-%Y",
+        "%b%d%Y",
+        "%b/%d/%Y",
+        "%b %d %Y",
 
-    if(is.na(dob_final)){
-      stop("Not a valid date of birth", call. = FALSE)
-    }
+        # mdy
+        "%m-%d-%y",
+        "%m%d%y",
+        "%m/%d/%y",
+        "%m %d %y",
+        "%b-%d-%y",
+        "%b%d%y",
+        "%b/%d/%y",
+        "%b %d %y"
+      )
+    )
 
-    return(format(dob_final, format = "%Y%m%d"))
   }
-})
+
+  if(is.na(dob_final)){
+    stop("Not a valid date of birth", call. = FALSE)
+  }
+
+  return(format(dob_final, format = "%Y%m%d"))
+}
