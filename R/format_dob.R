@@ -23,7 +23,7 @@ suppressWarnings({
 
     if ((!is.na(dob) || !is.null(dob))
                & is.na(anytime::anydate(dob))
-               & !is.na(lubridate::dmy(dob))){b
+               & !is.na(lubridate::dmy(dob))){
       dob_final <- lubridate::dmy(dob)
     }
 
