@@ -11,7 +11,7 @@ source("R/format_db_functions.R")
 # Part One: Table Formatting - Required prior due to multiple joins later
 
 # Set up connection to the DB
-con <- nhsbsaR::con_nhsbsa(database = "DALP", dsn = NULL)
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
 
 # Db pds table
 pds_db <- con %>%
@@ -79,14 +79,42 @@ pds_db <- pds_db %>%
     POSTCODE_PDS = POSTCODE
   )
 
+Sys.time()
+
 # Results
 results <- find_db_matches(
   eib_db, REFERENCE, FORENAME, SURNAME, DOB, POSTCODE,
   pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS
-)
+  ) %>%
+  collect()
 
-# Print results
-results
+Sys.time()
+
+# Check results
+eib_db %>% tally()
+results %>% tally()
+
+a <- results %>% collect()
+
+
+
+z <- eib_db %>%
+  select(FORENAME) %>%
+  mutate(TMP = 1) %>%
+  full_join(
+    pds_db %>%
+      select(FORENAME_PDS) %>%
+      mutate(TMP = 1)
+  ) %>%
+  select(-TMP)
+
+calc_db_jw_threshold(
+  df = z,
+  name_one = FORENAME,
+  name_two = FORENAME_PDS,
+  threshold_val = 0.75,
+  col_name = 'JW_FORENAME'
+)
 
 # Disconnect
 DBI::dbDisconnect(con)

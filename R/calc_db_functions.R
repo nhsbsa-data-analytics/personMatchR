@@ -15,14 +15,14 @@ dob_lv_filter <- function(df, dob_one, dob_two){
 
   # Rename df for convenience
   df <- df %>%
-    select({{ dob_one }}, {{ dob_two }}) %>%
-    distinct()
+    dplyr::select({{ dob_one }}, {{ dob_two }}) %>%
+    dplyr::distinct()
 
   # Function to apply multiple times
   dob_substr <- function(df, sub_one, sub_two, sub_three){
 
     df %>%
-      filter(
+      dplyr::filter(
         SUBSTR({{ dob_one }}, sub_one, 1) == SUBSTR({{ dob_two }}, sub_one, 1) |
           # Tokens share same second letter
           SUBSTR({{ dob_one }}, sub_two, 1) == SUBSTR({{ dob_two }}, sub_two, 1) |
@@ -142,7 +142,7 @@ name_db_filter <- function(df, name_one, name_two){
 calc_permutations <- function(df, forename, surname, postcode, dob){
 
   df %>%
-    mutate(
+    dplyr::mutate(
       # Perm 1-3 require full match of dob with 2 of forename, surname, postcode
       PERM1 = paste0({{ forename }}, {{ surname }}, {{ dob }}),
       PERM2 = paste0({{ forename }}, {{ postcode }}, {{dob}}),
@@ -153,31 +153,31 @@ calc_permutations <- function(df, forename, surname, postcode, dob){
         substr({{ surname }}, 1, 4),
         substr({{ postcode }}, 1, 4)
         ),
-      # First 3 chars forename, plus 3 chars of surname and postcode
+      # First 3 chars forename - 2 chars of surname & postcode
       PERM5 = paste0(
         substr({{ forename }}, 1, 3),
         substr({{ surname }}, 1, 2),
         substr({{ postcode }}, 1, 2)
       ),
-      # Last 3 chars forename, plus 3 chars of surname and postcode
+      # Last 3 chars forename - 3 chars of surname & postcode
       PERM6 = paste0(
         SUBSTR({{ forename }}, nchar({{ forename }})-2, 3),
-        substr({{ surname }}, 1, 2),
-        substr({{ postcode }}, 1, 2)
+        substr({{ surname }}, 1, 3),
+        substr({{ postcode }}, 1, 3)
       ),
-      # First 3 consonants, plus 3 chars of surname and postcode
+      # First 3 consonants - 3 chars of surname & postcode
       PERM7 = paste0(
         substr(REGEXP_REPLACE({{ forename}}, '[AEIOU]', ''), 1, 3),
-        substr({{ surname }}, 1, 2),
-        substr({{ postcode }}, 1, 2)
+        substr({{ surname }}, 1, 3),
+        substr({{ postcode }}, 1, 3)
       ),
-      # All consonants, plus 4 chars of surname and postcode
+      # All consonants - 2 chars of surname & postcode
       PERM8 = paste0(
         REGEXP_REPLACE({{ forename}}, '[AEIOU]', ''),
         substr({{ surname }}, 1, 2),
         substr({{ postcode }}, 1, 2)
       ),
-      # All vowels, plus 3 chars of surname and postcode
+      # All vowels - 3 chars of surname & postcode
       PERM9 = paste0(
         REGEXP_REPLACE({{ forename }}, '[B-DF-HJ-NP-TV-Z]', ''),
         substr({{ surname }}, 1, 3),
@@ -208,13 +208,13 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
 
   # Distinct df to calculate JW scores for
   output <- df %>%
-    rename(
+    dplyr::rename(
       NAME_ONE := {{ name_one }},
       NAME_TWO := {{ name_two }}
     ) %>%
-    distinct() %>%
+    dplyr::distinct() %>%
     #name_db_filter(., NAME_ONE, NAME_TWO) %>%
-    mutate(ID = row_number(NAME_ONE))
+    dplyr::mutate(ID = row_number(NAME_ONE))
 
   # Pull the connection
   db_connection <- output$src$con
@@ -247,14 +247,16 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
   "
   )
 
+  # Join two SQL outputs
   output <- inner_join(
     x = dplyr::tbl(db_connection, dplyr::sql(sql_query_one)),
     y = dplyr::tbl(db_connection, dplyr::sql(sql_query_two))
     )
 
+  # Generate SIM-approx
   output <- output %>%
-    group_by(ID) %>%
-    mutate(
+    dplyr::group_by(ID) %>%
+    dplyr::mutate(
       # NOTE: char-distance is ignored, as only approx calculation
       M = n(),
       # Assume max transpositions to speed up approx calculation
@@ -270,15 +272,15 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
       JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
       #JW_APPROX = SIM + (4 * 0.1 * (1 - SIM))
     ) %>%
-    ungroup() %>%
+    dplyr::ungroup() %>%
     # Filter by threshold value
-    filter(JW_APPROX >= threshold_val) %>%
-    select(NAME_ONE, NAME_TWO, JW_APPROX) %>%
-    distinct() %>%
-    mutate(JW_APPROX = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
-    filter(JW_APPROX >= threshold_val) %>%
-    rename_at("JW_APPROX", ~col_name) %>%
-    rename(
+    dplyr::filter(JW_APPROX >= threshold_val) %>%
+    dplyr::select(NAME_ONE, NAME_TWO, JW_APPROX) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(JW_APPROX = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
+    dplyr::filter(JW_APPROX >= threshold_val) %>%
+    dplyr::rename_at("JW_APPROX", ~col_name) %>%
+    dplyr::rename(
       {{ name_one }} := NAME_ONE,
       {{ name_two }} := NAME_TWO
     )
@@ -340,10 +342,10 @@ find_db_matches <- function(
 
   # Exact matches
   exact <- df_one %>%
-    select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
-    inner_join(
+    dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
+    dplyr::inner_join(
       y = df_two %>%
-        select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO),
+        dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO),
       by = c(
         "FORENAME_ONE" = "FORENAME_TWO",
         "SURNAME_ONE" = "SURNAME_TWO",
@@ -351,8 +353,8 @@ find_db_matches <- function(
         "POSTCODE_ONE" = "POSTCODE_TWO"
       )
     ) %>%
-    distinct() %>%
-    mutate(
+    dplyr::distinct() %>%
+    dplyr::mutate(
       FORENAME_TWO = FORENAME_ONE,
       SURNAME_TWO = SURNAME_ONE,
       DOB_TWO = DOB_ONE,
@@ -366,7 +368,7 @@ find_db_matches <- function(
     dplyr::select(ID_ONE, ID_TWO, everything())
 
   # Remaining records
-  df_one <- df_one %>%
+  remain <- df_one %>%
     dplyr::anti_join(y = exact, by = "ID_ONE")
 
   # List of permutation-join columns
@@ -376,13 +378,13 @@ find_db_matches <- function(
   id_pairs <- perm_num %>%
     purrr::map(~{
 
-      df_one %>%
-        select(ID_ONE, {{.x}}) %>%
-        inner_join(
+      remain %>%
+        dplyr::select(ID_ONE, {{.x}}) %>%
+        dplyr::inner_join(
           df_two %>%
-            select(ID_TWO, {{.x}})
+            dplyr::select(ID_TWO, {{.x}})
         ) %>%
-        select(ID_ONE, ID_TWO)
+        dplyr::select(ID_ONE, ID_TWO)
     }) %>%
     purrr::reduce(function(x, y) union(x, y)) %>%
     dplyr::distinct()
@@ -407,9 +409,13 @@ find_db_matches <- function(
     dob_two = DOB_TWO
   )
 
+  # Filter permutation output by feasible date-pair list
+  cross <- id_pairs %>%
+    dplyr::inner_join(eligible_dates)
+
   # Generate a list of feasible forename pairs
   eligible_names <- calc_db_jw_threshold(
-    df = id_pairs,
+    df = cross,
     name_one = FORENAME_ONE,
     name_two = FORENAME_TWO,
     threshold_val = 0.75,
@@ -417,39 +423,98 @@ find_db_matches <- function(
   )
 
   # Filter permutation output by feasible date-pair list
-  cross <- id_pairs %>%
-    dplyr::inner_join(eligible_dates) %>%
+  cross <- cross %>%
     dplyr::inner_join(eligible_names)
+
+  # Get JW scores for surname
+  surname_jw_score <- calc_db_jw_threshold(
+    df = cross,
+    name_one = SURNAME_ONE,
+    name_two = SURNAME_TWO,
+    threshold_val = 0.85,
+    col_name = 'JW_SURNAME'
+  )
+
+  # Get JW scores for postcode
+  postcode_jw_score <- calc_db_jw_threshold(
+    df = cross,
+    name_one = POSTCODE_ONE,
+    name_two = POSTCODE_TWO,
+    threshold_val = 0.85,
+    col_name = 'JW_POSTCODE'
+  )
 
   # Generate a list
   match <- cross %>%
-    mutate(
-      JW_SURNAME = UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO),
-      JW_POSTCODE = UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO),
+    dplyr::left_join(y = surname_jw_score) %>%
+    dplyr::left_join(y = postcode_jw_score)
+
+  print("jw left join")
+  print(match)
+
+  match <- match %>%
+    dplyr::mutate(
+      JW_SURNAME = ifelse(!is.na(JW_SURNAME), JW_SURNAME, 0),
+      JW_POSTCODE = ielse(!is.na(JW_POSTCODE), JW_POSTCODE, 0),
       ED_DOB = ifelse(DOB_ONE == DOB_TWO, 0, 2)
-    ) %>%
-    # limit to key fields and score matches
-    dplyr::mutate(MATCH_TYPE = case_when(
-      (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
-      (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
-      (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
-      (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-      (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-      (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
-      TRUE ~ "No Match"
     )
-    ) %>%
+
+  print("if else")
+  print(match)
+
+  # Generate confident matches
+  match <- match %>%
+    mutate(
+      MATCH_TYPE = dplyr::case_when(
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
+        (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+        (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+        (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
+        TRUE ~ "No Match"
+        )
+      ) %>%
     # filter to only confident matches
     dplyr::filter(MATCH_TYPE != "No Match")
 
+  print("match confidence done")
+
+  print(match)
+
   # Final Results
+  match <- match %>%
+    dplyr::union_all(exact)
+
+  print("match_union_done")
+
+  # Determine non-matches
+  non_matches <- df_one %>%
+    dplyr::anti_join(y = match %>% dplyr::select(ID_ONE)) %>%
+    dplyr::mutate(
+      ID_TWO = NA,
+      FORENAME_TWO = NA,
+      SURNAME_TWO= NA,
+      DOB_TWO = NA,
+      POSTCODE_TWO = NA,
+      JW_SURNAME = NA,
+      JW_FORENAME = NA,
+      JW_POSTCODE = NA,
+      ED_DOB = NA,
+      MATCH_TYPE = "No Match"
+    )
+
+  print("non_match_done")
+
+  # Add non-matches
   all_match <- match %>%
-    dplyr::union_all(exact) %>%
+    dplyr::union_all(non_matches) %>%
+    # Calculate match_count per primary dfID
     dplyr::group_by(ID_ONE) %>%
     dplyr::mutate(MATCH_COUNT = dplyr::n_distinct(ID_TWO)) %>%
     dplyr::ungroup() %>%
     # Rename back to OG column names
-    rename(
+    dplyr::rename(
       {{ id_one }} := ID_ONE,
       {{ forename_one }} := FORENAME_ONE,
       {{ surname_one }} := SURNAME_ONE,
@@ -461,6 +526,8 @@ find_db_matches <- function(
       {{ dob_two }} := DOB_TWO,
       {{ postcode_two }} := POSTCODE_TWO
     )
+
+  print("final_union_done")
 
   # Return data
   return(all_match)

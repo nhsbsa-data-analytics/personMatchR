@@ -16,7 +16,7 @@
 format_db_name <- function(df, name_col){
 
   df %>%
-    mutate(
+    dplyr::mutate(
       # Remove non-alpha chars and convert emtpy string to NA
       {{ name_col }} := toupper(REGEXP_REPLACE({{ name_col }}, "[^[:alpha:]]", "")),
       {{ name_col }} := ifelse(nchar({{ name_col }}) == 0, NA, {{ name_col }})
@@ -40,8 +40,8 @@ format_db_name <- function(df, name_col){
 format_db_date <- function(df, date_col){
 
   df %>%
-    mutate(
-      {{ date_col }} := case_when(
+    dplyr::mutate(
+      {{ date_col }} := dplyr::case_when(
         REGEXP_INSTR({{ date_col }}, '[A-Z]') == 0 ~ as.numeric({{ date_col }}),
         REGEXP_INSTR({{ date_col }}, '[A-Z]') == 1 ~ as.numeric(TO_CHAR({{ date_col }}, "YYYYMMDD")),
         nchar({{ date_col }}) == 0 ~ NA
@@ -66,14 +66,14 @@ format_db_postcode <- function(df, postcode){
 
   # Simple formatting of postcode
   df <- df %>%
-    mutate(POSTCODE_OLD := {{ postcode }})
+    dplyr::mutate(POSTCODE_OLD := {{ postcode }})
 
   # Just Process distinct postcodes
   output <- df %>%
-    select(POSTCODE_OLD, {{ postcode }}) %>%
-    filter(!is.na({{ postcode }})) %>%
-    distinct() %>%
-    mutate(
+    dplyr::select(POSTCODE_OLD, {{ postcode }}) %>%
+    dplyr::filter(!is.na({{ postcode }})) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(
       # Format and split postcode
       {{ postcode }} := ifelse(nchar({{ postcode }}) == 0, NA, {{ postcode }}),
       {{ postcode }} := toupper(REGEXP_REPLACE({{ postcode }}, "[^[:alnum:]]", "")),
@@ -81,7 +81,7 @@ format_db_postcode <- function(df, postcode){
       LEN = nchar({{ postcode }}),
 
       # Long case-statement to correct postcode errors
-      {{ postcode }} := case_when(
+      {{ postcode }} := dplyr::case_when(
 
         # 7 Character postcodes
         # Postcode Length 7 - # 1st Character
@@ -151,8 +151,8 @@ format_db_postcode <- function(df, postcode){
 
   # Rejoin back ot original data
   df <- df %>%
-    left_join(y = output, by = "POSTCODE_OLD") %>%
-    select(-c(LEN, POSTCODE_OLD))
+    dplyr::left_join(y = output, by = "POSTCODE_OLD") %>%
+    dplyr::select(-c(LEN, POSTCODE_OLD))
 
   # Return formatted df
   return(df)
