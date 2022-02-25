@@ -447,24 +447,12 @@ find_db_matches <- function(
   # Generate a list
   match <- cross %>%
     dplyr::left_join(y = surname_jw_score) %>%
-    dplyr::left_join(y = postcode_jw_score)
-
-  print("jw left join")
-  print(match)
-
-  match <- match %>%
+    dplyr::left_join(y = postcode_jw_score) %>%
     dplyr::mutate(
-      JW_SURNAME = ifelse(!is.na(JW_SURNAME), JW_SURNAME, 0),
-      JW_POSTCODE = ielse(!is.na(JW_POSTCODE), JW_POSTCODE, 0),
-      ED_DOB = ifelse(DOB_ONE == DOB_TWO, 0, 2)
-    )
-
-  print("if else")
-  print(match)
-
-  # Generate confident matches
-  match <- match %>%
-    mutate(
+      #JW_SURNAME = ifelse(!is.na(JW_SURNAME), JW_SURNAME, 0),
+      #JW_POSTCODE = ielse(!is.na(JW_POSTCODE), JW_POSTCODE, 0),
+      ED_DOB = ifelse(DOB_ONE == DOB_TWO, 0, 2),
+      # Generate confident matches
       MATCH_TYPE = dplyr::case_when(
         (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
         (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
