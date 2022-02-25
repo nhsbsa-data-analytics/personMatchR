@@ -79,42 +79,22 @@ pds_db <- pds_db %>%
     POSTCODE_PDS = POSTCODE
   )
 
-Sys.time()
-
 # Results
 results <- find_db_matches(
   eib_db, REFERENCE, FORENAME, SURNAME, DOB, POSTCODE,
   pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS
-  ) %>%
-  collect()
+  )
 
 Sys.time()
 
-# Check results
-eib_db %>% tally()
-results %>% tally()
+# Write the table back to the DB with indexes
+results %>%
+  compute(
+    name = "INT623_EIBBS_TEST",
+    temporary = FALSE
+  )
 
-a <- results %>% collect()
-
-
-
-z <- eib_db %>%
-  select(FORENAME) %>%
-  mutate(TMP = 1) %>%
-  full_join(
-    pds_db %>%
-      select(FORENAME_PDS) %>%
-      mutate(TMP = 1)
-  ) %>%
-  select(-TMP)
-
-calc_db_jw_threshold(
-  df = z,
-  name_one = FORENAME,
-  name_two = FORENAME_PDS,
-  threshold_val = 0.75,
-  col_name = 'JW_FORENAME'
-)
+Sys.time()
 
 # Disconnect
 DBI::dbDisconnect(con)
