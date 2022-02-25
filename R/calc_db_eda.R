@@ -80,21 +80,17 @@ pds_db <- pds_db %>%
   )
 
 # Results
-results <- find_db_matches(
+results <- find_db_matches_three(
   eib_db, REFERENCE, FORENAME, SURNAME, DOB, POSTCODE,
   pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS
   )
 
-Sys.time()
-
 # Write the table back to the DB with indexes
 results %>%
   compute(
-    name = "INT623_EIBBS_TEST",
+    name = "INT623_EIBBS_TEST3",
     temporary = FALSE
   )
-
-Sys.time()
 
 # Disconnect
 DBI::dbDisconnect(con)

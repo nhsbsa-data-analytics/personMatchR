@@ -741,7 +741,7 @@ find_db_matches_two <- function(
 find_db_matches_three <- function(
   df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
   df_two, id_two, forename_two, surname_two, dob_two, postcode_two
-){
+  ){
 
   # For convenience rename columns
   df_one <- df_one %>%
@@ -833,23 +833,11 @@ find_db_matches_three <- function(
   )
 
   # Filter permutation output by feasible date-pair list
-  cross <- id_pairs %>%
-    dplyr::inner_join(eligible_dates)
-
-  # Generate a list of feasible forename pairs
-  eligible_names <- calc_db_jw_threshold(
-    df = cross,
-    name_one = FORENAME_ONE,
-    name_two = FORENAME_TWO,
-    threshold_val = 0.75,
-    col_name = 'JW_FORENAME'
-  )
-
-  # Filter permutation output by feasible date-pair list
-  match <- cross %>%
-    dplyr::inner_join(eligible_names) %>%
+  match <- id_pairs %>%
+    dplyr::inner_join(eligible_dates) %>%
     dplyr::mutate(
       # NAs for zeros
+      JW_FORENAME = UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO),
       JW_SURNAME = UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO),
       JW_POSTCODE = UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO),
       ED_DOB = ifelse(DOB_ONE == DOB_TWO, 0, 2),
