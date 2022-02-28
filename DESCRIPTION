@@ -41,7 +41,8 @@ Imports:
     dplyr,
     stringr,
     stringdist,
-    anytime
+    anytime,
+    lubridate
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

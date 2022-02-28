@@ -143,3 +143,11 @@ test_that("MW14: Match weighting defined weightings applied", {
 
   expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
 })
+
+# tests for dob formatting
+test_that("DOB01: Exact matches against multiple DOB variations", {
+  test_run <- find_matches(readRDS("./testdata/test_dataset_a.rds"), readRDS("./testdata/test_dataset_DOB.rds"), inc_no_match = FALSE, sw_forename = 0.25, sw_surname = 0.25, sw_dob = 0.25, sw_postcode = 0.25)
+  expected_results <- readRDS("./testdata/test_match_results_DOB01.rds")
+
+  expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+})
