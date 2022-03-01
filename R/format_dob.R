@@ -91,8 +91,7 @@ format_dob <- function(dob) {
   }
 
   if(is.na(dob_final)){
-    stop("Not a valid date of birth", call. = FALSE)
-    #return(NA)
+    return(NA)
   }
 
   return(format(dob_final, format = "%Y%m%d"))
