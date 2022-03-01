@@ -140,5 +140,3 @@ test_that("DMY_Char", {
   # run function
   expect_equal(format_dob(test_value), expected_results)
 })
-
-

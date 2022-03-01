@@ -9,11 +9,9 @@
 #' @examples
 #' format_dob(dob = "2019-Mar-21")
 format_dob <- function(dob) {
-
-  if(is.na(dob) || is.null(dob)){
+  if (is.na(dob) || is.null(dob)) {
     # handle missing values first
-    return (NA)
-
+    return(NA)
   } else {
 
     # Try to parse using lubridate (returns NA quietly if unable to parse)
@@ -87,10 +85,9 @@ format_dob <- function(dob) {
         "%b %d %y"
       )
     )
-
   }
 
-  if(is.na(dob_final)){
+  if (is.na(dob_final)) {
     return(NA)
   }
 
