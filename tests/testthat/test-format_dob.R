@@ -140,3 +140,11 @@ test_that("DMY_Char", {
   # run function
   expect_equal(format_dob(test_value), expected_results)
 })
+
+test_that("Error_Date", {
+  # define test dates
+  test_value <- "41/march/2005"
+  expected_results <- NA
+  # run function
+  expect_equal(format_dob(test_value), expected_results)
+})
