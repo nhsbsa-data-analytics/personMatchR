@@ -359,7 +359,7 @@ calc_db_threshold_edit <- function(df, name_one, name_two, threshold_val, col_na
     SELECT
     t.name_one,
     t.name_two,
-    UTL_MATCH.JARO_WINKLER(t.name_one, t.name_two)  as  ", col_name, "
+    UTL_MATCH.JARO_WINKLER(t.name_one, t.name_two)  as  jw
     FROM   (", dbplyr::sql_render(output), ")  t
     INNER JOIN
     sim
@@ -375,7 +375,8 @@ calc_db_threshold_edit <- function(df, name_one, name_two, threshold_val, col_na
   output <- dplyr::tbl(db_connection, dplyr::sql(sql_query)) %>%
     dplyr::rename(
       {{ name_one }} := NAME_ONE,
-      {{ name_two }} := NAME_TWO
+      {{ name_two }} := NAME_TWO,
+      {{ col_name }} := JW
     )
 
   # Return output
