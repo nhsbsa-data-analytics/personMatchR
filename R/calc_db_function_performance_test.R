@@ -17,7 +17,7 @@ eib_db <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_EIBSS"))
 
 #-------------------------------------------------------------------------------
-# Part One: Custom JW Calculation ~10m matches
+# Intro: matching base table
 
 # Just select forename
 eib <- eib_db %>%
@@ -39,7 +39,27 @@ all <- eib %>%
   full_join(pds) %>%
   distinct()
 
-# 10.7m distinct forename-pairs
+# Write the table back to the DB with indexes
+all %>%
+  compute(
+    name = "INT623_FORENAME_TEST",
+    temporary = FALSE
+  )
+
+# Disconnect
+DBI::dbDisconnect(con)
+
+#-------------------------------------------------------------------------------
+# Part One: Custom JW Calculation ~10m matches
+
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
+# Db eibss table
+all <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT623_FORENAME_TEST"))
+
+# Row count
 all %>% tally()
 
 # Time for 'normal' JW calculation: 10.7m = 36mins
@@ -72,6 +92,9 @@ DBI::dbDisconnect(con)
 #-------------------------------------------------------------------------------
 # Part Three: Custom DOB Distance Calculation ~10m matches
 
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
 # Just select dob
 eib <- eib_db %>%
   select(DOB_ONE = DOB) %>%
@@ -80,18 +103,33 @@ eib <- eib_db %>%
 # Just select dob
 pds <- pds_db %>%
   select(DOB_TWO = DOB) %>%
-  mutate(
-    TMP = 1,
-    ID = row_number(DOB_TWO)
-  ) %>%
-  filter(ID <= 90000) %>%
-  select(-ID) %>%
+  mutate(TMP = 1) %>%
   distinct()
 
 # Full join
 all <- eib %>%
   full_join(pds) %>%
   distinct()
+
+# Write the table back to the DB with indexes
+all %>%
+  compute(
+    name = "INT623_DOB_TEST",
+    temporary = FALSE
+  )
+
+# Disconnect
+DBI::dbDisconnect(con)
+
+#-------------------------------------------------------------------------------
+# Part One: Custom JW Calculation ~10m matches
+
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
+# Db eibss table
+all <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT623_DOB_TEST"))
 
 # 10.1m distinct forename-pairs
 all %>% tally()

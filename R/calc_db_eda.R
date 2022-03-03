@@ -80,7 +80,7 @@ pds_db <- pds_db %>%
   )
 
 # Results
-results <- find_db_matches_three(
+results <- find_db_matches_two(
   eib_db, REFERENCE, FORENAME, SURNAME, DOB, POSTCODE,
   pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS
   )
@@ -88,7 +88,7 @@ results <- find_db_matches_three(
 # Write the table back to the DB with indexes
 results %>%
   compute(
-    name = "INT623_EIBBS_TEST3",
+    name = "INT623_EIBBS_TEST4",
     temporary = FALSE
   )
 

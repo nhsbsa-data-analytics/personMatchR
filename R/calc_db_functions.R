@@ -289,6 +289,99 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
   return(output)
 }
 
+calc_db_threshold_edit <- function(df, name_one, name_two, threshold_val, col_name){
+
+  # Distinct df to calculate JW scores for
+  output <- df %>%
+    dplyr::rename(
+      NAME_ONE := {{ name_one }},
+      NAME_TWO := {{ name_two }}
+    ) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(ID = row_number(NAME_ONE))
+
+  # Pull the connection
+  db_connection <- output$src$con
+
+  # Formulate SQL query one, to split on character
+  sql_query <- dbplyr::build_sql(
+    con = db_connection,
+
+    "
+    WITH
+
+    one as (
+    SELECT id, name_one,
+    token || row_number() OVER (PARTITION BY id, name_one, token order by id, name_one, token)  as  token
+    FROM   (", dbplyr::sql_render(output), ")  t
+    CROSS JOIN LATERAL (
+    SELECT SUBSTR(t.name_one, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_one)
+      )
+    )
+    ,
+
+    two as (
+    SELECT id, name_two,
+    token || row_number() OVER (PARTITION BY id, name_two, token order by id, name_two, token)  as  token
+    FROM   (", dbplyr::sql_render(output), ")  t
+    CROSS JOIN LATERAL (
+    SELECT SUBSTR(t.name_two, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_two)
+      )
+    )
+    ,
+
+    sim as (
+    SELECT
+    one.id,
+    COUNT(name_one)   as  m,
+    LENGTH(name_one)  as  s_one,
+    LENGTH(name_two)  as  s_two,
+    CASE
+        WHEN substr(name_one, 1, 4) = substr(name_two, 1, 4) then 4
+        WHEN substr(name_one, 1, 3) = substr(name_two, 1, 3) then 3
+        WHEN substr(name_one, 1, 2) = substr(name_two, 1, 2) then 2
+    ELSE 1 END as l
+    FROM one
+    INNER JOIN two
+    on one.token  =  two.token
+    and one.id    =  two.id
+    GROUP BY
+    one.id,
+    LENGTH(name_one),
+    LENGTH(name_two),
+    CASE
+        WHEN substr(name_one, 1, 4) = substr(name_two, 1, 4) then 4
+        WHEN substr(name_one, 1, 3) = substr(name_two, 1, 3) then 3
+        WHEN substr(name_one, 1, 2) = substr(name_two, 1, 2) then 2
+    ELSE 1 END
+    )
+
+    SELECT
+    t.name_one,
+    t.name_two,
+    UTL_MATCH.JARO_WINKLER(t.name_one, t.name_two)  as  ", col_name, "
+    FROM   (", dbplyr::sql_render(output), ")  t
+    INNER JOIN
+    sim
+    on sim.id  =  t.id
+    WHERE
+    1=1
+    and (1/3) * ( (m / s_one) + (m / s_two) + 1 ) + (l * 0.1 * (1 - (1/3) * ( (m / s_one) + (m / s_two) + 1 ))) >= ", threshold_val, "
+    and UTL_MATCH.JARO_WINKLER(t.name_one, t.name_two) >= ", threshold_val, "
+    "
+  )
+
+  # Generate SQL output & Rename original columns
+  output <- dplyr::tbl(db_connection, dplyr::sql(sql_query)) %>%
+    dplyr::rename(
+      {{ name_one }} := NAME_ONE,
+      {{ name_two }} := NAME_TWO
+    )
+
+  # Return output
+  return(output)
+}
+
 #' Function to find all matches form the db
 #'
 #' Find the exact and confident matches of a lookup df to a primary df
