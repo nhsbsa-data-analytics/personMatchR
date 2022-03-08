@@ -2,7 +2,7 @@
 % Please edit documentation in R/format_postcode.R
 \name{format_postcode}
 \alias{format_postcode}
-\title{Format the postcode strings prior to matchin}
+\title{Format the postcode strings prior to matching}
 \usage{
 format_postcode(postcode)
 }

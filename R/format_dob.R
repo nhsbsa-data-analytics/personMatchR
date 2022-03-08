@@ -1,43 +1,95 @@
-#' Format a DOB
+
+#' Convert date to character yyyymmdd format.
 #'
-#' Format the date of birth prior to matching
-#' Convert to a string representation in the format YYYYMMDD
+#' @param dob A vector of type character, integer or numeric with date expressions
 #'
-#' @param dob A date of birth date field to be cleansed
-#'
-#' @return A cleansed string
-#'
+#' @return A formatted date (yyyymmdd)
 #' @export
 #'
 #' @examples
-#' format_dob(dob)
-format_dob <- function(dob){
+#' format_dob(dob = "2019-Mar-21")
+format_dob <- function(dob) {
+  if (is.na(dob) || is.null(dob)) {
+    # handle missing values first
+    return(NA)
+  } else {
 
-  # handle missing variables
-  if(is.na(dob)||is.null(dob)){
+    # Try to parse using lubridate (returns NA quietly if unable to parse)
+    dob_final <- lubridate::fast_strptime(
+      x = dob,
+      # American way last
+      format = c(
+        # Ymd
+        "%Y-%m-%d",
+        "%Y%m%d",
+        "%Y/%m/%d",
+        "%Y %m %d",
+        "%Y-%b-%d",
+        "%Y%b%d",
+        "%Y/%b/%d",
+        "%Y %b %d",
+        # dmY
+        "%d-%m-%Y",
+        "%d%m%Y",
+        "%d/%m/%Y",
+        "%d %m %Y",
+        "%d-%b-%Y",
+        "%d%b%Y",
+        "%d/%b/%Y",
+        "%d %b %Y",
+        # dmy
+        "%d-%m-%y",
+        "%d%m%y",
+        "%d/%m/%y",
+        "%d %m %y",
+        "%d-%b-%y",
+        "%d%b%y",
+        "%d/%b/%y",
+        "%d %b %y",
+        # ymd
+        "%y-%m-%d",
+        "%y%m%d",
+        "%y/%m/%d",
+        "%y %m %d",
+        "%y-%b-%d",
+        "%y%b%d",
+        "%y/%b/%d",
+        "%y %b %d",
+        # Ydm
+        "%Y-%d-%m",
+        "%Y%d%m",
+        "%Y/%d/%m",
+        "%Y %d %m",
+        "%Y-%d-%b",
+        "%Y%d%b",
+        "%Y/%d/%b",
+        "%Y %d %b",
+        # mdY
+        "%m-%d-%Y",
+        "%m%d%Y",
+        "%m/%d/%Y",
+        "%m %d %Y",
+        "%b-%d-%Y",
+        "%b%d%Y",
+        "%b/%d/%Y",
+        "%b %d %Y",
+
+        # mdy
+        "%m-%d-%y",
+        "%m%d%y",
+        "%m/%d/%y",
+        "%m %d %y",
+        "%b-%d-%y",
+        "%b%d%y",
+        "%b/%d/%y",
+        "%b %d %y"
+      )
+    )
+  }
+
+  if (is.na(dob_final)) {
     return(NA)
   }
 
-  # Swap slash for hyphen
-  if(grepl('/', dob)){dob = gsub('/', '-', dob)}
-
-  # If contains letter
-  if(!grepl("[a-zA-Z]", dob)){
-
-    # Then use date with month-as-character format
-    dob = as.Date(dob, format = '%Y-%m-%d')
-
-  }else if(grepl("[a-zA-Z]", dob)){
-
-    # Or, use date-as-number format
-    dob = as.Date(dob, format = '%d-%B-%y')
-
-  }else{
-
-    # Attribute arbitrary day for other records
-    dob = NA
-  }
-
-  # Change date to character is it isnt NA
-  if(is.na(dob) == F){dob = format(dob, format = '%Y%m%d')}
+  return(format(dob_final, format = "%Y%m%d"))
 }

@@ -9,28 +9,28 @@
 #'
 #' @examples
 #' fix_homoglyph(string, char_pos, character_or_number)
-fix_homoglyph <- function(string, char_pos, character_or_number){
+fix_homoglyph <- function(string, char_pos, character_or_number) {
 
   # Helper function to replace numbers for characters
-  replace_numbers = function(x){
+  replace_numbers <- function(x) {
     stringr::str_replace_all(x, c("0" = "O", "5" = "S"))
   }
 
   # Helper function to replace characters for numbers
-  replace_characters = function(x){
+  replace_characters <- function(x) {
     stringr::str_replace_all(x, c("O" = "0", "I" = "1", "L" = "1", "S" = "5"))
   }
 
   # Split string into individual letters, in order they can indexed
-  char = strsplit(string, "")[[1]]
+  char <- strsplit(string, "")[[1]]
 
   # At selected index position, apply either of the 2 above helper functions
-  if(character_or_number == "char_to_num"){
-    char[char_pos] = replace_characters(char[char_pos])
-  }else{
-    char[char_pos] = replace_numbers(char[char_pos])
+  if (character_or_number == "char_to_num") {
+    char[char_pos] <- replace_characters(char[char_pos])
+  } else {
+    char[char_pos] <- replace_numbers(char[char_pos])
   }
 
   # Post-correction, now paste letters back into single string
-  char <- paste(char, collapse = '')
+  char <- paste(char, collapse = "")
 }

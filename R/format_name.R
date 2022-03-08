@@ -15,7 +15,7 @@
 format_name <- function(str_name) {
 
   # handle missing variables
-  if(is.na(str_name)||is.null(str_name)||str_name==""){
+  if (is.na(str_name) || is.null(str_name) || str_name == "") {
     return(NA)
   }
 
