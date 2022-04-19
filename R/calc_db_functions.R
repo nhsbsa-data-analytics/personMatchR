@@ -289,7 +289,7 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
   return(output)
 }
 
-calc_db_threshold_edit <- function(df, name_one, name_two, threshold_val, col_name){
+calc_db_jw_threshold_edit <- function(df, name_one, name_two, threshold_val, col_name){
 
   # Distinct df to calculate JW scores for
   output <- df %>%
@@ -297,8 +297,7 @@ calc_db_threshold_edit <- function(df, name_one, name_two, threshold_val, col_na
       NAME_ONE := {{ name_one }},
       NAME_TWO := {{ name_two }}
     ) %>%
-    dplyr::distinct() %>%
-    dplyr::mutate(ID = row_number(NAME_ONE))
+    dplyr::distinct()
 
   # Pull the connection
   db_connection <- output$src$con
@@ -311,8 +310,10 @@ calc_db_threshold_edit <- function(df, name_one, name_two, threshold_val, col_na
     WITH
 
     one as (
-    SELECT id, name_one,
-    token || row_number() OVER (PARTITION BY id, name_one, token order by id, name_one, token)  as  token
+    SELECT
+    name_one,
+    length(name_one) as s_one,
+    token || row_number() OVER (PARTITION BY name_one, token order by name_one, token)  as  token
     FROM   (", dbplyr::sql_render(output), ")  t
     CROSS JOIN LATERAL (
     SELECT SUBSTR(t.name_one, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_one)
@@ -321,58 +322,39 @@ calc_db_threshold_edit <- function(df, name_one, name_two, threshold_val, col_na
     ,
 
     two as (
-    SELECT id, name_two,
-    token || row_number() OVER (PARTITION BY id, name_two, token order by id, name_two, token)  as  token
+    SELECT
+    name_two,
+    length(name_two) as s_two,
+    token || row_number() OVER (PARTITION BY name_two, token order by name_two, token)  as  token
     FROM   (", dbplyr::sql_render(output), ")  t
     CROSS JOIN LATERAL (
     SELECT SUBSTR(t.name_two, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_two)
       )
     )
-    ,
 
-    sim as (
     SELECT
-    one.id,
-    COUNT(name_one)   as  m,
-    LENGTH(name_one)  as  s_one,
-    LENGTH(name_two)  as  s_two,
-    CASE
-        WHEN substr(name_one, 1, 4) = substr(name_two, 1, 4) then 4
-        WHEN substr(name_one, 1, 3) = substr(name_two, 1, 3) then 3
-        WHEN substr(name_one, 1, 2) = substr(name_two, 1, 2) then 2
-    ELSE 1 END as l
+    name_one,
+    name_two,
+    s_one,
+    s_two
     FROM one
-    INNER JOIN two
-    on one.token  =  two.token
-    and one.id    =  two.id
+    INNER JOIN two on one.token = two.token
     GROUP BY
-    one.id,
-    LENGTH(name_one),
-    LENGTH(name_two),
-    CASE
-        WHEN substr(name_one, 1, 4) = substr(name_two, 1, 4) then 4
-        WHEN substr(name_one, 1, 3) = substr(name_two, 1, 3) then 3
-        WHEN substr(name_one, 1, 2) = substr(name_two, 1, 2) then 2
-    ELSE 1 END
-    )
-
-    SELECT
-    t.name_one,
-    t.name_two,
-    UTL_MATCH.JARO_WINKLER(t.name_one, t.name_two)  as  jw
-    FROM   (", dbplyr::sql_render(output), ")  t
-    INNER JOIN
-    sim
-    on sim.id  =  t.id
-    WHERE
+    name_one,
+    name_two,
+    s_one,
+    s_two
+    HAVING
     1=1
-    and (1/3) * ( (m / s_one) + (m / s_two) + 1 ) + (l * 0.1 * (1 - (1/3) * ( (m / s_one) + (m / s_two) + 1 ))) >= ", threshold_val, "
-    and UTL_MATCH.JARO_WINKLER(t.name_one, t.name_two) >= ", threshold_val, "
-    "
+    and (1/3) *
+        ( (count(name_one) / s_one) + (count(name_one) / s_two) + 1 ) +
+        (4 * 0.1 * (1 - (1/3) * ( (count(name_one) / s_one) + (count(name_one) / s_two) + 1 ))) >= ", threshold_val, ""
   )
 
   # Generate SQL output & Rename original columns
   output <- dplyr::tbl(db_connection, dplyr::sql(sql_query)) %>%
+    dplyr::mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
+    dplyr::filter(JW >= threshold_val) %>%
     dplyr::rename(
       {{ name_one }} := NAME_ONE,
       {{ name_two }} := NAME_TWO,

@@ -17,47 +17,25 @@ eib_db <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_EIBSS"))
 
 #-------------------------------------------------------------------------------
-# Intro: matching base table
+# Part One: Custom JW Calculation ~10m matches
 
 # Just select forename
 eib <- eib_db %>%
   select(FORENAME_ONE = FORENAME) %>%
+  distinct() %>%
   mutate(TMP = 1)
 
 # Just select forename
 pds <- pds_db %>%
+  filter(RECORD_ID <= 10000) %>%
   select(FORENAME_TWO = FORENAME) %>%
-  mutate(
-    TMP = 1,
-    ID = row_number(FORENAME_TWO)
-  ) %>%
-  filter(ID <= 400000) %>%
-  select(-ID)
+  distinct() %>%
+  mutate(TMP = 1)
 
 # Full join
 all <- eib %>%
   full_join(pds) %>%
-  distinct()
-
-# Write the table back to the DB with indexes
-all %>%
-  compute(
-    name = "INT623_FORENAME_TEST",
-    temporary = FALSE
-  )
-
-# Disconnect
-DBI::dbDisconnect(con)
-
-#-------------------------------------------------------------------------------
-# Part One: Custom JW Calculation ~10m matches
-
-# Set up connection to the DB
-con <- nhsbsaR::con_nhsbsa(database = "DALP")
-
-# Db eibss table
-all <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT623_FORENAME_TEST"))
+  mutate(ID = row_number(TMP))
 
 # Row count
 all %>% tally()
@@ -73,12 +51,17 @@ Sys.time()
 # Time for custom JW calculation: 10.7m = 16mins
 Sys.time()
 results_two <- all %>%
-  calc_db_jw_threshold(., FORENAME_ONE, FORENAME_TWO, 0.75, "JW") %>%
+  calc_db_jw_threshold_edit(., FORENAME_ONE, FORENAME_TWO, 0.75, "JW") %>%
   collect()
 Sys.time()
 
 # Disconnect
 DBI::dbDisconnect(con)
+
+results_two %>%
+  select(FORENAME_ONE, FORENAME_TWO) %>%
+  distinct() %>%
+  tally()
 
 #-------------------------------------------------------------------------------
 # Part Two: Custom JW function - Summary
