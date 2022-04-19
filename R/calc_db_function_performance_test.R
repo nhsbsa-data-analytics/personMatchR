@@ -27,7 +27,7 @@ eib <- eib_db %>%
 
 # Just select forename
 pds <- pds_db %>%
-  filter(RECORD_ID <= 10000) %>%
+  filter(RECORD_ID <= 10) %>%
   select(FORENAME_TWO = FORENAME) %>%
   distinct() %>%
   mutate(TMP = 1)

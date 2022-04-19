@@ -211,10 +211,7 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
     dplyr::rename(
       NAME_ONE := {{ name_one }},
       NAME_TWO := {{ name_two }}
-    ) %>%
-    dplyr::distinct() %>%
-    #name_db_filter(., NAME_ONE, NAME_TWO) %>%
-    dplyr::mutate(ID = row_number(NAME_ONE))
+    )
 
   # Pull the connection
   db_connection <- output$src$con
@@ -224,8 +221,10 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
     con = db_connection,
     "
   SELECT
-    id, name_one,
-    token || row_number() over (partition by id, name_one, token order by id, name_one, token)  as  token
+    distinct
+    name_one,
+    length(name_one) as s_one,
+    token || row_number() over (partition by name_one, token order by name_one, token)  as  token
     FROM  (", dbplyr::sql_render(output), ")  t
     CROSS JOIN LATERAL (
     SELECT SUBSTR(t.name_one, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_one)
@@ -238,8 +237,10 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
     con = db_connection,
     "
   SELECT
-    id, name_two,
-    token || row_number() over (partition by id, name_two, token order by id, name_two, token)  as  token
+    distinct
+    name_two,
+    length(name_two) as s_two,
+    token || row_number() over (partition by name_two, token order by name_two, token)  as  token
     FROM  (", dbplyr::sql_render(output), ")  t
     CROSS JOIN LATERAL (
     SELECT SUBSTR(t.name_two, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_two)
@@ -255,12 +256,12 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
 
   # Generate SIM-approx
   output <- output %>%
-    dplyr::group_by(ID) %>%
+    dplyr::group_by(NAME_ONE, NAME_TWO) %>%
     dplyr::mutate(
       # NOTE: char-distance is ignored, as only approx calculation
       M = n(),
       # Assume max transpositions to speed up approx calculation
-      SIM = (1/3) * ( (M / nchar(NAME_ONE)) + (M / nchar(NAME_TWO)) + 1 ),
+      SIM = (1/3) * ( (M / S_ONE) + (M / S_TWO) )),
       # Final JW value, number of shared first four letters
       L = case_when(
         substr(NAME_ONE, 1, 4) == substr(NAME_TWO, 1, 4) ~ 4,
@@ -270,19 +271,16 @@ calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name
       ),
       # 'Real' values impossible to be higher than approx value
       JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
-      #JW_APPROX = SIM + (4 * 0.1 * (1 - SIM))
     ) %>%
     dplyr::ungroup() %>%
     # Filter by threshold value
     dplyr::filter(JW_APPROX >= threshold_val) %>%
-    dplyr::select(NAME_ONE, NAME_TWO, JW_APPROX) %>%
-    dplyr::distinct() %>%
-    dplyr::mutate(JW_APPROX = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
-    dplyr::filter(JW_APPROX >= threshold_val) %>%
-    dplyr::rename_at("JW_APPROX", ~col_name) %>%
-    dplyr::rename(
+    dplyr::mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
+    dplyr::filter(JW >= threshold_val) %>%
+    dplyr::select(
       {{ name_one }} := NAME_ONE,
-      {{ name_two }} := NAME_TWO
+      {{ name_two }} := NAME_TWO,
+      {{ col_name }} := JW
     )
 
   # Return output
@@ -296,8 +294,7 @@ calc_db_jw_threshold_edit <- function(df, name_one, name_two, threshold_val, col
     dplyr::rename(
       NAME_ONE := {{ name_one }},
       NAME_TWO := {{ name_two }}
-    ) %>%
-    dplyr::distinct()
+    )
 
   # Pull the connection
   db_connection <- output$src$con
@@ -311,6 +308,7 @@ calc_db_jw_threshold_edit <- function(df, name_one, name_two, threshold_val, col
 
     one as (
     SELECT
+    distinct
     name_one,
     length(name_one) as s_one,
     token || row_number() OVER (PARTITION BY name_one, token order by name_one, token)  as  token
@@ -323,6 +321,7 @@ calc_db_jw_threshold_edit <- function(df, name_one, name_two, threshold_val, col
 
     two as (
     SELECT
+    distinct
     name_two,
     length(name_two) as s_two,
     token || row_number() OVER (PARTITION BY name_two, token order by name_two, token)  as  token
@@ -332,30 +331,44 @@ calc_db_jw_threshold_edit <- function(df, name_one, name_two, threshold_val, col
       )
     )
 
-    SELECT
+    select
     name_one,
     name_two,
     s_one,
-    s_two
-    FROM one
-    INNER JOIN two on one.token = two.token
-    GROUP BY
+    s_two,
+    case
+        when substr(NAME_ONE, 1, 4) = substr(NAME_TWO, 1, 4) then 4
+        when substr(NAME_ONE, 1, 3) = substr(NAME_TWO, 1, 3) then 3
+        when substr(NAME_ONE, 1, 2) = substr(NAME_TWO, 1, 2) then 2
+    else 1 end as l,
+    (1/3) * ( (count(name_one) / s_one) + (count(name_one) / s_two) + 1 )  as sim
+    from
+    lat_one
+    inner join
+    lat_two
+    on lat_one.token  =  lat_two.token
+    group by
     name_one,
     name_two,
     s_one,
-    s_two
-    HAVING
-    1=1
-    and (1/3) *
-        ( (count(name_one) / s_one) + (count(name_one) / s_two) + 1 ) +
-        (4 * 0.1 * (1 - (1/3) * ( (count(name_one) / s_one) + (count(name_one) / s_two) + 1 ))) >= ", threshold_val, ""
+    s_two,
+    case
+        when substr(NAME_ONE, 1, 4) = substr(NAME_TWO, 1, 4) then 4
+        when substr(NAME_ONE, 1, 3) = substr(NAME_TWO, 1, 3) then 3
+        when substr(NAME_ONE, 1, 2) = substr(NAME_TWO, 1, 2) then 2
+    else 1 end"
   )
 
   # Generate SQL output & Rename original columns
   output <- dplyr::tbl(db_connection, dplyr::sql(sql_query)) %>%
+    dplyr::mutate(
+      SIM = 1/3 * ( (M / S_ONE) + (M / S_TWO) ),
+      JW_APPROX = SIM + (4 * 0.1 * (1 - SIM))
+    ) %>%
+    dplyr::filter(JW_APPROX >= 0.75) %>%
     dplyr::mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
     dplyr::filter(JW >= threshold_val) %>%
-    dplyr::rename(
+    dplyr::select(
       {{ name_one }} := NAME_ONE,
       {{ name_two }} := NAME_TWO,
       {{ col_name }} := JW
