@@ -27,7 +27,7 @@ eib <- eib_db %>%
 
 # Just select forename
 pds <- pds_db %>%
-  filter(RECORD_ID <= 10) %>%
+  filter(RECORD_ID <= 1000) %>%
   select(FORENAME_TWO = FORENAME) %>%
   distinct() %>%
   mutate(TMP = 1)
@@ -48,10 +48,12 @@ results_one <- all %>%
   collect()
 Sys.time()
 
+calc_db_jw_threshold_edit(all, FORENAME_ONE, FORENAME_TWO, 0.75, "JW") %>%
+  dplyr::show_query()
+
 # Time for custom JW calculation: 10.7m = 16mins
 Sys.time()
-results_two <- all %>%
-  calc_db_jw_threshold_edit(., FORENAME_ONE, FORENAME_TWO, 0.75, "JW") %>%
+results_two <- calc_db_jw_threshold_edit(all, FORENAME_ONE, FORENAME_TWO, 0.75, "JW") %>%
   collect()
 Sys.time()
 

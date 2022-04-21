@@ -42,11 +42,9 @@ format_db_date <- function(df, date_col){
   df %>%
     dplyr::mutate(
       {{ date_col }} := dplyr::case_when(
-        REGEXP_INSTR({{ date_col }}, '[A-Z]') == 0 ~ as.numeric({{ date_col }}),
-        REGEXP_INSTR({{ date_col }}, '[A-Z]') == 1 ~ as.numeric(TO_CHAR({{ date_col }}, "YYYYMMDD")),
-        nchar({{ date_col }}) == 0 ~ NA
-        )
+        REGEXP_INSTR({{ date_col }}, '[A-Z]') != 0 ~ as.numeric(TO_CHAR({{ date_col }}, "YYYYMMDD"))
       )
+    )
 }
 
 #' Format the postcode strings prior to matching
@@ -149,8 +147,9 @@ format_db_postcode <- function(df, postcode){
       )
     )
 
-  # Rejoin back ot original data
+  # Rejoin back to original data
   df <- df %>%
+    dplyr::select(- {{ postcode }}) %>%
     dplyr::left_join(y = output, by = "POSTCODE_OLD") %>%
     dplyr::select(-c(LEN, POSTCODE_OLD))
 
