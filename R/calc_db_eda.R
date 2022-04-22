@@ -94,12 +94,49 @@ results <- find_db_matches(
   "all"
   )
 
+Sys.time()
 # Write the table back to the DB with indexes: ~ 8hrs
 results %>%
   compute(
-    name = "INT623_LEAP_TEST",
+    name = "INT623_LEAP_TEST1",
     temporary = FALSE
   )
+
+Sys.time()
+
+# Results: ~ 10 mins
+results <- find_db_matches(
+  leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
+  pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
+  "match"
+)
+
+Sys.time()
+# Write the table back to the DB with indexes: ~ 8hrs
+results %>%
+  compute(
+    name = "INT623_LEAP_TEST2",
+    temporary = FALSE
+  )
+
+Sys.time()
+
+# Results: ~ 10 mins
+results <- find_db_matches(
+  leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
+  pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
+  "key"
+)
+
+Sys.time()
+# Write the table back to the DB with indexes: ~ 8hrs
+results %>%
+  compute(
+    name = "INT623_LEAP_TEST3",
+    temporary = FALSE
+  )
+
+Sys.time()
 
 # Disconnect
 DBI::dbDisconnect(con)
