@@ -83,14 +83,16 @@ pds_db <- pds_db %>%
     POSTCODE_PDS = POSTCODE
   )
 
-# Results: ~ 2hrs
-results <- find_db_matches_two(
-  leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
-  pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS
-  )
+# Check data
+pds_db
+leap_db
 
-# Results: tally
-results %>% tally()
+# Results: ~ 10 mins
+results <- find_db_matches(
+  leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
+  pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
+  "all"
+  )
 
 # Write the table back to the DB with indexes: ~ 8hrs
 results %>%
@@ -98,10 +100,6 @@ results %>%
     name = "INT623_LEAP_TEST",
     temporary = FALSE
   )
-
-pds_db
-
-Sys.time()
 
 # Disconnect
 DBI::dbDisconnect(con)
@@ -138,9 +136,9 @@ pds_db <- pds_db %>%
     DOB_TWO = DOB,
     POSTCODE_TWO = POSTCODE
   )
-
+pds_db %>% tally()
 # Exact matches
-exact <- leap_db %>%
+exact_matches <- leap_db %>%
   dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
   dplyr::inner_join(
     y = pds_db %>%
@@ -151,7 +149,25 @@ exact <- leap_db %>%
       "DOB_ONE" = "DOB_TWO",
       "POSTCODE_ONE" = "POSTCODE_TWO"
     )
-  ) %>%
+  )
+
+# Exact matches
+exact_matches_reverse <- leap_db %>%
+  dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
+  dplyr::inner_join(
+    y = pds_db %>%
+      dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO),
+    by = c(
+      "FORENAME_ONE" = "SURNAME_TWO",
+      "SURNAME_ONE" = "FORENAME_TWO",
+      "DOB_ONE" = "DOB_TWO",
+      "POSTCODE_ONE" = "POSTCODE_TWO"
+    )
+  )
+
+# Union exact matches
+exact_matches <- exact_matches %>%
+  dplyr::union_all(exact_matches_reverse) %>%
   dplyr::distinct() %>%
   dplyr::mutate(
     FORENAME_TWO = FORENAME_ONE,
@@ -164,11 +180,10 @@ exact <- leap_db %>%
     ED_DOB = 0,
     MATCH_TYPE = 'Exact',
   )
-  #dplyr::select(ID_ONE, ID_TWO, everything())
 
 # Remaining records
 remain <- leap_db %>%
-  dplyr::anti_join(y = exact, by = "ID_ONE")
+  dplyr::anti_join(y = exact_matches, by = "ID_ONE")
 
 # List of permutation-join columns
 perm_num <- paste0("PERM", 1:9)
@@ -187,6 +202,7 @@ id_pairs <- perm_num %>%
   }) %>%
   purrr::reduce(function(x, y) union(x, y)) %>%
   dplyr::distinct()
+id_pairs
 
 # Generate list of feasible dob-pairs with 6 identical characters
 cross <- id_pairs %>%

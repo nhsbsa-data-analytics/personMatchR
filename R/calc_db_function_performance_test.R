@@ -17,56 +17,7 @@ eib_db <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_EIBSS"))
 
 #-------------------------------------------------------------------------------
-# Part One: Custom JW Calculation ~10m matches
-
-# Just select forename
-eib <- eib_db %>%
-  select(FORENAME_ONE = FORENAME) %>%
-  distinct() %>%
-  mutate(TMP = 1)
-
-# Just select forename
-pds <- pds_db %>%
-  filter(RECORD_ID <= 1000) %>%
-  select(FORENAME_TWO = FORENAME) %>%
-  distinct() %>%
-  mutate(TMP = 1)
-
-# Full join
-all <- eib %>%
-  full_join(pds) %>%
-  mutate(ID = row_number(TMP))
-
-# Row count
-all %>% tally()
-
-# Time for 'normal' JW calculation: 10.7m = 36mins
-Sys.time()
-results_one <- all %>%
-  mutate(JW = UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)) %>%
-  filter(JW >= 0.75) %>%
-  collect()
-Sys.time()
-
-calc_db_jw_threshold_edit(all, FORENAME_ONE, FORENAME_TWO, 0.75, "JW") %>%
-  dplyr::show_query()
-
-# Time for custom JW calculation: 10.7m = 16mins
-Sys.time()
-results_two <- calc_db_jw_threshold_edit(all, FORENAME_ONE, FORENAME_TWO, 0.75, "JW") %>%
-  collect()
-Sys.time()
-
-# Disconnect
-DBI::dbDisconnect(con)
-
-results_two %>%
-  select(FORENAME_ONE, FORENAME_TWO) %>%
-  distinct() %>%
-  tally()
-
-#-------------------------------------------------------------------------------
-# Part Two: Custom JW function - Summary
+# Part One: Custom JW function - Summary
 
 # 1. Both methods have same output
 # 2. 10.7m - Method 2 (in this instance) took ~44% of the time of Method 1
@@ -140,7 +91,7 @@ DBI::dbDisconnect(con)
 #-------------------------------------------------------------------------------
 # Part Four: Custom Date-Dist function - Summary
 
-# 1. There are less dob-combinaations that name-combinations
+# 1. There are less dob-combinations that name-combinations
 # 2. Date-Dist is similar, although *not* identical, to LV, thus outputs vary
 # 3. Date-dist in effect is 6 identical characters
 # 4. LV dist of 2 can instances or 5 (or even 4) identical chars, due to swaps

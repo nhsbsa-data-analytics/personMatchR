@@ -415,10 +415,11 @@ calc_db_jw_threshold_edit <- function(df, name_one, name_two, threshold_val, col
 #' df_two, id_two, forename_two, surname_two, dob_two, postcode_two)
 find_db_matches <- function(
   df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
-  df_two, id_two, forename_two, surname_two, dob_two, postcode_two
+  df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
+  output_type
 ){
 
-  # For convenience rename columns
+  # Rename columns
   df_one <- df_one %>%
     rename(
       ID_ONE := {{ id_one }},
@@ -428,7 +429,7 @@ find_db_matches <- function(
       POSTCODE_ONE := {{ postcode_one }}
     )
 
-  # For convenience rename columns
+  # Rename columns
   df_two <- df_two %>%
     rename(
       ID_TWO := {{ id_two }},
@@ -438,8 +439,16 @@ find_db_matches <- function(
       POSTCODE_TWO := {{ postcode_two }}
     )
 
+  # Separate from other columns
+  df_one_cols <- df_one %>%
+    select(-c(FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE))
+
+  # Separate from other columns
+  df_two_cols <- df_two %>%
+    select(-c(FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO))
+
   # Exact matches
-  exact <- df_one %>%
+  exact_matches <- df_one %>%
     dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
     dplyr::inner_join(
       y = df_two %>%
@@ -450,7 +459,25 @@ find_db_matches <- function(
         "DOB_ONE" = "DOB_TWO",
         "POSTCODE_ONE" = "POSTCODE_TWO"
       )
-    ) %>%
+    )
+
+  # Reverse exact matches
+  exact_matches_reverse <- df_one %>%
+    dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
+    dplyr::inner_join(
+      y = df_two %>%
+        dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO),
+      by = c(
+        "FORENAME_ONE" = "SURNAME_TWO",
+        "SURNAME_ONE" = "FORENAME_TWO",
+        "DOB_ONE" = "DOB_TWO",
+        "POSTCODE_ONE" = "POSTCODE_TWO"
+      )
+    )
+
+  # Union exact matches
+  exact_matches <- exact_matches %>%
+    dplyr::union_all(exact_matches_reverse) %>%
     dplyr::distinct() %>%
     dplyr::mutate(
       FORENAME_TWO = FORENAME_ONE,
@@ -466,7 +493,7 @@ find_db_matches <- function(
 
   # Remaining records
   remain <- df_one %>%
-    dplyr::anti_join(y = exact, by = "ID_ONE")
+    dplyr::anti_join(y = exact_matches, by = "ID_ONE")
 
   # List of permutation-join columns
   perm_num <- paste0("PERM", 1:9)
@@ -513,7 +540,7 @@ find_db_matches <- function(
     # filter to only confident matches
     dplyr::filter(MATCH_TYPE != "No Match") %>%
     # Add exact matches
-    dplyr::union_all(exact)
+    dplyr::union_all(exact_matches)
 
   # Determine non-matches
   non_matches <- df_one %>%
@@ -534,7 +561,7 @@ find_db_matches <- function(
   # Add non-matches
   all_matches <- matches %>%
     dplyr::union_all(non_matches) %>%
-    # Calculate match_count per primary dfID
+    # Calculate match_count per primary df ID
     dplyr::group_by(ID_ONE) %>%
     dplyr::mutate(MATCH_COUNT = dplyr::n_distinct(ID_TWO)) %>%
     dplyr::ungroup() %>%
@@ -543,20 +570,58 @@ find_db_matches <- function(
       ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       MATCH_TYPE, MATCH_COUNT
     ) %>%
-  # Rename back to original column names
-  dplyr::rename(
-    {{ id_one }} := ID_ONE,
-    {{ forename_one }} := FORENAME_ONE,
-    {{ surname_one }} := SURNAME_ONE,
-    {{ dob_one }} := DOB_ONE,
-    {{ postcode_one }} := POSTCODE_ONE,
-    {{ id_two }} := ID_TWO,
-    {{ forename_two }} := FORENAME_TWO,
-    {{ surname_two }} := SURNAME_ONE,
-    {{ dob_two }} := DOB_TWO,
-    {{ postcode_two }} := POSTCODE_TWO
-  )
+    # Rejoin original columns
+    dplyr::left_join(df_one_cols, by = "ID_ONE") %>%
+    dplyr::left_join(df_two_cols, by = "ID_TWO") %>%
+    # Rename back to original column names
+    dplyr::rename(
+      {{ id_one }} := ID_ONE,
+      {{ forename_one }} := FORENAME_ONE,
+      {{ surname_one }} := SURNAME_ONE,
+      {{ dob_one }} := DOB_ONE,
+      {{ postcode_one }} := POSTCODE_ONE,
+      {{ id_two }} := ID_TWO,
+      {{ forename_two }} := FORENAME_TWO,
+      {{ surname_two }} := SURNAME_ONE,
+      {{ dob_two }} := DOB_TWO,
+      {{ postcode_two }} := POSTCODE_TWO
+    )
 
-  # Return data
-  return(all_matches)
+  # Determine final output format
+  if(output_type == "key"){
+
+    # Only select key columns
+    all_matches <- all_matches %>%
+      dplyr::select({{ id_one }}, {{ id_two }}, MATCH_TYPE, MATCH_COUNT)
+
+    # Return data
+    return(all_matches)
+
+  }else if(output_type == "match"){
+
+    # Rejoin to original columns
+    all_matches <- all_matches %>%
+      dplyr::select(
+        {{ id_one }},
+        {{ forename_one }},
+        {{ surname_one }},
+        {{ dob_one }},
+        {{ postcode_one }},
+        {{ id_two }},
+        {{ forename_two }},
+        {{ surname_two }},
+        {{ dob_two }},
+        {{ postcode_two }},
+        MATCH_TYPE,
+        MATCH_COUNT
+      )
+
+    # Return data
+    return(all_matches)
+
+  }else{
+
+    # Return data
+    return(all_matches)
+  }
 }
