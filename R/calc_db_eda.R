@@ -25,40 +25,38 @@ pds_db <- con %>%
 leap_db %>% tally()
 pds_db %>% tally()
 
-# Format EIBBS data
+# Format LEAP data
 leap <- leap_db %>%
-  select(ID, DATE_OF_BIRTH, SURNAME, FORENAME, POSTCODE) %>%
   format_db_postcode(., POSTCODE) %>%
   format_db_name(., FORENAME) %>%
   format_db_name(., SURNAME) %>%
-  format_db_date(., DATE_OF_BIRTH) %>%
-  calc_permutations(., FORENAME, SURNAME, POSTCODE, DATE_OF_BIRTH)
+  format_db_date(., DATE_OF_BIRTH)
 
 # Format PDS data
 pds <- pds_db %>%
-  select(RECORD_ID, DOB, SURNAME, FORENAME, POSTCODE) %>%
+  select(RECORD_ID, DOB, SURNAME, FORENAME, POSTCODE, NHS_NO_PDS, DOD) %>%
   format_db_postcode(., POSTCODE) %>%
   format_db_name(., FORENAME) %>%
   format_db_name(., SURNAME) %>%
-  format_db_date(., DOB) %>%
-  calc_permutations(., FORENAME, SURNAME, POSTCODE, DOB)
+  format_db_date(., DOB)
 
 # Write the table back to the DB: 1 min
 leap %>%
   compute(
-    name = "INT623_LEAP_PROCESSED",
+    name = "INT600_LEAP_PROCESSED",
     temporary = FALSE
   )
 
 # Write the table back to the DB: 35 mins
 pds %>%
   compute(
-    name = "INT617_PDS_PROCESSED",
+    name = "INT600_PDS_PROCESSED",
     temporary = FALSE
   )
 
 # Disconnect
 DBI::dbDisconnect(con)
+
 
 #-------------------------------------------------------------------------------
 # Part Two: composite joins then scoring
@@ -68,7 +66,7 @@ con <- nhsbsaR::con_nhsbsa(database = "DALP")
 
 # Db pds table
 leap_db <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT623_LEAP_PROCESSED"))
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_LEAP_PROCESSED"))
 
 # Db eibss table
 pds_db <- con %>%
@@ -102,24 +100,18 @@ results %>%
     temporary = FALSE
   )
 
-Sys.time()
-
 # Results: ~ 10 mins
 results <- find_db_matches(
   leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
   pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
   "match"
 )
-
-Sys.time()
 # Write the table back to the DB with indexes: ~ 8hrs
 results %>%
   compute(
     name = "INT623_LEAP_TEST2",
     temporary = FALSE
   )
-
-Sys.time()
 
 # Results: ~ 10 mins
 results <- find_db_matches(
@@ -148,12 +140,13 @@ con <- nhsbsaR::con_nhsbsa(database = "DALP")
 
 # Db pds table
 leap_db <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT623_LEAP_PROCESSED"))
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_LEAP_PROCESSED"))
 
 # Db eibss table
 pds_db <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_PDS_PROCESSED"))
-
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_PDS_PROCESSED"))
+leap_db
+pds_db
 # For convenience rename columns
 leap_db <- leap_db %>%
   rename(
@@ -162,7 +155,8 @@ leap_db <- leap_db %>%
     SURNAME_ONE = SURNAME,
     DOB_ONE = DATE_OF_BIRTH,
     POSTCODE_ONE = POSTCODE
-  )
+  ) %>%
+  calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
 
 # For convenience rename columns
 pds_db <- pds_db %>%
@@ -172,14 +166,13 @@ pds_db <- pds_db %>%
     SURNAME_TWO = SURNAME,
     DOB_TWO = DOB,
     POSTCODE_TWO = POSTCODE
-  )
-pds_db %>% tally()
+  ) %>%
+  calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
+
 # Exact matches
 exact_matches <- leap_db %>%
-  dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
   dplyr::inner_join(
-    y = pds_db %>%
-      dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO),
+    y = pds_db,
     by = c(
       "FORENAME_ONE" = "FORENAME_TWO",
       "SURNAME_ONE" = "SURNAME_TWO",
@@ -190,10 +183,8 @@ exact_matches <- leap_db %>%
 
 # Exact matches
 exact_matches_reverse <- leap_db %>%
-  dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
   dplyr::inner_join(
-    y = pds_db %>%
-      dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO),
+    y = pds_db,
     by = c(
       "FORENAME_ONE" = "SURNAME_TWO",
       "SURNAME_ONE" = "FORENAME_TWO",
@@ -230,16 +221,11 @@ id_pairs <- perm_num %>%
   purrr::map(~{
 
     remain %>%
-      dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE, {{.x}}) %>%
-      dplyr::inner_join(
-        pds_db %>%
-          dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO, {{.x}})
-      ) %>%
+      dplyr::inner_join(pds_db, by = {{.x}}) %>%
       dplyr::select(- {{.x}})
   }) %>%
   purrr::reduce(function(x, y) union(x, y)) %>%
   dplyr::distinct()
-id_pairs
 
 # Generate list of feasible dob-pairs with 6 identical characters
 cross <- id_pairs %>%
@@ -253,7 +239,7 @@ matches <- cross %>%
     JW_FORENAME = UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO),
     JW_SURNAME = UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO),
     JW_POSTCODE = UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO),
-    ED_DOB = ifelse(DOB_ONE == DOB_TWO, 0, 2),
+    ED_DOB = UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO),
     # Generate confident matches
     MATCH_TYPE = dplyr::case_when(
       (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
@@ -299,18 +285,18 @@ all_matches <- matches %>%
     MATCH_TYPE, MATCH_COUNT
     )
   # Rename back to OG column names
-  # dplyr::rename(
-  #   {{ id_one }} := ID_ONE,
-  #   {{ forename_one }} := FORENAME_ONE,
-  #   {{ surname_one }} := SURNAME_ONE,
-  #   {{ dob_one }} := DOB_ONE,
-  #   {{ postcode_one }} := POSTCODE_ONE,
-  #   {{ id_two }} := ID_TWO,
-  #   {{ forename_two }} := FORENAME_TWO,
-  #   {{ surname_two }} := SURNAME_ONE,
-  #   {{ dob_two }} := DOB_TWO,
-  #   {{ postcode_two }} := POSTCODE_TWO
-  # )
+  dplyr::rename(
+    {{ id_one }} := ID_ONE,
+    {{ forename_one }} := FORENAME_ONE,
+    {{ surname_one }} := SURNAME_ONE,
+    {{ dob_one }} := DOB_ONE,
+    {{ postcode_one }} := POSTCODE_ONE,
+    {{ id_two }} := ID_TWO,
+    {{ forename_two }} := FORENAME_TWO,
+    {{ surname_two }} := SURNAME_ONE,
+    {{ dob_two }} := DOB_TWO,
+    {{ postcode_two }} := POSTCODE_TWO
+  )
 
 # Return data
 return(all_match)

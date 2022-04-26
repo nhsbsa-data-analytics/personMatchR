@@ -41,8 +41,10 @@ format_db_date <- function(df, date_col){
 
   df %>%
     dplyr::mutate(
-      {{ date_col }} := dplyr::case_when(
-        REGEXP_INSTR({{ date_col }}, '[A-Z]') != 0 ~ as.numeric(TO_CHAR({{ date_col }}, "YYYYMMDD"))
+      {{ date_col }} := ifelse(
+        REGEXP_INSTR({{ date_col }}, '[0-9]{8}$') == 1,
+        TO_NUMBER({{ date_col }}),
+        TO_NUMBER(TO_CHAR({{ date_col }},'YYYYMMDD'))
       )
     )
 }

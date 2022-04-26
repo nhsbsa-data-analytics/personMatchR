@@ -416,7 +416,7 @@ calc_db_jw_threshold_edit <- function(df, name_one, name_two, threshold_val, col
 find_db_matches <- function(
   df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
   df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
-  output_type
+  output_type, format_daata
 ){
 
   # Rename columns
@@ -439,20 +439,41 @@ find_db_matches <- function(
       POSTCODE_TWO := {{ postcode_two }}
     )
 
-  # Separate from other columns
-  df_one_cols <- df_one %>%
-    select(-c(FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE))
+  if(format_data == TRUE){
 
-  # Separate from other columns
-  df_two_cols <- df_two %>%
-    select(-c(FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO))
+    df_one <- df_one %>%
+      # Format data
+      format_db_postcode(., POSTCODE_ONE) %>%
+      format_db_name(., FORENAME_ONE) %>%
+      format_db_name(., SURNAME_ONE) %>%
+      format_db_date(., DOB_ONE) %>%
+      # Calculate permutations
+      calc_permutations(., FORENAME, SURNAME, POSTCODE, DATE_OF_BIRTH)
+
+    df_two <- df_two %>%
+      # Format data
+      format_db_postcode(., POSTCODE_TWO) %>%
+      format_db_name(., FORENAME_TWO) %>%
+      format_db_name(., SURNAME_TWO) %>%
+      format_db_date(., DOB_TWO) %>%
+      # Calculate permutations
+      calc_permutations(., FORENAME, SURNAME, POSTCODE, DATE_OF_BIRTH)
+
+  }else{
+
+    df_one <- df_one %>%
+      # Calculate permutations
+      calc_permutations(., FORENAME, SURNAME, POSTCODE, DATE_OF_BIRTH)
+
+    df_two <- df_two %>%
+      # Calculate permutations
+      calc_permutations(., FORENAME, SURNAME, POSTCODE, DATE_OF_BIRTH)
+  }
 
   # Exact matches
   exact_matches <- df_one %>%
-    dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
     dplyr::inner_join(
-      y = df_two %>%
-        dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO),
+      y = df_two,
       by = c(
         "FORENAME_ONE" = "FORENAME_TWO",
         "SURNAME_ONE" = "SURNAME_TWO",
@@ -463,10 +484,8 @@ find_db_matches <- function(
 
   # Reverse exact matches
   exact_matches_reverse <- df_one %>%
-    dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
     dplyr::inner_join(
-      y = df_two %>%
-        dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO),
+      y = df_two,
       by = c(
         "FORENAME_ONE" = "SURNAME_TWO",
         "SURNAME_ONE" = "FORENAME_TWO",
