@@ -70,7 +70,7 @@ leap_db <- con %>%
 
 # Db eibss table
 pds_db <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_PDS_PROCESSED"))
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_PDS_PROCESSED"))
 
 # Rename PDS relevant variables
 pds_db <- pds_db %>%
@@ -89,29 +89,32 @@ leap_db
 results <- find_db_matches(
   leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
   pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
-  "all"
+  "all", F
   )
 
 Sys.time()
 # Write the table back to the DB with indexes: ~ 8hrs
 results %>%
   compute(
-    name = "INT623_LEAP_TEST1",
+    name = "INT600_LEAP_TEST1",
     temporary = FALSE
   )
-
+Sys.time()
 # Results: ~ 10 mins
 results <- find_db_matches(
   leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
   pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
-  "match"
+  "match", F
 )
+
+Sys.time()
 # Write the table back to the DB with indexes: ~ 8hrs
 results %>%
   compute(
     name = "INT623_LEAP_TEST2",
     temporary = FALSE
   )
+Sys.time()
 
 # Results: ~ 10 mins
 results <- find_db_matches(
@@ -154,8 +157,8 @@ leap_db <- leap_db %>%
     SURNAME_ONE = SURNAME,
     DOB_ONE = DATE_OF_BIRTH,
     POSTCODE_ONE = POSTCODE
-  )
-
+  ) %>%
+  calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
 
 # For convenience rename columns
 pds_db <- pds_db %>%
@@ -165,12 +168,22 @@ pds_db <- pds_db %>%
     SURNAME_TWO = SURNAME,
     DOB_TWO = DOB,
     POSTCODE_TWO = POSTCODE
-  )
+  ) %>%
+  calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
+
+# List of permutation-join columns
+perm_num <- paste0("PERM", 1:9)
+
+# Get column names
+leap_cols <- colnames(leap_db)[!colnames(leap_db) %in% perm_num]
+pds_cols <- colnames(pds_db)[!colnames(pds_db) %in% perm_num]
 
 # Exact matches
 exact_matches <- leap_db %>%
+  dplyr::select(-perm_num) %>%
   dplyr::inner_join(
-    y = pds_db,
+    y = pds_db %>%
+      dplyr::select(-perm_num),
     by = c(
       "FORENAME_ONE" = "FORENAME_TWO",
       "SURNAME_ONE" = "SURNAME_TWO",
@@ -181,8 +194,10 @@ exact_matches <- leap_db %>%
 
 # Exact matches
 exact_matches_reverse <- leap_db %>%
+  dplyr::select(-perm_num) %>%
   dplyr::inner_join(
-    y = pds_db,
+    y = pds_db %>%
+      dplyr::select(-perm_num),
     by = c(
       "FORENAME_ONE" = "SURNAME_TWO",
       "SURNAME_ONE" = "FORENAME_TWO",
@@ -209,27 +224,23 @@ exact_matches <- exact_matches %>%
 
 # Remaining records
 remain <- leap_db %>%
-  dplyr::anti_join(y = exact_matches, by = "ID_ONE") %>%
-  calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
-
-pds_db <- pds_db %>%
-  calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
-
-# List of permutation-join columns
-perm_num <- paste0("PERM", 1:9)
+  dplyr::anti_join(y = exact_matches, by = "ID_ONE")
 
 # Distinct list of ID perm-join pairs
 id_pairs <- perm_num %>%
   purrr::map(~{
 
     remain %>%
-      dplyr::inner_join(pds_db, by = {{.x}}) %>%
-      dplyr::select(- {{.x}})
+      dplyr::select(leap_cols, {{.x}}) %>%
+      dplyr::inner_join(
+        y = pds_db %>%
+          dplyr::select(pds_cols, {{.x}}),
+        by = {{.x}}
+        ) %>%
+      dplyr::select(-{{.x}})
   }) %>%
   purrr::reduce(function(x, y) union(x, y)) %>%
   dplyr::distinct()
-
-id_pairs
 
 # Generate list of feasible dob-pairs with 6 identical characters
 cross <- id_pairs %>%

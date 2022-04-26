@@ -416,7 +416,7 @@ calc_db_jw_threshold_edit <- function(df, name_one, name_two, threshold_val, col
 find_db_matches <- function(
   df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
   df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
-  output_type, format_daata
+  output_type, format_data
 ){
 
   # Rename columns
@@ -439,35 +439,47 @@ find_db_matches <- function(
       POSTCODE_TWO := {{ postcode_two }}
     )
 
+  # Separate from other columns
+  df_one_cols <- df_one %>%
+    select(-c(FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE))
+
+  # Separate from other columns
+  df_two_cols <- df_two %>%
+    select(-c(FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO))
+
   if(format_data == TRUE){
 
     df_one <- df_one %>%
+      dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
       # Format data
       format_db_postcode(., POSTCODE_ONE) %>%
       format_db_name(., FORENAME_ONE) %>%
       format_db_name(., SURNAME_ONE) %>%
       format_db_date(., DOB_ONE) %>%
       # Calculate permutations
-      calc_permutations(., FORENAME, SURNAME, POSTCODE, DATE_OF_BIRTH)
+      calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
 
     df_two <- df_two %>%
+      dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO)
       # Format data
       format_db_postcode(., POSTCODE_TWO) %>%
       format_db_name(., FORENAME_TWO) %>%
       format_db_name(., SURNAME_TWO) %>%
       format_db_date(., DOB_TWO) %>%
       # Calculate permutations
-      calc_permutations(., FORENAME, SURNAME, POSTCODE, DATE_OF_BIRTH)
+      calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
 
   }else{
 
     df_one <- df_one %>%
-      # Calculate permutations
-      calc_permutations(., FORENAME, SURNAME, POSTCODE, DATE_OF_BIRTH)
+      # Select columns and calculate permutations
+      dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
+      calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
 
     df_two <- df_two %>%
-      # Calculate permutations
-      calc_permutations(., FORENAME, SURNAME, POSTCODE, DATE_OF_BIRTH)
+      # Select columns and calculate permutations
+      dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO) %>%
+      calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
   }
 
   # Exact matches
@@ -541,10 +553,10 @@ find_db_matches <- function(
   matches <- cross %>%
     dplyr::mutate(
       # NAs for zeros
-      JW_FORENAME = UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO),
+      JW_FORENAME = ifelse(FORENAME_ONE == FORENAME_TWO, 1, UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)),
       JW_SURNAME = UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO),
       JW_POSTCODE = UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO),
-      ED_DOB = ifelse(DOB_ONE == DOB_TWO, 0, 2),
+      ED_DOB = UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO),
       # Generate confident matches
       MATCH_TYPE = dplyr::case_when(
         (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
@@ -560,6 +572,20 @@ find_db_matches <- function(
     dplyr::filter(MATCH_TYPE != "No Match") %>%
     # Add exact matches
     dplyr::union_all(exact_matches)
+
+  # Determine non-matches
+  # non_matches <- df_one %>%
+  #   dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE))
+
+  # Final cross-join
+  #cross_join_size <- nrow(non_matches) * nrow(df_two)
+
+  # Less than 1 billion then attempt cross join
+  # if(cross_join_size <= 1000000000){
+  #
+  #   final_matches <- no_matches %>%
+  #     dplyr::
+  # }
 
   # Determine non-matches
   non_matches <- df_one %>%
@@ -589,7 +615,7 @@ find_db_matches <- function(
       ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       MATCH_TYPE, MATCH_COUNT
     ) %>%
-    # Rejoin original columns
+    #Rejoin original columns
     dplyr::left_join(df_one_cols, by = "ID_ONE") %>%
     dplyr::left_join(df_two_cols, by = "ID_TWO") %>%
     # Rename back to original column names
@@ -618,7 +644,7 @@ find_db_matches <- function(
 
   }else if(output_type == "match"){
 
-    # Rejoin to original columns
+    # Only select key columns
     all_matches <- all_matches %>%
       dplyr::select(
         {{ id_one }},
@@ -639,6 +665,24 @@ find_db_matches <- function(
     return(all_matches)
 
   }else{
+
+    ## Only select key columns
+    all_matches <- all_matches %>%
+      dplyr::select(
+        {{ id_one }},
+        {{ forename_one }},
+        {{ surname_one }},
+        {{ dob_one }},
+        {{ postcode_one }},
+        {{ id_two }},
+        {{ forename_two }},
+        {{ surname_two }},
+        {{ dob_two }},
+        {{ postcode_two }},
+        MATCH_TYPE,
+        MATCH_COUNT,
+        dplyr::everything()
+      )
 
     # Return data
     return(all_matches)
