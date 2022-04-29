@@ -416,8 +416,12 @@ calc_db_jw_threshold_edit <- function(df, name_one, name_two, threshold_val, col
 find_db_matches <- function(
   df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
   df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
-  output_type = C("all", "key", "match"), format_data = C(TRUE, FALSE)
+  output_type = c("all", "key", "match"),
+  format_data = c(TRUE, FALSE)
 ){
+
+  # Match arguments
+  match.arg(output_type)
 
   # Rename columns
   df_one <- df_one %>%
@@ -562,75 +566,68 @@ find_db_matches <- function(
     # Add exact matches
     dplyr::union_all(exact_matches)
 
-  # Determine non-matches
+  # Determine non-matches size
+  non_matches_tally <- df_one %>%
+    dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE)) %>%
+    dplyr::tally() %>%
+    dplyr::pull()
+
+  # Df one tally
+  df_one_tally <- df_one %>% dplyr::tally() %>% pull()
+
+  # Final cross-join
+  cross_join_size <- non_matches_tally * df_one_tally
+
+  # Determine non-matches size
   non_matches <- df_one %>%
     dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE))
 
-  non_matches %>%
-    dplyr::select(ID_ONE) %>%
-    dplyr::mutate(TMP = 1) %>%
-    dplyr::full_join(
-      df_one %>%
-        dplyr::select(ID_ONE) %>%
-        dplyr::mutate(TMP = 1)
-    )
-
-
-  # Get row counts
-  #non_matches_tally <- non_matches %>% tally() %>% pull()
-  #df_one_tally <- df_one %>% tally() %>% pull()
-
-  # Final cross-join
-  #cross_join_size <- non_matches_tally * df_one_tally
-
   # #Less than 1 billion then attempt cross join
-  # if(cross_join_size <= 1000000000){
-  #
-  #   # Final cross-join matches, with corss-join threshold in place
-  #   final_matches <- non_matches %>%
-  #     dplyr::mutate(TMP = 1) %>%
-  #     dplyr::full_join(
-  #       y = df_two %>%
-  #         dplyr::select(df_two_cols) %>%
-  #         dplyr::mutate(TMP = 1),
-  #       by = "TMP"
-  #     ) %>%
-  #     select(-TMP) %>%
-  #     dplyr::mutate(
-  #       # NAs for zeros
-  #       JW_FORENAME = dplyr::case_when(
-  #         length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
-  #         FORENAME_ONE == FORENAME_TWO ~ 1,
-  #         T ~ UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)
-  #         ),
-  #       JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
-  #       JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
-  #       ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
-  #       # Generate confident matches
-  #       MATCH_TYPE = dplyr::case_when(
-  #         (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
-  #         (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
-  #         (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
-  #         (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-  #         (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-  #         (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
-  #         TRUE ~ "No Match"
-  #       )
-  #     ) %>%
-  #     # filter to only confident matches
-  #     dplyr::filter(MATCH_TYPE != "No Match")
-  #
-  #   # Re-determine non-matches
-  #   non_matches <- non_matches %>%
-  #     dplyr::anti_join(y = final_matches %>% dplyr::select(ID_ONE))
-  #
-  #   # Re-determine total matches df
-  #   matches <- matches %>%
-  #     # Add exact matches
-  #     dplyr::union_all(final_matches)
-  # }
+  if(cross_join_size <= 1000000000){
 
-  print("final no matches")
+    # Final cross-join matches, with corss-join threshold in place
+    final_matches <- non_matches %>%
+      dplyr::mutate(TMP = 1) %>%
+      dplyr::full_join(
+        y = df_two %>%
+          dplyr::select(df_two_cols) %>%
+          dplyr::mutate(TMP = 1),
+        by = "TMP"
+      ) %>%
+      select(-TMP) %>%
+      dplyr::mutate(
+        # NAs for zeros
+        JW_FORENAME = dplyr::case_when(
+          length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
+          FORENAME_ONE == FORENAME_TWO ~ 1,
+          T ~ UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)
+          ),
+        JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
+        JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
+        ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
+        # Generate confident matches
+        MATCH_TYPE = dplyr::case_when(
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
+          (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
+          TRUE ~ "No Match"
+        )
+      ) %>%
+      # filter to only confident matches
+      dplyr::filter(MATCH_TYPE != "No Match")
+
+    # Re-determine non-matches
+    non_matches <- non_matches %>%
+      dplyr::anti_join(y = final_matches %>% dplyr::select(ID_ONE))
+
+    # Re-determine total matches df
+    matches <- matches %>%
+      # Add exact matches
+      dplyr::union_all(final_matches)
+  }
 
   # Determine missing non-match fields
   non_matches <- non_matches %>%
@@ -646,6 +643,9 @@ find_db_matches <- function(
       ED_DOB = NA,
       MATCH_TYPE = "No Match"
     )
+
+  print(matches)
+  print(non_matches)
 
   # Add non-matches
   all_matches <- matches %>%
@@ -668,7 +668,7 @@ find_db_matches <- function(
       {{ postcode_two }} := POSTCODE_TWO
     )
 
-  print("all matches done")
+  print(all_matches)
 
   # Determine final output format
   if(output_type == "key"){
@@ -707,7 +707,7 @@ find_db_matches <- function(
     # Return data
     return(all_matches)
 
-  }else{
+  }else if(output_type == "all"){
 
     # Only select key columns
     all_matches <- all_matches %>%

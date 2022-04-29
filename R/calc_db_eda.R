@@ -85,22 +85,25 @@ pds_db <- pds_db %>%
 pds_db
 leap_db
 
-# Results: ~ 10 mins
-Sys.time()
+# Results
 results <- find_db_matches(
   leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
   pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
-  "key", F
+  "match", F
   )
+
 Sys.time()
 # Write the table back to the DB with indexes: ~ 8hrs
 results %>%
   compute(
-    name = "INT600_LEAP_TEST1",
+    name = "INT600_LEAP_TEST3",
     temporary = FALSE
   )
 Sys.time()
 # Results: ~ 10 mins
+
+
+
 results <- find_db_matches(
   leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
   pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
