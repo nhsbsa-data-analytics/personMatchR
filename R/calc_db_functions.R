@@ -416,7 +416,7 @@ calc_db_jw_threshold_edit <- function(df, name_one, name_two, threshold_val, col
 find_db_matches <- function(
   df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
   df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
-  output_type, format_data
+  output_type = C("all", "key", "match"), format_data = C(TRUE, FALSE)
 ){
 
   # Rename columns
@@ -439,48 +439,27 @@ find_db_matches <- function(
       POSTCODE_TWO := {{ postcode_two }}
     )
 
-  # Separate from other columns
-  df_one_cols <- df_one %>%
-    select(-c(FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE))
-
-  # Separate from other columns
-  df_two_cols <- df_two %>%
-    select(-c(FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO))
-
+  # Format data depending on function input selection
   if(format_data == TRUE){
 
+    # Format df one
     df_one <- df_one %>%
-      dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
-      # Format data
       format_db_postcode(., POSTCODE_ONE) %>%
       format_db_name(., FORENAME_ONE) %>%
       format_db_name(., SURNAME_ONE) %>%
-      format_db_date(., DOB_ONE) %>%
-      # Calculate permutations
-      calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
+      format_db_date(., DOB_ONE)
 
+    # Format df two
     df_two <- df_two %>%
-      dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO)
-      # Format data
       format_db_postcode(., POSTCODE_TWO) %>%
       format_db_name(., FORENAME_TWO) %>%
       format_db_name(., SURNAME_TWO) %>%
-      format_db_date(., DOB_TWO) %>%
-      # Calculate permutations
-      calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
-
-  }else{
-
-    df_one <- df_one %>%
-      # Select columns and calculate permutations
-      dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE) %>%
-      calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
-
-    df_two <- df_two %>%
-      # Select columns and calculate permutations
-      dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO) %>%
-      calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
+      format_db_date(., DOB_TWO)
   }
+
+  # Df column names
+  df_one_cols <- colnames(df_one)
+  df_two_cols <- colnames(df_two)
 
   # Exact matches
   exact_matches <- df_one %>%
@@ -524,7 +503,12 @@ find_db_matches <- function(
 
   # Remaining records
   remain <- df_one %>%
-    dplyr::anti_join(y = exact_matches, by = "ID_ONE")
+    dplyr::anti_join(y = exact_matches, by = "ID_ONE") %>%
+    calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
+
+  # Select columns and calculate permutations
+  df_two <- df_two %>%
+    calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
 
   # List of permutation-join columns
   perm_num <- paste0("PERM", 1:9)
@@ -534,10 +518,11 @@ find_db_matches <- function(
     purrr::map(~{
 
       remain %>%
-        dplyr::select(ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE, {{.x}}) %>%
+        dplyr::select(df_one_cols, {{.x}}) %>%
         dplyr::inner_join(
           df_two %>%
-            dplyr::select(ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO, {{.x}})
+            dplyr::select(df_two_cols, {{.x}}),
+          by = {{.x}}
         ) %>%
         dplyr::select(- {{.x}})
     }) %>%
@@ -553,10 +538,14 @@ find_db_matches <- function(
   matches <- cross %>%
     dplyr::mutate(
       # NAs for zeros
-      JW_FORENAME = ifelse(FORENAME_ONE == FORENAME_TWO, 1, UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)),
-      JW_SURNAME = UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO),
-      JW_POSTCODE = UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO),
-      ED_DOB = UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO),
+      JW_FORENAME = dplyr::case_when(
+        length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
+        FORENAME_ONE == FORENAME_TWO ~ 1,
+        T ~ UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)
+      ),
+      JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
+      JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
+      ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
       # Generate confident matches
       MATCH_TYPE = dplyr::case_when(
         (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
@@ -574,22 +563,65 @@ find_db_matches <- function(
     dplyr::union_all(exact_matches)
 
   # Determine non-matches
-  # non_matches <- df_one %>%
-  #   dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE))
+  non_matches <- df_one %>%
+    dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE))
+
+  # Get row counts
+  non_matches_tally <- non_matches %>% tally()
+  df_one_tally <- df_one %>% tally()
 
   # Final cross-join
-  #cross_join_size <- nrow(non_matches) * nrow(df_two)
+  cross_join_size <- non_match_tally * df_one_tally
 
-  # Less than 1 billion then attempt cross join
-  # if(cross_join_size <= 1000000000){
-  #
-  #   final_matches <- no_matches %>%
-  #     dplyr::
-  # }
+  #Less than 1 billion then attempt cross join
+  if(cross_join_size <= 1000000000){
 
-  # Determine non-matches
-  non_matches <- df_one %>%
-    dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE)) %>%
+    # Final cross-join matches, with corss-join threshold in place
+    final_matches <- non_matches %>%
+      dplyr::mutate(TMP = 1) %>%
+      dplyr::full_join(
+        y = df_two %>%
+          dplyr::select(df_two_cols) %>%
+          dplyr::mutate(TMP = 1),
+        by = "TMP"
+      ) %>%
+      select(-TMP) %>%
+      dplyr::mutate(
+        # NAs for zeros
+        JW_FORENAME = dplyr::case_when(
+          length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
+          FORENAME_ONE == FORENAME_TWO ~ 1,
+          T ~ UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)
+          ),
+        JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
+        JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
+        ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
+        # Generate confident matches
+        MATCH_TYPE = dplyr::case_when(
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
+          (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
+          TRUE ~ "No Match"
+        )
+      ) %>%
+      # filter to only confident matches
+      dplyr::filter(MATCH_TYPE != "No Match")
+
+    # Re-determine non-matches
+    non_matches <- non_matches %>%
+      dplyr::anti_join(y = final_matches %>% dplyr::select(ID_ONE))
+
+    # Re-determine total matches df
+    matches <- matches %>%
+      # Add exact matches
+      dplyr::union_all(final_matches)
+  }
+
+  # Determine missing non-match fieelds
+  non_matches <- non_matches %>%
     dplyr::mutate(
       ID_TWO = NA,
       FORENAME_TWO = NA,
@@ -637,7 +669,12 @@ find_db_matches <- function(
 
     # Only select key columns
     all_matches <- all_matches %>%
-      dplyr::select({{ id_one }}, {{ id_two }}, MATCH_TYPE, MATCH_COUNT)
+      dplyr::select(
+        {{ id_one }},
+        {{ id_two }},
+        MATCH_TYPE,
+        MATCH_COUNT
+        )
 
     # Return data
     return(all_matches)
@@ -688,3 +725,4 @@ find_db_matches <- function(
     return(all_matches)
   }
 }
+

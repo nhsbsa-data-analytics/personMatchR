@@ -6,7 +6,7 @@ library(dbplyr)
 # Functions
 source("R/calc_db_functions.R")
 source("R/format_db_functions.R")
-
+abcd
 #-------------------------------------------------------------------------------
 # Part One: Table Formatting - Required prior due to multiple joins later
 
@@ -137,53 +137,47 @@ Sys.time()
 DBI::dbDisconnect(con)
 
 #-------------------------------------------------------------------------------
+# Part Three: manual woring of code
 
 # Set up connection to the DB
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
 
 # Db pds table
-leap_db <- con %>%
+df_one <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_LEAP_PROCESSED"))
 
 # Db eibss table
-pds_db <- con %>%
+df_two <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_PDS_PROCESSED"))
 
 # For convenience rename columns
-leap_db <- leap_db %>%
+df_one <- df_one %>%
   rename(
     ID_ONE = ID,
     FORENAME_ONE = FORENAME,
     SURNAME_ONE = SURNAME,
     DOB_ONE = DATE_OF_BIRTH,
     POSTCODE_ONE = POSTCODE
-  ) %>%
-  calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
+  )
 
 # For convenience rename columns
-pds_db <- pds_db %>%
+df_two <- df_two %>%
   rename(
     ID_TWO = RECORD_ID,
     FORENAME_TWO = FORENAME,
     SURNAME_TWO = SURNAME,
     DOB_TWO = DOB,
     POSTCODE_TWO = POSTCODE
-  ) %>%
-  calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
+  )
 
-# List of permutation-join columns
-perm_num <- paste0("PERM", 1:9)
-
-# Get column names
-leap_cols <- colnames(leap_db)[!colnames(leap_db) %in% perm_num]
-pds_cols <- colnames(pds_db)[!colnames(pds_db) %in% perm_num]
+# Df column names
+df_one_cols <- colnames(df_one)
+df_two_cols <- colnames(df_two)
 
 # Exact matches
-exact_matches <- leap_db %>%
-  dplyr::select(-perm_num) %>%
+exact_matches <- df_one %>%
   dplyr::inner_join(
-    y = pds_db %>%
-      dplyr::select(-perm_num),
+    y = df_two,
     by = c(
       "FORENAME_ONE" = "FORENAME_TWO",
       "SURNAME_ONE" = "SURNAME_TWO",
@@ -192,12 +186,10 @@ exact_matches <- leap_db %>%
     )
   )
 
-# Exact matches
-exact_matches_reverse <- leap_db %>%
-  dplyr::select(-perm_num) %>%
+# Reverse exact matches
+exact_matches_reverse <- df_one %>%
   dplyr::inner_join(
-    y = pds_db %>%
-      dplyr::select(-perm_num),
+    y = df_two,
     by = c(
       "FORENAME_ONE" = "SURNAME_TWO",
       "SURNAME_ONE" = "FORENAME_TWO",
@@ -223,21 +215,29 @@ exact_matches <- exact_matches %>%
   )
 
 # Remaining records
-remain <- leap_db %>%
-  dplyr::anti_join(y = exact_matches, by = "ID_ONE")
+remain <- df_one %>%
+  dplyr::anti_join(y = exact_matches, by = "ID_ONE") %>%
+  calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
+
+# Select columns and calculate permutations
+df_two <- df_two %>%
+  calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
+
+# List of permutation-join columns
+perm_num <- paste0("PERM", 1:9)
 
 # Distinct list of ID perm-join pairs
 id_pairs <- perm_num %>%
   purrr::map(~{
 
     remain %>%
-      dplyr::select(leap_cols, {{.x}}) %>%
+      dplyr::select(df_one_cols, {{.x}}) %>%
       dplyr::inner_join(
-        y = pds_db %>%
-          dplyr::select(pds_cols, {{.x}}),
+        df_two %>%
+          dplyr::select(df_two_cols, {{.x}}),
         by = {{.x}}
-        ) %>%
-      dplyr::select(-{{.x}})
+      ) %>%
+      dplyr::select(- {{.x}})
   }) %>%
   purrr::reduce(function(x, y) union(x, y)) %>%
   dplyr::distinct()
@@ -251,10 +251,10 @@ cross <- id_pairs %>%
 matches <- cross %>%
   dplyr::mutate(
     # NAs for zeros
-    JW_FORENAME = UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO),
-    JW_SURNAME = UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO),
-    JW_POSTCODE = UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO),
-    ED_DOB = UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO),
+    JW_FORENAME = ifelse(FORENAME_ONE == FORENAME_TWO, 1, UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)),
+    JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
+    JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
+    ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
     # Generate confident matches
     MATCH_TYPE = dplyr::case_when(
       (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
@@ -269,28 +269,82 @@ matches <- cross %>%
   # filter to only confident matches
   dplyr::filter(MATCH_TYPE != "No Match") %>%
   # Add exact matches
-  dplyr::union_all(exact)
+  dplyr::union_all(exact_matches)
 
 # Determine non-matches
-non_matches <- leap_db %>%
-  dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE)) %>%
-  dplyr::mutate(
-    ID_TWO = NA,
-    FORENAME_TWO = NA,
-    SURNAME_TWO= NA,
-    DOB_TWO = NA,
-    POSTCODE_TWO = NA,
-    JW_SURNAME = NA,
-    JW_FORENAME = NA,
-    JW_POSTCODE = NA,
-    ED_DOB = NA,
-    MATCH_TYPE = "No Match"
-  )
+non_matches <- df_one %>%
+  dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE))
+
+# Get row counts
+non_matches_tally <- non_matches %>% tally()
+df_one_tally <- df_one %>% tally()
+
+# Final cross-join
+cross_join_size <- non_match_tally * df_one_tally
+
+#Less than 1 billion then attempt cross join
+if(cross_join_size <= 1000000000){
+
+    # Final cross-join matches, with corss-join threshold in place
+    final_matches <- non_matches %>%
+      dplyr::mutate(TMP = 1) %>%
+      dplyr::full_join(
+        y = df_two %>%
+          dplyr::select(df_two_cols) %>%
+          dplyr::mutate(TMP = 1),
+        by = "TMP"
+      ) %>%
+      select(-TMP) %>%
+      dplyr::mutate(
+        # NAs for zeros
+        JW_FORENAME = ifelse(FORENAME_ONE == FORENAME_TWO, 1, UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)),
+        JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
+        JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
+        ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
+        # Generate confident matches
+        MATCH_TYPE = dplyr::case_when(
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
+          (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
+          TRUE ~ "No Match"
+        )
+      ) %>%
+      # filter to only confident matches
+      dplyr::filter(MATCH_TYPE != "No Match")
+
+    # Re-determine non-matches
+    non_matches <- non_matches %>%
+      dplyr::anti_join(y = final_matches %>% dplyr::select(ID_ONE))
+
+    # Re-determine total matches df
+    matches <- matches %>%
+      # Add exact matches
+      dplyr::union_all(final_matches)
+
+}
+  # Determine non-matches
+  non_matches <- non_matches %>%
+    dplyr::mutate(
+      ID_TWO = NA,
+      FORENAME_TWO = NA,
+      SURNAME_TWO= NA,
+      DOB_TWO = NA,
+      POSTCODE_TWO = NA,
+      JW_SURNAME = NA,
+      JW_FORENAME = NA,
+      JW_POSTCODE = NA,
+      ED_DOB = NA,
+      MATCH_TYPE = "No Match"
+    )
+
 
 # Add non-matches
 all_matches <- matches %>%
   dplyr::union_all(non_matches) %>%
-  # Calculate match_count per primary dfID
+  # Calculate match_count per primary df ID
   dplyr::group_by(ID_ONE) %>%
   dplyr::mutate(MATCH_COUNT = dplyr::n_distinct(ID_TWO)) %>%
   dplyr::ungroup() %>%
@@ -298,7 +352,18 @@ all_matches <- matches %>%
     ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE,
     ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
     MATCH_TYPE, MATCH_COUNT
-    )
+  ) %>%
+  #Rejoin original columns
+  dplyr::left_join(df_one_cols, by = "ID_ONE") %>%
+  dplyr::left_join(df_two_cols, by = "ID_TWO")
+
+
+
+
+
+
+
+
   # Rename back to OG column names
   dplyr::rename(
     {{ id_one }} := ID_ONE,
