@@ -573,7 +573,7 @@ find_db_matches <- function(
     dplyr::inner_join(
       df_one %>%
         dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE)) %>%
-        tally() %>%
+        dplyr::tally() %>%
         dplyr::mutate(TMP = 1)
     )
 
@@ -641,17 +641,68 @@ find_db_matches <- function(
       MATCH_TYPE = "No Match"
     )
 
-  print(matches)
-  print(non_matches)
-
   # Add non-matches
   all_matches <- matches %>%
     dplyr::union_all(non_matches) %>%
     # Calculate match_count per primary df ID
     dplyr::group_by(ID_ONE) %>%
     dplyr::mutate(MATCH_COUNT = dplyr::n_distinct(ID_TWO)) %>%
-    dplyr::ungroup() %>%
-    # Rename back to original column names
+    dplyr::ungroup()
+
+  # Determine final output format
+  if(output_type == "key"){
+
+    # Only select key columns
+    all_matches <- all_matches %>%
+      dplyr::select(
+        ID_ONE,
+        ID_TWO,
+        MATCH_TYPE,
+        MATCH_COUNT
+        )
+
+  }else if(output_type == "match"){
+
+    # Only select key columns
+    all_matches <- all_matches %>%
+      dplyr::select(
+        ID_ONE,
+        FORENAME_ONE,
+        SURNAME_ONE,
+        DOB_ONE,
+        POSTCODE_ONE,
+        ID_TWO,
+        FORENAME_TWO,
+        SURNAME_TWO,
+        DOB_TWO,
+        POSTCODE_TWO,
+        MATCH_TYPE,
+        MATCH_COUNT
+      )
+
+  }else if(output_type == "all"){
+
+    # Only select key columns
+    all_matches <- all_matches %>%
+      dplyr::select(
+        ID_ONE,
+        FORENAME_ONE,
+        SURNAME_ONE,
+        DOB_ONE,
+        POSTCODE_ONE,
+        ID_TWO,
+        FORENAME_TWO,
+        SURNAME_TWO,
+        DOB_TWO,
+        POSTCODE_TWO,
+        MATCH_TYPE,
+        MATCH_COUNT,
+        dplyr::everything()
+      )
+  }
+
+  # Rename back to original column names
+  all_matches <- all_matches %>%
     dplyr::rename(
       {{ id_one }} := ID_ONE,
       {{ forename_one }} := FORENAME_ONE,
@@ -663,69 +714,9 @@ find_db_matches <- function(
       {{ surname_two }} := SURNAME_ONE,
       {{ dob_two }} := DOB_TWO,
       {{ postcode_two }} := POSTCODE_TWO
-    )
+  )
 
-  print(all_matches)
-
-  # Determine final output format
-  if(output_type == "key"){
-
-    # Only select key columns
-    all_matches <- all_matches %>%
-      dplyr::select(
-        {{ id_one }},
-        {{ id_two }},
-        MATCH_TYPE,
-        MATCH_COUNT
-        )
-
-    # Return data
-    return(all_matches)
-
-  }else if(output_type == "match"){
-
-    # Only select key columns
-    all_matches <- all_matches %>%
-      dplyr::select(
-        {{ id_one }},
-        {{ forename_one }},
-        {{ surname_one }},
-        {{ dob_one }},
-        {{ postcode_one }},
-        {{ id_two }},
-        {{ forename_two }},
-        {{ surname_two }},
-        {{ dob_two }},
-        {{ postcode_two }},
-        MATCH_TYPE,
-        MATCH_COUNT
-      )
-
-    # Return data
-    return(all_matches)
-
-  }else if(output_type == "all"){
-
-    # Only select key columns
-    all_matches <- all_matches %>%
-      dplyr::select(
-        {{ id_one }},
-        {{ forename_one }},
-        {{ surname_one }},
-        {{ dob_one }},
-        {{ postcode_one }},
-        {{ id_two }},
-        {{ forename_two }},
-        {{ surname_two }},
-        {{ dob_two }},
-        {{ postcode_two }},
-        MATCH_TYPE,
-        MATCH_COUNT,
-        dplyr::everything()
-      )
-
-    # Return data
-    return(all_matches)
-  }
+  # Return data
+  return(all_matches)
 }
 
