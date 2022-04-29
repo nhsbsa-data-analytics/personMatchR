@@ -6,7 +6,7 @@ library(dbplyr)
 # Functions
 source("R/calc_db_functions.R")
 source("R/format_db_functions.R")
-abcd
+
 #-------------------------------------------------------------------------------
 # Part One: Table Formatting - Required prior due to multiple joins later
 
@@ -86,12 +86,12 @@ pds_db
 leap_db
 
 # Results: ~ 10 mins
+Sys.time()
 results <- find_db_matches(
   leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
   pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
-  "all", F
+  "key", F
   )
-
 Sys.time()
 # Write the table back to the DB with indexes: ~ 8hrs
 results %>%
@@ -389,3 +389,17 @@ all_matches %>%
     temporary = FALSE
   )
 Sys.time()
+
+# Get row counts
+non_matches_tally <- leap_db %>% tally() %>% pull()
+df_one_tally <- pds_db %>% tally() %>% pull()
+
+# Final cross-join
+cross_join_size <- non_matches_tally * df_one_tally
+
+#Less than 1 billion then attempt cross join
+if(cross_join_size <= 1000000000){
+  print("hello")
+}else{
+  print("no")
+}
