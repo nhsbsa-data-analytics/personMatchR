@@ -574,57 +574,69 @@ find_db_matches <- function(
       df_one %>%
         dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE)) %>%
         dplyr::tally() %>%
+        dplyr::rename(DF_ONE_ROWS = n) %>%
         dplyr::mutate(TMP = 1)
-    )
+    ) %>%
+    dplyr::inner_join(
+      df_two %>%
+        dplyr::tally() %>%
+        dplyr::rename(DF_TWO_ROWS = n) %>%
+        dplyr::mutate(TMP = 1)
+    ) %>%
+    dplyr::mutate(CROSS = DF_ONE_ROWS * DF_TWO_ROWS) %>%
+    dplyr::select(-c(TMP, DF_ONE_ROWS, DF_TWO_ROWS))
 
 
 
-  # #Less than 1 billion then attempt cross join
-  # if(cross_join_size <= 1000000000){
-  #
-  #   # Final cross-join matches, with corss-join threshold in place
-  #   final_matches <- non_matches %>%
-  #     dplyr::mutate(TMP = 1) %>%
-  #     dplyr::full_join(
-  #       y = df_two %>%
-  #         dplyr::select(df_two_cols) %>%
-  #         dplyr::mutate(TMP = 1),
-  #       by = "TMP"
-  #     ) %>%
-  #     select(-TMP) %>%
-  #     dplyr::mutate(
-  #       # NAs for zeros
-  #       JW_FORENAME = dplyr::case_when(
-  #         length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
-  #         FORENAME_ONE == FORENAME_TWO ~ 1,
-  #         T ~ UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)
-  #         ),
-  #       JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
-  #       JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
-  #       ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
-  #       # Generate confident matches
-  #       MATCH_TYPE = dplyr::case_when(
-  #         (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
-  #         (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
-  #         (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
-  #         (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-  #         (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-  #         (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
-  #         TRUE ~ "No Match"
-  #       )
-  #     ) %>%
-  #     # filter to only confident matches
-  #     dplyr::filter(MATCH_TYPE != "No Match")
-  #
-  #   # Re-determine non-matches
-  #   non_matches <- non_matches %>%
-  #     dplyr::anti_join(y = final_matches %>% dplyr::select(ID_ONE))
-  #
-  #   # Re-determine total matches df
-  #   matches <- matches %>%
-  #     # Add exact matches
-  #     dplyr::union_all(final_matches)
-  # }
+  #Less than 1 billion then attempt cross join
+  if(non_matches %>%
+     dplyr::select(CROSS) %>%
+     dplyr::distinct() %>%
+     dplyr::pull() <= 1000000000){
+
+    # Final cross-join matches, with corss-join threshold in place
+    final_matches <- non_matches %>%
+      dplyr::mutate(TMP = 1) %>%
+      dplyr::full_join(
+        y = df_two %>%
+          dplyr::select(df_two_cols) %>%
+          dplyr::mutate(TMP = 1),
+        by = "TMP"
+      ) %>%
+      select(-TMP) %>%
+      dplyr::mutate(
+        # NAs for zeros
+        JW_FORENAME = dplyr::case_when(
+          length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
+          FORENAME_ONE == FORENAME_TWO ~ 1,
+          T ~ UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)
+          ),
+        JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
+        JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
+        ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
+        # Generate confident matches
+        MATCH_TYPE = dplyr::case_when(
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
+          (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
+          (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
+          TRUE ~ "No Match"
+        )
+      ) %>%
+      # filter to only confident matches
+      dplyr::filter(MATCH_TYPE != "No Match")
+
+    # Re-determine non-matches
+    non_matches <- non_matches %>%
+      dplyr::anti_join(y = final_matches %>% dplyr::select(ID_ONE))
+
+    # Re-determine total matches df
+    matches <- matches %>%
+      # Add exact matches
+      dplyr::union_all(final_matches)
+  }
 
   # Determine missing non-match fields
   non_matches <- non_matches %>%
