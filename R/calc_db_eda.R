@@ -78,11 +78,7 @@ pds_db <- con %>%
 
 # Format EIBSS data
 eib_db <- eib_db %>%
-  select(REFERENCE, DOB, FORENAME, SURNAME, POSTCODE) %>%
-  format_db_date(DOB) %>%
-  format_db_name(., FORENAME) %>%
-  format_db_name(., SURNAME) %>%
-  format_db_postcode(., POSTCODE)
+  select(REFERENCE, DOB, FORENAME, SURNAME, POSTCODE)
 
 # Rename PDS relevant variables
 pds_db <- pds_db %>%
@@ -95,18 +91,18 @@ pds_db <- pds_db %>%
   )
 
 # Check data
+leap_db
 eib_db
 pds_db
-leap_db
 
 # Function output
 results <- find_db_matches(
   # Data to be matched
-  df_one = leap_db,
-  id_one = ID,
+  df_one = eib_db,
+  id_one = REFERENCE,
   forename_one = FORENAME,
   surname_one = SURNAME,
-  dob_one = DATE_OF_BIRTH,
+  dob_one = DOB,
   postcode_one = POSTCODE,
   # Lookup data
   df_two = pds_db,
@@ -124,12 +120,15 @@ results <- find_db_matches(
 Sys.time()
 results %>%
   compute(
-    name = "INT600_EIBSS_TEST",
+    name = "INT600_EIBSS_TEST2",
     temporary = FALSE
   )
 Sys.time()
 
 
+
+#-------------------------------------------------------------------------------
+# Part Three: Manual Code Run
 
 # Check data
 df_one

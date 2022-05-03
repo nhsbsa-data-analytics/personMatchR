@@ -166,6 +166,7 @@ find_db_matches <- function(
   if(max(colnames(pds_db) %in% colnames(eib_db)) == 1){
 
     print("ERROR: Each dataset requires unique column names.")
+    print("REASON: Matched database tables cannot contain duplicate column names")
     print("EDIT: Rename columns then use the function again.")
     return()
   }
@@ -248,7 +249,7 @@ find_db_matches <- function(
       JW_FORENAME = 1,
       JW_SURNAME = 1,
       JW_POSTCODE = 1,
-      ED_DOB = 0,
+      DIFF_DOB = 0,
       MATCH_TYPE = 'Exact',
     )
 
@@ -328,7 +329,7 @@ find_db_matches <- function(
       JW_SURNAME = NA,
       JW_FORENAME = NA,
       JW_POSTCODE = NA,
-      ED_DOB = NA,
+      DIFF_DOB = NA,
       MATCH_TYPE = "No Match"
     )
 
