@@ -159,6 +159,17 @@ find_db_matches <- function(
   # Match arguments
   match.arg(output_type)
 
+  # Check all column names unique
+  df_one_cols_original <- colnames(df_one)
+  df_two_cols_original <- colnames(df_two)
+
+  if(max(colnames(pds_db) %in% colnames(eib_db)) == 1){
+
+    print("ERROR: Each dataset requires unique column names.")
+    print("EDIT: Rename columns then use the function again.")
+    return()
+  }
+
   # Rename columns
   df_one <- df_one %>%
     rename(
@@ -382,19 +393,19 @@ find_db_matches <- function(
   }
 
   # Rename back to original column names
-  # all_matches <- all_matches %>%
-  #   dplyr::rename(
-  #     {{ id_one }} := ID_ONE,
-  #     {{ forename_one }} := FORENAME_ONE,
-  #     {{ surname_one }} := SURNAME_ONE,
-  #     {{ dob_one }} := DOB_ONE,
-  #     {{ postcode_one }} := POSTCODE_ONE,
-  #     {{ id_two }} := ID_TWO,
-  #     {{ forename_two }} := FORENAME_TWO,
-  #     {{ surname_two }} := SURNAME_ONE,
-  #     {{ dob_two }} := DOB_TWO,
-  #     {{ postcode_two }} := POSTCODE_TWO
-  # )
+  all_matches <- all_matches %>%
+    dplyr::rename(
+      {{ id_one }} := ID_ONE,
+      {{ forename_one }} := FORENAME_ONE,
+      {{ surname_one }} := SURNAME_ONE,
+      {{ dob_one }} := DOB_ONE,
+      {{ postcode_one }} := POSTCODE_ONE,
+      {{ id_two }} := ID_TWO,
+      {{ forename_two }} := FORENAME_TWO,
+      {{ surname_two }} := SURNAME_TWO,
+      {{ dob_two }} := DOB_TWO,
+      {{ postcode_two }} := POSTCODE_TWO
+  )
 
   # Return data
   return(all_matches)
