@@ -59,7 +59,7 @@ DBI::dbDisconnect(con)
 
 
 #-------------------------------------------------------------------------------
-# Part Two: composite joins then scoring
+# Part Two: Function output
 
 # Set up connection to the DB
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
@@ -68,13 +68,26 @@ con <- nhsbsaR::con_nhsbsa(database = "DALP")
 leap_db <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_LEAP_PROCESSED"))
 
+# Db pds table
+eib_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_EIB_PROCESSED"))
+
 # Db eibss table
 pds_db <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_PDS_PROCESSED"))
 
+# Format EIBSS data
+eib_db <- eib_db %>%
+  select(REFERENCE, DOB, FORENAME, SURNAME, POSTCODE) %>%
+  format_db_date(DOB) %>%
+  format_db_name(., FORENAME) %>%
+  format_db_name(., SURNAME) %>%
+  format_db_postcode(., POSTCODE)
+
 # Rename PDS relevant variables
 pds_db <- pds_db %>%
   rename(
+    ID_PDS = RECORD_ID,
     DOB_PDS = DOB,
     SURNAME_PDS = SURNAME,
     FORENAME_PDS = FORENAME,
@@ -82,96 +95,45 @@ pds_db <- pds_db %>%
   )
 
 # Check data
+eib_db
 pds_db
 leap_db
 
-# Results
+# Function output
 results <- find_db_matches(
-  leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
-  pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
-  "match", F
-  )
-
-Sys.time()
-# Write the table back to the DB with indexes: ~ 8hrs
-results %>%
-  compute(
-    name = "INT600_LEAP_TEST3",
-    temporary = FALSE
-  )
-Sys.time()
-# Results: ~ 10 mins
-
-
-
-results <- find_db_matches(
-  leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
-  pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
-  "match", F
+  # Data to be matched
+  df_one = leap_db,
+  id_one = ID,
+  forename_one = FORENAME,
+  surname_one = SURNAME,
+  dob_one = DATE_OF_BIRTH,
+  postcode_one = POSTCODE,
+  # Lookup data
+  df_two = pds_db,
+  id_two = ID_PDS,
+  forename_two = FORENAME_PDS,
+  surname_two = SURNAME_PDS,
+  dob_two = DOB_PDS,
+  postcode_two = POSTCODE_PDS,
+  # Other Information
+  output_type = "all",
+  format_data = FALSE
 )
 
+# Write data back
 Sys.time()
-# Write the table back to the DB with indexes: ~ 8hrs
 results %>%
   compute(
-    name = "INT623_LEAP_TEST2",
+    name = "INT600_EIBSS_TEST",
     temporary = FALSE
   )
 Sys.time()
 
-# Results: ~ 10 mins
-results <- find_db_matches(
-  leap_db, ID, FORENAME, SURNAME, DATE_OF_BIRTH, POSTCODE,
-  pds_db, RECORD_ID, FORENAME_PDS, SURNAME_PDS, DOB_PDS, POSTCODE_PDS,
-  "key"
-)
 
-Sys.time()
-# Write the table back to the DB with indexes: ~ 8hrs
-results %>%
-  compute(
-    name = "INT623_LEAP_TEST3",
-    temporary = FALSE
-  )
 
-Sys.time()
-
-# Disconnect
-DBI::dbDisconnect(con)
-
-#-------------------------------------------------------------------------------
-# Part Three: manual woring of code
-
-# Set up connection to the DB
-con <- nhsbsaR::con_nhsbsa(database = "DALP")
-
-# Db pds table
-df_one <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_LEAP_PROCESSED"))
-
-# Db eibss table
-df_two <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_PDS_PROCESSED"))
-
-# For convenience rename columns
-df_one <- df_one %>%
-  rename(
-    ID_ONE = ID,
-    FORENAME_ONE = FORENAME,
-    SURNAME_ONE = SURNAME,
-    DOB_ONE = DATE_OF_BIRTH,
-    POSTCODE_ONE = POSTCODE
-  )
-
-# For convenience rename columns
-df_two <- df_two %>%
-  rename(
-    ID_TWO = RECORD_ID,
-    FORENAME_TWO = FORENAME,
-    SURNAME_TWO = SURNAME,
-    DOB_TWO = DOB,
-    POSTCODE_TWO = POSTCODE
-  )
+# Check data
+df_one
+df_two
 
 # Df column names
 df_one_cols <- colnames(df_one)
@@ -234,10 +196,10 @@ id_pairs <- perm_num %>%
   purrr::map(~{
 
     remain %>%
-      dplyr::select(df_one_cols, {{.x}}) %>%
+      dplyr::select(all_of(df_one_cols), {{.x}}) %>%
       dplyr::inner_join(
         df_two %>%
-          dplyr::select(df_two_cols, {{.x}}),
+          dplyr::select(all_of(df_two_cols), {{.x}}),
         by = {{.x}}
       ) %>%
       dplyr::select(- {{.x}})
@@ -248,24 +210,31 @@ id_pairs <- perm_num %>%
 # Generate list of feasible dob-pairs with 6 identical characters
 cross <- id_pairs %>%
   name_db_filter(., FORENAME_ONE, FORENAME_TWO) %>%
-  dob_lv_filter(., DOB_ONE, DOB_TWO)
+  dob_db_filter(., DOB_ONE, DOB_TWO, 2)
 
 # Generate a list
 matches <- cross %>%
   dplyr::mutate(
-    # NAs for zeros
-    JW_FORENAME = ifelse(FORENAME_ONE == FORENAME_TWO, 1, UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)),
+    # If single character forename handle differently, otherwise JW
+    JW_FORENAME = dplyr::case_when(
+      length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
+      FORENAME_ONE == FORENAME_TWO ~ 1,
+      T ~ UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)
+    )
+  ) %>%
+  dplyr::filter(JW_FORENAME >= 0.75) %>%
+  dplyr::mutate(
+    # JW match, bypassing exact string matches (DIFF_DOB already calculated)
     JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
     JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
-    ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
     # Generate confident matches
     MATCH_TYPE = dplyr::case_when(
-      (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
-      (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
-      (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
-      (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-      (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-      (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
+      (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Exact",
+      (JW_SURNAME == 1 & JW_FORENAME == 1 & DIFF_DOB == 0) ~ "Confident",
+      (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB <= 2) ~ "Confident",
+      (JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
+      (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
+      (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & DIFF_DOB <= 2) ~ "Confident",
       TRUE ~ "No Match"
     )
   ) %>%
@@ -274,75 +243,21 @@ matches <- cross %>%
   # Add exact matches
   dplyr::union_all(exact_matches)
 
-# Determine non-matches
+# Determine missing non-match fields
 non_matches <- df_one %>%
-  dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE))
-
-# Get row counts
-non_matches_tally <- non_matches %>% tally()
-df_one_tally <- df_one %>% tally()
-
-# Final cross-join
-cross_join_size <- non_match_tally * df_one_tally
-
-#Less than 1 billion then attempt cross join
-if(cross_join_size <= 1000000000){
-
-    # Final cross-join matches, with corss-join threshold in place
-    final_matches <- non_matches %>%
-      dplyr::mutate(TMP = 1) %>%
-      dplyr::full_join(
-        y = df_two %>%
-          dplyr::select(df_two_cols) %>%
-          dplyr::mutate(TMP = 1),
-        by = "TMP"
-      ) %>%
-      select(-TMP) %>%
-      dplyr::mutate(
-        # NAs for zeros
-        JW_FORENAME = ifelse(FORENAME_ONE == FORENAME_TWO, 1, UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)),
-        JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
-        JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
-        ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
-        # Generate confident matches
-        MATCH_TYPE = dplyr::case_when(
-          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
-          (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
-          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
-          (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-          (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-          (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
-          TRUE ~ "No Match"
-        )
-      ) %>%
-      # filter to only confident matches
-      dplyr::filter(MATCH_TYPE != "No Match")
-
-    # Re-determine non-matches
-    non_matches <- non_matches %>%
-      dplyr::anti_join(y = final_matches %>% dplyr::select(ID_ONE))
-
-    # Re-determine total matches df
-    matches <- matches %>%
-      # Add exact matches
-      dplyr::union_all(final_matches)
-
-}
-  # Determine non-matches
-  non_matches <- non_matches %>%
-    dplyr::mutate(
-      ID_TWO = NA,
-      FORENAME_TWO = NA,
-      SURNAME_TWO= NA,
-      DOB_TWO = NA,
-      POSTCODE_TWO = NA,
-      JW_SURNAME = NA,
-      JW_FORENAME = NA,
-      JW_POSTCODE = NA,
-      ED_DOB = NA,
-      MATCH_TYPE = "No Match"
-    )
-
+  dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE)) %>%
+  dplyr::mutate(
+    ID_TWO = NA,
+    FORENAME_TWO = NA,
+    SURNAME_TWO= NA,
+    DOB_TWO = NA,
+    POSTCODE_TWO = NA,
+    JW_SURNAME = NA,
+    JW_FORENAME = NA,
+    JW_POSTCODE = NA,
+    ED_DOB = NA,
+    MATCH_TYPE = "No Match"
+  )
 
 # Add non-matches
 all_matches <- matches %>%
@@ -350,59 +265,14 @@ all_matches <- matches %>%
   # Calculate match_count per primary df ID
   dplyr::group_by(ID_ONE) %>%
   dplyr::mutate(MATCH_COUNT = dplyr::n_distinct(ID_TWO)) %>%
-  dplyr::ungroup() %>%
-  dplyr::select(
-    ID_ONE, FORENAME_ONE, SURNAME_ONE, DOB_ONE, POSTCODE_ONE,
-    ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
-    MATCH_TYPE, MATCH_COUNT
-  ) %>%
-  #Rejoin original columns
-  dplyr::left_join(df_one_cols, by = "ID_ONE") %>%
-  dplyr::left_join(df_two_cols, by = "ID_TWO")
+  dplyr::ungroup()
 
+# Get results: 15 mins
+match_df <- all_matches %>% collect()
 
-
-
-
-
-
-
-  # Rename back to OG column names
-  dplyr::rename(
-    {{ id_one }} := ID_ONE,
-    {{ forename_one }} := FORENAME_ONE,
-    {{ surname_one }} := SURNAME_ONE,
-    {{ dob_one }} := DOB_ONE,
-    {{ postcode_one }} := POSTCODE_ONE,
-    {{ id_two }} := ID_TWO,
-    {{ forename_two }} := FORENAME_TWO,
-    {{ surname_two }} := SURNAME_ONE,
-    {{ dob_two }} := DOB_TWO,
-    {{ postcode_two }} := POSTCODE_TWO
-  )
-
-# Return data
-return(all_match)
-
-# Write the table back to the DB with indexes: ~ 8hrs
-Sys.time()
-all_matches %>%
-  compute(
-    name = "INT623_LEAP_TEST",
-    temporary = FALSE
-  )
-Sys.time()
-
-# Get row counts
-non_matches_tally <- leap_db %>% tally() %>% pull()
-df_one_tally <- pds_db %>% tally() %>% pull()
-
-# Final cross-join
-cross_join_size <- non_matches_tally * df_one_tally
-
-#Less than 1 billion then attempt cross join
-if(cross_join_size <= 1000000000){
-  print("hello")
-}else{
-  print("no")
-}
+#
+match_df %>%
+  filter(MATCH_TYPE == "No Match") %>%
+  select(ID_ONE) %>%
+  distinct()
+  count(MATCH_TYPE)

@@ -10,80 +10,25 @@
 #' @export
 #'
 #' @examples
-#' dob_substr(df, sub_one, sub_two, sub_three)
-dob_lv_filter <- function(df, dob_one, dob_two){
+#' dob_substr(df, dob_one, dob_two, dob_diff
+dob_db_filter <- function(df, dob_one, dob_two, diff_threshold){
 
-  # Function to apply multiple times
-  dob_substr <- function(df, sub_one, sub_two, sub_three){
-
-    df %>%
-      dplyr::filter(
-        SUBSTR({{ dob_one }}, sub_one, 1) == SUBSTR({{ dob_two }}, sub_one, 1) |
-          # Tokens share same second letter
-          SUBSTR({{ dob_one }}, sub_two, 1) == SUBSTR({{ dob_two }}, sub_two, 1) |
-          # Tokens share same second letter
-          SUBSTR({{ dob_one }}, sub_three, 1) == SUBSTR({{ dob_two }}, sub_three, 1)
-      )
-  }
-
-  # Apply multiple filters to replicate use case of LV
   df %>%
-    dob_substr(., 1,2,3) %>%
-    dob_substr(., 1,2,4) %>%
-    dob_substr(., 1,2,5) %>%
-    dob_substr(., 1,2,6) %>%
-    dob_substr(., 1,2,7) %>%
-    dob_substr(., 1,2,8) %>%
-    dob_substr(., 1,3,4) %>%
-    dob_substr(., 1,3,5) %>%
-    dob_substr(., 1,3,6) %>%
-    dob_substr(., 1,3,7) %>%
-    dob_substr(., 1,3,8) %>%
-    dob_substr(., 1,4,5) %>%
-    dob_substr(., 1,4,6) %>%
-    dob_substr(., 1,4,7) %>%
-    dob_substr(., 1,4,8) %>%
-    dob_substr(., 1,5,6) %>%
-    dob_substr(., 1,5,7) %>%
-    dob_substr(., 1,5,8) %>%
-    dob_substr(., 1,6,7) %>%
-    dob_substr(., 1,6,8) %>%
-    dob_substr(., 1,7,8) %>%
-    dob_substr(., 2,3,4) %>%
-    dob_substr(., 2,3,5) %>%
-    dob_substr(., 2,3,6) %>%
-    dob_substr(., 2,3,7) %>%
-    dob_substr(., 2,3,8) %>%
-    dob_substr(., 2,4,5) %>%
-    dob_substr(., 2,4,6) %>%
-    dob_substr(., 2,4,7) %>%
-    dob_substr(., 2,4,8) %>%
-    dob_substr(., 2,5,6) %>%
-    dob_substr(., 2,5,7) %>%
-    dob_substr(., 2,5,8) %>%
-    dob_substr(., 2,6,7) %>%
-    dob_substr(., 2,6,8) %>%
-    dob_substr(., 2,7,8) %>%
-    dob_substr(., 3,4,5) %>%
-    dob_substr(., 3,4,6) %>%
-    dob_substr(., 3,4,7) %>%
-    dob_substr(., 3,4,8) %>%
-    dob_substr(., 3,5,6) %>%
-    dob_substr(., 3,5,7) %>%
-    dob_substr(., 3,5,8) %>%
-    dob_substr(., 3,6,7) %>%
-    dob_substr(., 3,6,8) %>%
-    dob_substr(., 3,7,8) %>%
-    dob_substr(., 4,5,6) %>%
-    dob_substr(., 4,5,7) %>%
-    dob_substr(., 4,5,8) %>%
-    dob_substr(., 4,6,7) %>%
-    dob_substr(., 4,6,8) %>%
-    dob_substr(., 4,7,8) %>%
-    dob_substr(., 5,6,7) %>%
-    dob_substr(., 5,6,8) %>%
-    dob_substr(., 5,7,8) %>%
-    dob_substr(., 6,7,8)
+    dplyr::mutate(
+      # Generate 8 character-level matching binary scores
+      CHAR1 = ifelse(substr({{ dob_one }},1,1) == substr({{ dob_two }},1,1), 1, 0),
+      CHAR2 = ifelse(substr({{ dob_one }},2,2) == substr({{ dob_two }},2,2), 1, 0),
+      CHAR3 = ifelse(substr({{ dob_one }},3,3) == substr({{ dob_two }},3,3), 1, 0),
+      CHAR4 = ifelse(substr({{ dob_one }},4,4) == substr({{ dob_two }},4,4), 1, 0),
+      CHAR5 = ifelse(substr({{ dob_one }},5,5) == substr({{ dob_two }},5,5), 1, 0),
+      CHAR6 = ifelse(substr({{ dob_one }},6,6) == substr({{ dob_two }},6,6), 1, 0),
+      CHAR7 = ifelse(substr({{ dob_one }},7,7) == substr({{ dob_two }},7,7), 1, 0),
+      CHAR8 = ifelse(substr({{ dob_one }},8,8) == substr({{ dob_two }},8,8), 1, 0),
+      # Total scores and present as DOB difference
+      DIFF_DOB = 8 - (CHAR1 + CHAR2 + CHAR3 + CHAR4 + CHAR5 + CHAR6 + CHAR7 + CHAR8)
+    ) %>%
+    dplyr::filter(DIFF_DOB <= diff_threshold) %>%
+    dplyr::select(-c(CHAR1, CHAR2, CHAR3, CHAR4, CHAR5, CHAR6, CHAR7, CHAR8))
 }
 
 #' Applies a filter on either forename or surname to limit cross-join
@@ -176,215 +121,6 @@ calc_permutations <- function(df, forename, surname, postcode, dob){
         substr({{ postcode }}, 1, 3)
       )
     )
-}
-
-#' Calculates two strings JW score, using a JW approximation to limit results
-#'
-#' JW can be slow within SQL Developer
-#' A quick JW-approximation can limit results before then applying this
-#' Scores below threshold not returned
-#'
-#' @param df A df to be formatted
-#' @param name_one first name column
-#' @param name_two second name column
-#' @param threshold_val retain only records with JW of a certain score or higher
-#' @param col_name what the name of the new output JW-scored column should be
-#'
-#' @return A df only with name-pairs with a JW value above a threshold
-#'
-#' @export
-#'
-#' @examples
-#' calc_db_jw_threshold(df, name_one, name_two, threshold_val)
-calc_db_jw_threshold <- function(df, name_one, name_two, threshold_val, col_name){
-
-  # Distinct df to calculate JW scores for
-  output <- df %>%
-    dplyr::rename(
-      NAME_ONE := {{ name_one }},
-      NAME_TWO := {{ name_two }}
-    )
-
-  # Pull the connection
-  db_connection <- output$src$con
-
-  # Formulate SQL query one, to split on character
-  sql_query_one <- dbplyr::build_sql(
-    con = db_connection,
-    "
-  SELECT
-    distinct
-    name_one,
-    length(name_one) as s_one,
-    token || row_number() over (partition by name_one, token order by name_one, token)  as  token
-    FROM  (", dbplyr::sql_render(output), ")  t
-    CROSS JOIN LATERAL (
-    SELECT SUBSTR(t.name_one, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_one)
-    )
-  "
-  )
-
-  # Formulate SQL query one, to split on character
-  sql_query_two <- dbplyr::build_sql(
-    con = db_connection,
-    "
-  SELECT
-    distinct
-    name_two,
-    length(name_two) as s_two,
-    token || row_number() over (partition by name_two, token order by name_two, token)  as  token
-    FROM  (", dbplyr::sql_render(output), ")  t
-    CROSS JOIN LATERAL (
-    SELECT SUBSTR(t.name_two, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_two)
-    )
-  "
-  )
-
-  # Join two SQL outputs
-  output <- inner_join(
-    x = dplyr::tbl(db_connection, dplyr::sql(sql_query_one)),
-    y = dplyr::tbl(db_connection, dplyr::sql(sql_query_two))
-    )
-
-  # Generate SIM-approx
-  output <- output %>%
-    dplyr::group_by(NAME_ONE, NAME_TWO) %>%
-    dplyr::mutate(
-      # NOTE: char-distance is ignored, as only approx calculation
-      M = n(),
-      # Assume max transpositions to speed up approx calculation
-      SIM = (1/3) * ( (M / S_ONE) + (M / S_TWO) + 1),
-      # Final JW value, number of shared first four letters
-      L = case_when(
-        substr(NAME_ONE, 1, 4) == substr(NAME_TWO, 1, 4) ~ 4,
-        substr(NAME_ONE, 1, 3) == substr(NAME_TWO, 1, 3) ~ 3,
-        substr(NAME_ONE, 1, 2) == substr(NAME_TWO, 1, 2) ~ 2,
-        T ~ 1
-      ),
-      # 'Real' values impossible to be higher than approx value
-      JW_APPROX = SIM + (L * 0.1 * (1 - SIM))
-    ) %>%
-    dplyr::ungroup() %>%
-    # Filter by threshold value
-    dplyr::filter(JW_APPROX >= threshold_val) %>%
-    dplyr::mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
-    dplyr::filter(JW >= threshold_val) %>%
-    dplyr::select(
-      {{ name_one }} := NAME_ONE,
-      {{ name_two }} := NAME_TWO,
-      {{ col_name }} := JW
-    )
-
-  # Return output
-  return(output)
-}
-
-calc_db_jw_threshold_edit <- function(df, name_one, name_two, threshold_val, col_name){
-
-  # Distinct df to calculate JW scores for
-  output <- df %>%
-    dplyr::rename(
-      NAME_ONE := {{ name_one }},
-      NAME_TWO := {{ name_two }}
-    )
-
-  # Pull the connection
-  db_connection <- output$src$con
-
-  # Formulate SQL query one, to split on character
-  sql_query <- dbplyr::build_sql(
-    con = db_connection,
-
-    "
-    WITH
-
-    one as (
-    SELECT
-    /*+ materialize */
-    distinct
-    name_one,
-    length(name_one) as s_one,
-    token || row_number() OVER (PARTITION BY name_one, token order by name_one, token)  as  token
-    FROM   (", dbplyr::sql_render(output), ")  t
-    CROSS JOIN LATERAL (
-    SELECT SUBSTR(t.name_one, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_one)
-      )
-    )
-    ,
-
-    two as (
-    /*+ materialize */
-    SELECT
-    distinct
-    name_two,
-    length(name_two) as s_two,
-    token || row_number() OVER (PARTITION BY name_two, token order by name_two, token)  as  token
-    FROM   (", dbplyr::sql_render(output), ")  t
-    CROSS JOIN LATERAL (
-    SELECT SUBSTR(t.name_two, LEVEL, 1) as token FROM DUAL CONNECT BY LEVEL <= LENGTH(t.name_two)
-      )
-    )
-    ,
-
-    res as (
-    /*+ materialize */
-    select
-    name_one,
-    name_two,
-    s_one,
-    s_two,
-    case
-        when substr(NAME_ONE, 1, 4) = substr(NAME_TWO, 1, 4) then 4
-        when substr(NAME_ONE, 1, 3) = substr(NAME_TWO, 1, 3) then 3
-        when substr(NAME_ONE, 1, 2) = substr(NAME_TWO, 1, 2) then 2
-    else 1 end as L,
-    (1/3) * ( (count(name_one) / s_one) + (count(name_one) / s_two) + 1 )  as SIM
-    from
-    one
-    inner join
-    two
-    on one.token  =  two.token
-    group by
-    name_one,
-    name_two,
-    s_one,
-    s_two,
-    case
-        when substr(NAME_ONE, 1, 4) = substr(NAME_TWO, 1, 4) then 4
-        when substr(NAME_ONE, 1, 3) = substr(NAME_TWO, 1, 3) then 3
-        when substr(NAME_ONE, 1, 2) = substr(NAME_TWO, 1, 2) then 2
-    else 1 end
-    )
-
-    select
-
-    name_one,
-    name_two,
-    UTL_MATCH.JARO_WINKLER(name_one, name_two) as jw
-    SIM + (L * 0.1 * (1 - SIM))  as jw_approx
-    from
-    res
-    where
-    1=1
-    and SIM + (L * 0.1 * (1 - SIM)) >= 0.75
-    and UTL_MATCH.JARO_WINKLER(name_one, name_two) >= 0.75
-    "
-  )
-
-  # Generate SQL output & Rename original columns
-  output <- dplyr::tbl(db_connection, dplyr::sql(sql_query))
-    # dplyr::mutate(JW_APPROX = SIM + (L * 0.1 * (1 - SIM))) %>%
-    # dplyr::filter(JW_APPROX >= 0.75) %>%
-    # dplyr::mutate(JW = UTL_MATCH.JARO_WINKLER(NAME_ONE, NAME_TWO)) %>%
-    # dplyr::filter(JW >= threshold_val) %>%
-    # dplyr::select(
-    #   {{ name_one }} := NAME_ONE,
-    #   {{ name_two }} := NAME_TWO,
-    #   {{ col_name }} := JW
-    # )
-
-  # Return output
-  return(output)
 }
 
 #' Function to find all matches form the db
@@ -536,28 +272,31 @@ find_db_matches <- function(
   # Generate list of feasible dob-pairs with 6 identical characters
   cross <- id_pairs %>%
     name_db_filter(., FORENAME_ONE, FORENAME_TWO) %>%
-    dob_lv_filter(., DOB_ONE, DOB_TWO)
+    dob_db_filter(., DOB_ONE, DOB_TWO, 2)
 
   # Generate a list
   matches <- cross %>%
     dplyr::mutate(
-      # NAs for zeros
+      # If single character forename handle differently, otherwise JW
       JW_FORENAME = dplyr::case_when(
         length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
         FORENAME_ONE == FORENAME_TWO ~ 1,
         T ~ UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)
-      ),
+      )
+    ) %>%
+    dplyr::filter(JW_FORENAME >= 0.75) %>%
+    dplyr::mutate(
+      # JW match, bypassing exact string matches (DIFF_DOB already calculated)
       JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
       JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
-      ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
       # Generate confident matches
       MATCH_TYPE = dplyr::case_when(
-        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
-        (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
-        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
-        (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-        (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-        (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Exact",
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & DIFF_DOB == 0) ~ "Confident",
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB <= 2) ~ "Confident",
+        (JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
+        (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
+        (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & DIFF_DOB <= 2) ~ "Confident",
         TRUE ~ "No Match"
       )
     ) %>%
@@ -566,80 +305,9 @@ find_db_matches <- function(
     # Add exact matches
     dplyr::union_all(exact_matches)
 
-  # Determine non-matches size
+  # Determine missing non-match fields
   non_matches <- df_one %>%
     dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE)) %>%
-    dplyr::mutate(TMP = 1) %>%
-    dplyr::inner_join(
-      df_one %>%
-        dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE)) %>%
-        dplyr::tally() %>%
-        dplyr::rename(DF_ONE_ROWS = n) %>%
-        dplyr::mutate(TMP = 1)
-    ) %>%
-    dplyr::inner_join(
-      df_two %>%
-        dplyr::tally() %>%
-        dplyr::rename(DF_TWO_ROWS = n) %>%
-        dplyr::mutate(TMP = 1)
-    ) %>%
-    dplyr::mutate(CROSS = DF_ONE_ROWS * DF_TWO_ROWS) %>%
-    dplyr::select(-c(TMP, DF_ONE_ROWS, DF_TWO_ROWS))
-
-
-
-  #Less than 1 billion then attempt cross join
-  if(non_matches %>%
-     dplyr::select(CROSS) %>%
-     dplyr::distinct() %>%
-     dplyr::pull() <= 1000000000){
-
-    # Final cross-join matches, with corss-join threshold in place
-    final_matches <- non_matches %>%
-      dplyr::mutate(TMP = 1) %>%
-      dplyr::full_join(
-        y = df_two %>%
-          dplyr::select(df_two_cols) %>%
-          dplyr::mutate(TMP = 1),
-        by = "TMP"
-      ) %>%
-      select(-TMP) %>%
-      dplyr::mutate(
-        # NAs for zeros
-        JW_FORENAME = dplyr::case_when(
-          length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
-          FORENAME_ONE == FORENAME_TWO ~ 1,
-          T ~ UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)
-          ),
-        JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
-        JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
-        ED_DOB = ifelse(DOB_ONE == DOB_TWO, 1, UTL_MATCH.EDIT_DISTANCE(DOB_ONE, DOB_TWO)),
-        # Generate confident matches
-        MATCH_TYPE = dplyr::case_when(
-          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Exact",
-          (JW_SURNAME == 1 & JW_FORENAME == 1 & ED_DOB == 0) ~ "Confident",
-          (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB <= 2) ~ "Confident",
-          (JW_FORENAME == 1 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-          (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & ED_DOB == 0) ~ "Confident",
-          (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & ED_DOB <= 2) ~ "Confident",
-          TRUE ~ "No Match"
-        )
-      ) %>%
-      # filter to only confident matches
-      dplyr::filter(MATCH_TYPE != "No Match")
-
-    # Re-determine non-matches
-    non_matches <- non_matches %>%
-      dplyr::anti_join(y = final_matches %>% dplyr::select(ID_ONE))
-
-    # Re-determine total matches df
-    matches <- matches %>%
-      # Add exact matches
-      dplyr::union_all(final_matches)
-  }
-
-  # Determine missing non-match fields
-  non_matches <- non_matches %>%
     dplyr::mutate(
       ID_TWO = NA,
       FORENAME_TWO = NA,
@@ -714,21 +382,20 @@ find_db_matches <- function(
   }
 
   # Rename back to original column names
-  all_matches <- all_matches %>%
-    dplyr::rename(
-      {{ id_one }} := ID_ONE,
-      {{ forename_one }} := FORENAME_ONE,
-      {{ surname_one }} := SURNAME_ONE,
-      {{ dob_one }} := DOB_ONE,
-      {{ postcode_one }} := POSTCODE_ONE,
-      {{ id_two }} := ID_TWO,
-      {{ forename_two }} := FORENAME_TWO,
-      {{ surname_two }} := SURNAME_ONE,
-      {{ dob_two }} := DOB_TWO,
-      {{ postcode_two }} := POSTCODE_TWO
-  )
+  # all_matches <- all_matches %>%
+  #   dplyr::rename(
+  #     {{ id_one }} := ID_ONE,
+  #     {{ forename_one }} := FORENAME_ONE,
+  #     {{ surname_one }} := SURNAME_ONE,
+  #     {{ dob_one }} := DOB_ONE,
+  #     {{ postcode_one }} := POSTCODE_ONE,
+  #     {{ id_two }} := ID_TWO,
+  #     {{ forename_two }} := FORENAME_TWO,
+  #     {{ surname_two }} := SURNAME_ONE,
+  #     {{ dob_two }} := DOB_TWO,
+  #     {{ postcode_two }} := POSTCODE_TWO
+  # )
 
   # Return data
   return(all_matches)
 }
-
