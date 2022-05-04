@@ -65,10 +65,6 @@ DBI::dbDisconnect(con)
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
 
 # Db pds table
-leap_db <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_LEAP_PROCESSED"))
-
-# Db pds table
 eib_db <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT617_EIB_PROCESSED"))
 
@@ -91,7 +87,6 @@ pds_db <- pds_db %>%
   )
 
 # Check data
-leap_db
 eib_db
 pds_db
 
@@ -266,12 +261,175 @@ all_matches <- matches %>%
   dplyr::mutate(MATCH_COUNT = dplyr::n_distinct(ID_TWO)) %>%
   dplyr::ungroup()
 
-# Get results: 15 mins
-match_df <- all_matches %>% collect()
+#-------------------------------------------------------------------------------
+# Part 4.1: Create date-pairs list
 
-#
-match_df %>%
-  filter(MATCH_TYPE == "No Match") %>%
-  select(ID_ONE) %>%
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
+# Db pds table
+res <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_EIBSS_TEST2"))
+
+# Db eibss table
+pds_db <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_PDS_PROCESSED"))
+
+# Rename RES fields
+res <- res %>%
+  rename(
+    ID_ONE = REFERENCE,
+    DOB_ONE = DOB,
+    SURNAME_ONE = SURNAME,
+    FORENAME_ONE = FORENAME,
+    POSTCODE_ONE = POSTCODE
+  ) %>%
+  filter(MATCH_TYPE == "No Match")
+
+# Rename PDS Fields
+pds_db <- pds_db %>%
+  rename(
+    ID_TWO = RECORD_ID,
+    DOB_TWO = DOB,
+    SURNAME_TWO = SURNAME,
+    FORENAME_TWO = FORENAME,
+    POSTCODE_TWO = POSTCODE
+  )
+
+# List of eligible date pairs: 130k
+date_pairs <- pds_db %>%
+  select(DOB_TWO) %>%
+  distinct() %>%
+  full_join(
+    res %>%
+      select(DOB_ONE) %>%
+      distinct(),
+    by = character()
+  ) %>%
+  dob_db_filter(., DOB_ONE, DOB_TWO, 2)
+
+# Compute date pairs
+date_pairs %>%
+  compute(
+    name = "INT600_EIBSS_DATE_PAIRS",
+    temporary = FALSE
+  )
+
+# Part 4.2 ---------------------------------------------------------------------
+
+# Db EIBSS table
+date_pairs <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_EIBSS_DATE_PAIRS"))
+
+# Get Distinct PDS info
+pds_distinct <- pds_db %>%
+  inner_join(
+    y = date_pairs %>% select(DOB_TWO) %>% distinct()
+  ) %>%
+  select(FORENAME_TWO) %>%
   distinct()
-  count(MATCH_TYPE)
+
+# Create name pairs
+name_pairs <- pds_distinct %>%
+  full_join(
+    res %>%
+      select(FORENAME_ONE) %>%
+      distinct(),
+    by = character()
+  ) %>%
+  mutate(JW_FORENAME = UTL_MATCH.JARO_WINKLER(FORENAME_ONE, FORENAME_TWO)) %>%
+  filter(JW_FORENAME >= 0.75)
+
+# Compute date pairs: 15 seconds
+name_pairs %>%
+  compute(
+    name = "INT600_EIBSS_NAMES_PAIRS",
+    temporary = FALSE
+  )
+
+# Part 4.3 ---------------------------------------------------------------------
+
+# Name Pairs
+name_pairs <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_EIBSS_NAMES_PAIRS"))
+
+# Create name-date pairs
+name_date_pairs <- pds_db %>%
+  inner_join(
+    name_pairs %>%
+      select(FORENAME_TWO) %>%
+      distinct()
+  ) %>%
+  inner_join(
+    date_pairs %>%
+      select(DOB_TWO) %>%
+      distinct()
+  ) %>%
+  select(ID_TWO, FORENAME_TWO, DOB_TWO) %>%
+  full_join(
+    res %>%
+      select(ID_ONE, FORENAME_ONE, DOB_ONE),
+    by = character()
+  ) %>%
+  inner_join(date_pairs) %>%
+  inner_join(name_pairs)
+
+# Compute date pairs
+name_date_pairs %>%
+  compute(
+    name = "INT600_EIBSS_NAME_DATE_PAIRS",
+    temporary = FALSE
+  )
+
+# Part 4.4 ---------------------------------------------------------------------
+
+# Name Pairs: 5.8M
+name_date_pairs <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_EIBSS_NAME_DATE_PAIRS"))
+
+# Missing Confident matches
+extra_matches <- name_date_pairs %>%
+  inner_join(
+    y = pds_db %>% select(ID_TWO, SURNAME_TWO, POSTCODE_TWO)
+    ) %>%
+  inner_join(
+    y = res %>% select(ID_ONE, SURNAME_ONE, POSTCODE_ONE)
+    ) %>%
+  dplyr::mutate(
+    # JW match, bypassing exact string matches (DIFF_DOB already calculated)
+    JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, UTL_MATCH.JARO_WINKLER(SURNAME_ONE, SURNAME_TWO)),
+    JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
+    # Generate confident matches
+    MATCH_TYPE = dplyr::case_when(
+      (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Exact",
+      (JW_SURNAME == 1 & JW_FORENAME == 1 & DIFF_DOB == 0) ~ "Confident",
+      (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB <= 2) ~ "Confident",
+      (JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
+      (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
+      (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & DIFF_DOB <= 2) ~ "Confident",
+      TRUE ~ "No Match"
+    )
+  )
+
+# Compute date pairs
+extra_matches %>%
+  compute(
+    name = "INT600_EIBSS_EXTRA_MATCHES",
+    temporary = FALSE
+  )
+
+# Part 4.5 Analysis match results -----------------------------------------------
+
+# Name Pairs: 5.8M
+extra_matches <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_EIBSS_EXTRA_MATCHES"))
+
+# Potential new Rule?
+extra_matches %>%
+  filter(DIFF_DOB == 0) %>%
+  filter(JW_POSTCODE == 1) %>%
+  filter(JW_FORENAME >= 0.9) %>%
+  filter(JW_SURNAME >= 0.8)
+
+# Disconnect
+
