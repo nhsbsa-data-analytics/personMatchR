@@ -140,9 +140,6 @@ find_matches <- function(
   format_data = c(TRUE, FALSE)
 ){
 
-  # Option for later cross-join
-  options(scipen = 999)
-
   # Match arguments
   match.arg(output_type)
 
@@ -180,14 +177,14 @@ find_matches <- function(
 
     # Format df one
     df_one <- df_one %>%
-      format_postcode(., POSTCODE_ONE) %>%
+      format_postcode(., ID_ONE, POSTCODE_ONE) %>%
       format_name(., FORENAME_ONE) %>%
       format_name(., SURNAME_ONE) %>%
       format_date(., DOB_ONE)
 
     # Format df two
     df_two <- df_two %>%
-      format_postcode(., POSTCODE_TWO) %>%
+      format_postcode(., ID_TWO, POSTCODE_TWO) %>%
       format_name(., FORENAME_TWO) %>%
       format_name(., SURNAME_TWO) %>%
       format_date(., DOB_TWO)
@@ -308,16 +305,18 @@ find_matches <- function(
     dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE))
 
   # Final cross-join tally
-  cross_join_size <- nrow(non_matches) * nrow(df_one)
+  non_match_rows <- nrow(non_matches) / 1000
+  match_rows <- nrow(df_one) / 1000
 
-  print(cross_join_size)
+  # Cross-join size in 1000s
+  cross_join_size <- non_match_rows * match_rows
 
   #Less than 1 billion then attempt cross join
-  if(cross_join_size <= 10000000){
+  if(cross_join_size <= 10){
 
     # Message
     print("Final cross-join performed as less than 10m rows")
-    print(paste0("Cross-join size: ", cross_join_size))
+    print(paste0("Cross-join size: ", cross_join_size, " million rows"))
 
     # Final cross-join matches, with corss-join threshold in place
     final_matches <- non_matches %>%
@@ -368,7 +367,7 @@ find_matches <- function(
 
     # Message
     print("Final cross-join not performed as greater than 10m rows")
-    print(paste0("Cross-join size: ", cross_join_size))
+    print(paste0("Cross-join size: ", cross_join_size, " million rows"))
   }
 
   # Determine missing non-match fieelds
