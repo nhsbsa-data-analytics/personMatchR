@@ -1,54 +1,3 @@
-#' Formatting either a Forename or Surname within the DB
-#'
-#' Format the name strings prior to matching
-#' Formatting includes conversion to upper case and removal of
-#' non alphabetic characters
-#'
-#' @param df A df to be formatted
-#' @param name_col a patient name column
-#'
-#' @return A df with cleansed patient name information
-#'
-#' @export
-#'
-#' @examples
-#' format_db_name(df, name_col)
-format_db_name <- function(df, name_col){
-
-  df %>%
-    dplyr::mutate(
-      # Remove non-alpha chars and convert emtpy string to NA
-      {{ name_col }} := toupper(REGEXP_REPLACE({{ name_col }}, "[^[:alpha:]]", "")),
-      {{ name_col }} := ifelse(nchar({{ name_col }}) == 0, NA, {{ name_col }})
-    )
-}
-
-#' Format a DOB within the DB
-#'
-#' Format the date of birth prior to matching
-#' Convert to a string representation in the format YYYYMMDD
-#'
-#' @param df A df to be formatted
-#' @param name_col a date column
-#'
-#' @return A df with cleansed date information, as a 8-digit number
-#'
-#' @export
-#'
-#' @examples
-#' format_db_date(df, date_col)
-format_db_date <- function(df, date_col){
-
-  df %>%
-    dplyr::mutate(
-      {{ date_col }} := ifelse(
-        REGEXP_INSTR({{ date_col }}, '[0-9]{8}$') == 1,
-        TO_NUMBER({{ date_col }}),
-        TO_NUMBER(TO_CHAR({{ date_col }},'YYYYMMDD'))
-      )
-    )
-}
-
 #' Format the postcode strings prior to matching
 #'
 #' Formatting includes conversion to upper case and removal of
@@ -62,7 +11,7 @@ format_db_date <- function(df, date_col){
 #'
 #' @examples
 #' format_db_postcode(df, postcode_col)
-format_db_postcode <- function(df, postcode){
+format_postcode_db <- function(df, postcode){
 
   # Simple formatting of postcode
   df <- df %>%
@@ -158,4 +107,3 @@ format_db_postcode <- function(df, postcode){
   # Return formatted df
   return(df)
 }
-

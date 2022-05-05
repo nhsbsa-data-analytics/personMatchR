@@ -16,17 +16,8 @@ pds_db <- con %>%
 eib_db <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_EIBSS"))
 
-#-------------------------------------------------------------------------------
-# Part One: Custom JW function - Summary
 
-# 1. Both methods have same output
-# 2. 10.7m - Method 2 (in this instance) took ~44% of the time of Method 1
-# 3. With smaller numbers, the difference is less
-# 4. With very small number, diff will at some point become negligible
-# 5. With larger numbers, difference may be more
-
-#-------------------------------------------------------------------------------
-# Part Three: Custom DOB Distance Calculation ~10m matches
+# Part One: Custom DOB Distance Calculation ~10m matches: Setup ----------------
 
 # Set up connection to the DB
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
@@ -57,8 +48,7 @@ all %>%
 # Disconnect
 DBI::dbDisconnect(con)
 
-#-------------------------------------------------------------------------------
-# Part One: Custom JW Calculation ~10m matches
+# Part One: Custom DOB Distance Calculation ~10m matches: Test ----------------
 
 # Set up connection to the DB
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
@@ -81,23 +71,11 @@ Sys.time()
 # Time for custom DOB-Dist calculation: 10.1m = 3mins 4s (184s)
 Sys.time()
 results_two <- all %>%
-  dob_lv_filter(., DOB_ONE, DOB_TWO) %>%
+  filter_dob_db(., DOB_ONE, DOB_TWO, 2) %>%
   collect()
 Sys.time()
 
 # Disconnect
 DBI::dbDisconnect(con)
 
-#-------------------------------------------------------------------------------
-# Part Four: Custom Date-Dist function - Summary
 
-# 1. There are less dob-combinations that name-combinations
-# 2. Date-Dist is similar, although *not* identical, to LV, thus outputs vary
-# 3. Date-dist in effect is 6 identical characters
-# 4. LV dist of 2 can instances or 5 (or even 4) identical chars, due to swaps
-# 5. Date-Dist is a 'tighter' control  as a result
-# 6. Date-Dist took 184s for 10.1m dob-pairs
-# 7. LV took 513s for 10.1m dob-pairs
-# 8. Date-Dist took 36% of the time that LV did
-
-#-------------------------------------------------------------------------------

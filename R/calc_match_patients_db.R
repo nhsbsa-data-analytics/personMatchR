@@ -1,129 +1,4 @@
-#' Applies all combinations of dob_substr() filters
-#'
-#' Through doing so, it mirrors an edit distance of 2 on an 8-digit string
-#' For this very particular use case, is faster than LV within SQL
-#'
-#' @param df A df with dates to be formatted
-#'
-#' @return A df with relevant dates from both columns
-#'
-#' @export
-#'
-#' @examples
-#' dob_substr(df, dob_one, dob_two, dob_diff
-dob_db_filter <- function(df, dob_one, dob_two, diff_threshold){
-
-  df %>%
-    dplyr::mutate(
-      # Generate 8 character-level matching binary scores
-      CHAR1 = ifelse(substr({{ dob_one }},1,1) == substr({{ dob_two }},1,1), 1, 0),
-      CHAR2 = ifelse(substr({{ dob_one }},2,2) == substr({{ dob_two }},2,2), 1, 0),
-      CHAR3 = ifelse(substr({{ dob_one }},3,3) == substr({{ dob_two }},3,3), 1, 0),
-      CHAR4 = ifelse(substr({{ dob_one }},4,4) == substr({{ dob_two }},4,4), 1, 0),
-      CHAR5 = ifelse(substr({{ dob_one }},5,5) == substr({{ dob_two }},5,5), 1, 0),
-      CHAR6 = ifelse(substr({{ dob_one }},6,6) == substr({{ dob_two }},6,6), 1, 0),
-      CHAR7 = ifelse(substr({{ dob_one }},7,7) == substr({{ dob_two }},7,7), 1, 0),
-      CHAR8 = ifelse(substr({{ dob_one }},8,8) == substr({{ dob_two }},8,8), 1, 0),
-      # Total scores and present as DOB difference
-      DIFF_DOB = 8 - (CHAR1 + CHAR2 + CHAR3 + CHAR4 + CHAR5 + CHAR6 + CHAR7 + CHAR8)
-    ) %>%
-    dplyr::filter(DIFF_DOB <= diff_threshold) %>%
-    dplyr::select(-c(CHAR1, CHAR2, CHAR3, CHAR4, CHAR5, CHAR6, CHAR7, CHAR8))
-}
-
-#' Applies a filter on either forename or surname to limit cross-join
-#'
-#' Only contains name-pair instances that share certain characteristsics
-#' These include same 1st, 2nd or last letter, or being a substring of another
-#'
-#' @param df A df to be formatted
-#' @param name_one first name column
-#' @param name_two second name column
-#'
-#' @return A df with a filtered name-col to limit post cross-join
-#'
-#' @export
-#'
-#' @examples
-#' name_db_filter(df, name_one, name_two)
-name_db_filter <- function(df, name_one, name_two){
-
-  df %>%
-    dplyr::filter(
-      # Tokens share the same first letter
-      SUBSTR({{ name_one }}, 1, 1) == SUBSTR({{ name_two }}, 1, 1) |
-        # Tokens share same second letter
-        SUBSTR({{ name_one }}, 2, 1) == SUBSTR({{ name_two }}, 2, 1) |
-        # Tokens share same last letter
-        SUBSTR({{ name_one  }}, LENGTH({{ name_one }}), 1) == SUBSTR({{ name_two }}, LENGTH({{ name_two }}), 1) |
-        # One token is a substring of the other
-        INSTR({{ name_one }}, {{ name_two }}) > 1 |
-        INSTR({{ name_two }}, {{ name_one }}) > 1
-    )
-}
-
-#' Calculates 9 permutations for primary-lookup join prior to match scoring
-#'
-#' @param df A df to be formatted
-#' @param forename forename column name
-#' @param surname surname column name
-#' @param postcode postcode column name
-#' @param dob DOB column name
-#'
-#' @return A df with 5 'basic' join permutations added
-#'
-#' @export
-#'
-#' @examples
-#' calc_permutations(df, forename, surname, postcode, dob)
-calc_permutations <- function(df, forename, surname, postcode, dob){
-
-  df %>%
-    dplyr::mutate(
-      # Perm 1-3 require full match of dob with 2 of forename, surname, postcode
-      PERM1 = paste0({{ forename }}, {{ surname }}, {{ dob }}),
-      PERM2 = paste0({{ forename }}, {{ postcode }}, {{dob}}),
-      PERM3 = paste0({{ surname }}, {{ postcode }}, {{ dob }}),
-      # First char forename, plus 4 chars of surname and postcode
-      PERM4 = paste0(
-        substr({{ forename }}, 1, 1),
-        substr({{ surname }}, 1, 4),
-        substr({{ postcode }}, 1, 4)
-        ),
-      # First 3 chars forename - 2 chars of surname & postcode
-      PERM5 = paste0(
-        substr({{ forename }}, 1, 3),
-        substr({{ surname }}, 1, 2),
-        substr({{ postcode }}, 1, 2)
-      ),
-      # Last 3 chars forename - 3 chars of surname & postcode
-      PERM6 = paste0(
-        SUBSTR({{ forename }}, nchar({{ forename }})-2, 3),
-        substr({{ surname }}, 1, 3),
-        substr({{ postcode }}, 1, 3)
-      ),
-      # First 3 consonants - 3 chars of surname & postcode
-      PERM7 = paste0(
-        substr(REGEXP_REPLACE({{ forename}}, '[AEIOU]', ''), 1, 3),
-        substr({{ surname }}, 1, 3),
-        substr({{ postcode }}, 1, 3)
-      ),
-      # All consonants - 2 chars of surname & postcode
-      PERM8 = paste0(
-        REGEXP_REPLACE({{ forename}}, '[AEIOU]', ''),
-        substr({{ surname }}, 1, 2),
-        substr({{ postcode }}, 1, 2)
-      ),
-      # All vowels - 3 chars of surname & postcode
-      PERM9 = paste0(
-        REGEXP_REPLACE({{ forename }}, '[B-DF-HJ-NP-TV-Z]', ''),
-        substr({{ surname }}, 1, 3),
-        substr({{ postcode }}, 1, 3)
-      )
-    )
-}
-
-#' Function to find all matches form the db
+#' Function to find all matches from the db
 #'
 #' Find the exact and confident matches of a lookup df to a primary df
 #'
@@ -139,6 +14,8 @@ calc_permutations <- function(df, forename, surname, postcode, dob){
 #' @param surname_two lookup df surname
 #' @param dob_two lookup df DOB
 #' @param postcode_two lookup df postcode
+#' @param output_type which group of fields the user wants returning
+#' @param format_data whether or not to format the data (which adds runtime)
 #'
 #' @return The primary df matched against the lookup df
 #' @return This will a combinaation of exact, confident and non-matches
@@ -146,10 +23,11 @@ calc_permutations <- function(df, forename, surname, postcode, dob){
 #' @export
 #'
 #' @examples
-#' find_db_matches(
+#' calc_match_patients_db(
 #' df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
-#' df_two, id_two, forename_two, surname_two, dob_two, postcode_two)
-find_db_matches <- function(
+#' df_two, id_two, forename_two, surname_two, dob_two, postcode_two
+#' output_type, format_data)
+calc_match_patients_db <- function(
   df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
   df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
   output_type = c("all", "key", "match"),
@@ -159,11 +37,8 @@ find_db_matches <- function(
   # Match arguments
   match.arg(output_type)
 
-  # Check all column names unique
-  df_one_cols_original <- colnames(df_one)
-  df_two_cols_original <- colnames(df_two)
-
-  if(max(colnames(pds_db) %in% colnames(eib_db)) == 1){
+  # Return id db tables have matching column names
+  if(max(colnames(df_one) %in% colnames(df_one)) == 1){
 
     print("ERROR: Each dataset requires unique column names.")
     print("REASON: Matched database tables cannot contain duplicate column names")
@@ -196,17 +71,17 @@ find_db_matches <- function(
 
     # Format df one
     df_one <- df_one %>%
-      format_db_postcode(., POSTCODE_ONE) %>%
-      format_db_name(., FORENAME_ONE) %>%
-      format_db_name(., SURNAME_ONE) %>%
-      format_db_date(., DOB_ONE)
+      format_postcode_db(., POSTCODE_ONE) %>%
+      format_name_db(., FORENAME_ONE) %>%
+      format_name_db(., SURNAME_ONE) %>%
+      format_date_db(., DOB_ONE)
 
     # Format df two
     df_two <- df_two %>%
-      format_db_postcode(., POSTCODE_TWO) %>%
-      format_db_name(., FORENAME_TWO) %>%
-      format_db_name(., SURNAME_TWO) %>%
-      format_db_date(., DOB_TWO)
+      format_postcode_db(., POSTCODE_TWO) %>%
+      format_name_db(., FORENAME_TWO) %>%
+      format_name_db(., SURNAME_TWO) %>%
+      format_date_db(., DOB_TWO)
   }
 
   # Df column names
@@ -222,7 +97,8 @@ find_db_matches <- function(
         "SURNAME_ONE" = "SURNAME_TWO",
         "DOB_ONE" = "DOB_TWO",
         "POSTCODE_ONE" = "POSTCODE_TWO"
-      )
+      ),
+      na_match = "never"
     )
 
   # Reverse exact matches
@@ -234,7 +110,8 @@ find_db_matches <- function(
         "SURNAME_ONE" = "FORENAME_TWO",
         "DOB_ONE" = "DOB_TWO",
         "POSTCODE_ONE" = "POSTCODE_TWO"
-      )
+      ),
+      na_match = "never"
     )
 
   # Union exact matches
@@ -256,11 +133,11 @@ find_db_matches <- function(
   # Remaining records
   remain <- df_one %>%
     dplyr::anti_join(y = exact_matches, by = "ID_ONE") %>%
-    calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
+    calc_permutations_db(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
 
   # Select columns and calculate permutations
   df_two <- df_two %>%
-    calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
+    calc_permutations_db(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
 
   # List of permutation-join columns
   perm_num <- paste0("PERM", 1:9)
@@ -283,8 +160,8 @@ find_db_matches <- function(
 
   # Generate list of feasible dob-pairs with 6 identical characters
   cross <- id_pairs %>%
-    name_db_filter(., FORENAME_ONE, FORENAME_TWO) %>%
-    dob_db_filter(., DOB_ONE, DOB_TWO, 2)
+    filter_name_db(., FORENAME_ONE, FORENAME_TWO) %>%
+    filter_dob_db(., DOB_ONE, DOB_TWO, 2)
 
   # Generate a list
   matches <- cross %>%
@@ -351,7 +228,7 @@ find_db_matches <- function(
         ID_TWO,
         MATCH_TYPE,
         MATCH_COUNT
-        )
+      )
 
   }else if(output_type == "match"){
 
@@ -406,7 +283,7 @@ find_db_matches <- function(
       {{ surname_two }} := SURNAME_TWO,
       {{ dob_two }} := DOB_TWO,
       {{ postcode_two }} := POSTCODE_TWO
-  )
+    )
 
   # Return data
   return(all_matches)
