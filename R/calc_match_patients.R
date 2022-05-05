@@ -141,8 +141,8 @@ calc_match_patients <- function(
 
   # Generate list of feasible dob-pairs with 6 identical characters
   cross <- id_pairs %>%
-    name_filter(., FORENAME_ONE, FORENAME_TWO) %>%
-    dob_filter(., DOB_ONE, DOB_TWO, 2)
+    filter_name(., FORENAME_ONE, FORENAME_TWO) %>%
+    filter_dob(., DOB_ONE, DOB_TWO, 2)
 
   # Generate a list
   matches <- cross %>%
