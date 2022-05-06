@@ -38,7 +38,7 @@ calc_match_patients_db <- function(
   match.arg(output_type)
 
   # Return id db tables have matching column names
-  if(max(colnames(df_one) %in% colnames(df_one)) == 1){
+  if(max(colnames(df_one) %in% colnames(df_two)) == 1){
 
     print("ERROR: Each dataset requires unique column names.")
     print("REASON: Matched database tables cannot contain duplicate column names")
@@ -98,7 +98,7 @@ calc_match_patients_db <- function(
         "DOB_ONE" = "DOB_TWO",
         "POSTCODE_ONE" = "POSTCODE_TWO"
       ),
-      na_match = "never"
+      na_matches = "never"
     )
 
   # Reverse exact matches
@@ -111,7 +111,7 @@ calc_match_patients_db <- function(
         "DOB_ONE" = "DOB_TWO",
         "POSTCODE_ONE" = "POSTCODE_TWO"
       ),
-      na_match = "never"
+      na_matches = "never"
     )
 
   # Union exact matches
@@ -158,10 +158,16 @@ calc_match_patients_db <- function(
     purrr::reduce(function(x, y) union(x, y)) %>%
     dplyr::distinct()
 
+  id_pairs %>% tally()
+
   # Generate list of feasible dob-pairs with 6 identical characters
   cross <- id_pairs %>%
     filter_name_db(., FORENAME_ONE, FORENAME_TWO) %>%
     filter_dob_db(., DOB_ONE, DOB_TWO, 2)
+
+  # Print Cross Join Permutation Count
+  #cross_join_count <-
+  #print(cross_join_count)
 
   # Generate a list
   matches <- cross %>%

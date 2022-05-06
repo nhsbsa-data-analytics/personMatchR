@@ -1,11 +1,72 @@
+#-------------------------------------------------------------------------------
+# Patient Matching Code Example
+
+# Install patientMatchR Package
+install.packages("devtools")
+devtools::install_github("nhsbsa-data-analytics/patieentMatchR")
+
+# Library
+library(dplyr)
+library(dbplyr)
+library(patientMatchR)
+
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
+# Db pds table
+df_one <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "PATIENT_MATCHING_DF_ONE"))
+
+# Db eibss table
+df_two <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "PATIENT_MATCHING_DF_TWO"))
+
+# Function output
+results <- calc_match_patients_db(
+  # Data to be matched
+  df_one = df_one,
+  id_one = REFERENCE,
+  forename_one = FORENAME,
+  surname_one = SURNAME,
+  dob_one = DOB,
+  postcode_one = POSTCODE,
+  # Lookup data
+  df_two = df_two,
+  id_two = ID_PDS,
+  forename_two = FORENAME_PDS,
+  surname_two = SURNAME_PDS,
+  dob_two = DOB_PDS,
+  postcode_two = POSTCODE_PDS,
+  # Other Information
+  output_type = "all",
+  format_data = TRUE
+)
+
+# Write data back
+results %>%
+  compute(
+    name = "PATIENT_MATCHING_RESULTS",
+    temporary = FALSE
+  )
+
+# Disconnect
+DBI::dbDisconnect()
+
+#-------------------------------------------------------------------------------
+
 
 # Library
 library(dplyr)
 library(dbplyr)
 
 # Functions
-source("R/calc_db_functions.R")
-source("R/format_db_functions.R")
+source("R/format_name_db.R")
+source("R/format_date_db.R")
+source("R/format_postcode_db.R")
+source("R/filter_name_db.R")
+source("R/filter_dob_db.R")
+source("R/calc_permutations_db.R")
+source("R/calc_match_patients_db.R")
 
 #-------------------------------------------------------------------------------
 # Part One: Table Formatting - Required prior due to multiple joins later
@@ -59,7 +120,15 @@ DBI::dbDisconnect(con)
 
 
 #-------------------------------------------------------------------------------
-# Part Two: Function output
+# Patient Matching Code Example
+
+# Install patientMatchR Package
+install.packages("devtools")
+devtools::install_github("nhsbsa-data-analytics/patieentMatchR")
+
+# Library
+library(dplyr)
+library(dbplyr)
 
 # Set up connection to the DB
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
@@ -90,17 +159,30 @@ pds_db <- pds_db %>%
 eib_db
 pds_db
 
+colnames(eib_db) %in% colnames(pds_db)
+
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
+# Db pds table
+df_one <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "PATIENT_MATCHING_DF_ONE"))
+
+# Db eibss table
+df_two <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "PATIENT_MATCHING_DF_TWO"))
+
 # Function output
-results <- find_db_matches(
+results <- calc_match_patients_db(
   # Data to be matched
-  df_one = eib_db,
+  df_one = df_one,
   id_one = REFERENCE,
   forename_one = FORENAME,
   surname_one = SURNAME,
   dob_one = DOB,
   postcode_one = POSTCODE,
   # Lookup data
-  df_two = pds_db,
+  df_two = df_two,
   id_two = ID_PDS,
   forename_two = FORENAME_PDS,
   surname_two = SURNAME_PDS,
@@ -108,17 +190,18 @@ results <- find_db_matches(
   postcode_two = POSTCODE_PDS,
   # Other Information
   output_type = "all",
-  format_data = FALSE
+  format_data = TRUE
 )
 
 # Write data back
-Sys.time()
 results %>%
   compute(
-    name = "INT600_EIBSS_TEST2",
+    name = "PATIENT_MATCHING_RESULTS",
     temporary = FALSE
   )
-Sys.time()
+
+# Disconnect
+DBI::dbDisconnect()
 
 
 
@@ -126,8 +209,24 @@ Sys.time()
 # Part Three: Manual Code Run
 
 # Check data
-df_one
-df_two
+df_one <- eib_db %>%
+  rename(
+    ID_ONE = REFERENCE,
+    DOB_ONE = DOB,
+    SURNAME_ONE = SURNAME,
+    FORENAME_ONE = FORENAME,
+    POSTCODE_ONE = POSTCODE
+  )
+
+# Rename PDS Fields
+df_two <- pds_db %>%
+  rename(
+    ID_TWO = ID_PDS,
+    DOB_TWO = DOB_PDS,
+    SURNAME_TWO = SURNAME_PDS,
+    FORENAME_TWO = FORENAME_PDS,
+    POSTCODE_TWO = POSTCODE_PDS
+  )
 
 # Df column names
 df_one_cols <- colnames(df_one)
@@ -176,11 +275,13 @@ exact_matches <- exact_matches %>%
 # Remaining records
 remain <- df_one %>%
   dplyr::anti_join(y = exact_matches, by = "ID_ONE") %>%
-  calc_permutations(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
+  calc_permutations_db(., FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
+
+remain %>% tally()
 
 # Select columns and calculate permutations
 df_two <- df_two %>%
-  calc_permutations(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
+  calc_permutations_db(., FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
 
 # List of permutation-join columns
 perm_num <- paste0("PERM", 1:9)
@@ -200,6 +301,8 @@ id_pairs <- perm_num %>%
   }) %>%
   purrr::reduce(function(x, y) union(x, y)) %>%
   dplyr::distinct()
+
+id_pairs %>% tally()
 
 # Generate list of feasible dob-pairs with 6 identical characters
 cross <- id_pairs %>%
@@ -424,12 +527,48 @@ extra_matches %>%
 extra_matches <- con %>%
   dplyr::tbl(from = dbplyr::in_schema("ADNSH", "INT600_EIBSS_EXTRA_MATCHES"))
 
+extra_matches
+
 # Potential new Rule?
 extra_matches %>%
-  filter(DIFF_DOB == 0) %>%
+  filter(DIFF_DOB <= 2) %>%
+  filter(JW_POSTCODE >= 0.85) %>%
+  filter(
+    INSTR(FORENAME_ONE, FORENAME_TWO) > 0 |
+      INSTR(FORENAME_TWO, FORENAME_ONE) > 0
+  ) %>%
+  filter(JW_SURNAME >= 0.85)
+
+extra_matches %>%
+  filter(DIFF_DOB <= 0) %>%
   filter(JW_POSTCODE == 1) %>%
-  filter(JW_FORENAME >= 0.9) %>%
-  filter(JW_SURNAME >= 0.8)
+  filter(
+    INSTR(SURNAME_ONE, SURNAME_TWO) > 0 |
+      INSTR(SURNAME_TWO, SURNAME_ONE) > 0
+  ) %>%
+  filter(JW_FORENAME >= 0.75)
+
+#---------------------------------------------
+
+extra_matches %>%
+  filter(DIFF_DOB <= 2) %>%
+  filter(JW_POSTCODE >= 0.85) %>%
+  filter(
+    INSTR(FORENAME_ONE, FORENAME_TWO) > 0 |
+      INSTR(FORENAME_TWO, FORENAME_ONE) > 0
+  ) %>%
+  filter(JW_SURNAME >= 0.85)
+
+extra_matches %>%
+  filter(DIFF_DOB <= 0) %>%
+  filter(JW_POSTCODE == 1) %>%
+  filter(
+    INSTR(FORENAME_ONE, FORENAME_TWO) > 0 |
+      INSTR(FORENAME_TWO, FORENAME_ONE) > 0
+  ) %>%
+  filter(JW_SURNAME >= 0.85)
 
 # Disconnect
+DBI::dbDisconnect()
+
 

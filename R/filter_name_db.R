@@ -24,7 +24,7 @@ filter_name_db <- function(df, name_one, name_two){
         # Tokens share same last letter
         SUBSTR({{ name_one  }}, LENGTH({{ name_one }}), 1) == SUBSTR({{ name_two }}, LENGTH({{ name_two }}), 1) |
         # One token is a substring of the other
-        INSTR({{ name_one }}, {{ name_two }}) > 1 |
-        INSTR({{ name_two }}, {{ name_one }}) > 1
+        INSTR({{ name_one }}, {{ name_two }}) > 0 |
+        INSTR({{ name_two }}, {{ name_one }}) > 0
     )
 }
