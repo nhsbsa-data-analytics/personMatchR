@@ -6,6 +6,51 @@ install.packages("devtools")
 devtools::install_github("nhsbsa-data-analytics/patieentMatchR")
 
 # Library
+library(patientMatchR)
+
+# Set Wroking Directory
+setwd("C:/Users/ADNSH/Desktop/")
+
+# DF One
+df_one <- read.csv("PATIENT_MATCHING_DF_ONE")
+
+# DF One
+df_two <- read.csv("PATIENT_MATCHING_DF_TWO")
+
+# Function output
+results <- calc_match_patients(
+  # Data to be matched
+  df_one = df_one,
+  id_one = REFERENCE,
+  forename_one = FORENAME,
+  surname_one = SURNAME,
+  dob_one = DOB,
+  postcode_one = POSTCODE,
+  # Lookup data
+  df_two = df_two,
+  id_two = ID_PDS,
+  forename_two = FORENAME_PDS,
+  surname_two = SURNAME_PDS,
+  dob_two = DOB_PDS,
+  postcode_two = POSTCODE_PDS,
+  # Other Information
+  output_type = "all",
+  format_data = TRUE
+)
+
+# Write data back
+write.csv(results, "MATCHING_OUTPUT.csv")
+
+#-------------------------------------------------------------------------------
+getwd()
+#-------------------------------------------------------------------------------
+# Patient Matching Code Example
+
+# Install patientMatchR Package
+install.packages("devtools")
+devtools::install_github("nhsbsa-data-analytics/patieentMatchR")
+
+# Library
 library(dplyr)
 library(dbplyr)
 library(patientMatchR)
@@ -50,7 +95,7 @@ results %>%
   )
 
 # Disconnect
-DBI::dbDisconnect()
+DBI::dbDisconnect(con)
 
 #-------------------------------------------------------------------------------
 
