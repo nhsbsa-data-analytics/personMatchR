@@ -1,31 +1,95 @@
-#' Format a DOB
+#' Convert date to character yyyymmdd format.
 #'
-#' Format the date of birth prior to matching
-#' Convert to a string representation in the format YYYYMMDD
+#' @param dob A vector of type character, integer or numeric with date expressions
 #'
-#' @param df A dataframe with date of birth date field to be cleansed
-#'
-#' @return A dataframe with cleansed date of birth
-#'
+#' @return A formatted date (yyyymmdd)
 #' @export
 #'
 #' @examples
-#' format_dob(dob)
-format_date <- function(df, dob){
+#' format_dob(dob = "2019-Mar-21")
+format_date <- function(df, dob) {
 
-  df %>%
-    dplyr::mutate(
-      # Remove hyphens and upper case
-      {{ dob }} := gsub('/', '-', {{ dob }}),
-      {{ dob }} := toupper({{ dob }}),
-      # Generate various potential dates
-      DOB_V1 = as.Date({{ dob }}, format = '%d-%B-%y'),
-      DOB_V2 = as.Date({{ dob }}, format = '%Y-%m-%d'),
-      # Find first non-NA date then format as string
-      {{ dob }} := dplyr::coalesce(DOB_V1, DOB_V2),
-      {{ dob }} := format({{ dob }}, format = '%Y%m%d'),
-      # Empty strings as NA
-      {{ dob }} := ifelse({{ dob }} == "", NA, {{ dob }})
-    ) %>%
-    select(-c(DOB_V1, DOB_V2))
+  if (is.na(dob) || is.null(dob)) {
+    # handle missing values first
+    return(NA)
+  } else {
+
+    # Try to parse using lubridate (returns NA quietly if unable to parse)
+    dob_final <- lubridate::fast_strptime(
+      x = dob,
+      # American way last
+      format = c(
+        # Ymd
+        "%Y-%m-%d",
+        "%Y%m%d",
+        "%Y/%m/%d",
+        "%Y %m %d",
+        "%Y-%b-%d",
+        "%Y%b%d",
+        "%Y/%b/%d",
+        "%Y %b %d",
+        # dmY
+        "%d-%m-%Y",
+        "%d%m%Y",
+        "%d/%m/%Y",
+        "%d %m %Y",
+        "%d-%b-%Y",
+        "%d%b%Y",
+        "%d/%b/%Y",
+        "%d %b %Y",
+        # dmy
+        "%d-%m-%y",
+        "%d%m%y",
+        "%d/%m/%y",
+        "%d %m %y",
+        "%d-%b-%y",
+        "%d%b%y",
+        "%d/%b/%y",
+        "%d %b %y",
+        # ymd
+        "%y-%m-%d",
+        "%y%m%d",
+        "%y/%m/%d",
+        "%y %m %d",
+        "%y-%b-%d",
+        "%y%b%d",
+        "%y/%b/%d",
+        "%y %b %d",
+        # Ydm
+        "%Y-%d-%m",
+        "%Y%d%m",
+        "%Y/%d/%m",
+        "%Y %d %m",
+        "%Y-%d-%b",
+        "%Y%d%b",
+        "%Y/%d/%b",
+        "%Y %d %b",
+        # mdY
+        "%m-%d-%Y",
+        "%m%d%Y",
+        "%m/%d/%Y",
+        "%m %d %Y",
+        "%b-%d-%Y",
+        "%b%d%Y",
+        "%b/%d/%Y",
+        "%b %d %Y",
+
+        # mdy
+        "%m-%d-%y",
+        "%m%d%y",
+        "%m/%d/%y",
+        "%m %d %y",
+        "%b-%d-%y",
+        "%b%d%y",
+        "%b/%d/%y",
+        "%b %d %y"
+      )
+    )
+  }
+
+  if (is.na(dob_final)) {
+    return(NA)
+  }
+
+  return(format(dob_final, format = "%Y%m%d"))
 }
