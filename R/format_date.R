@@ -6,90 +6,84 @@
 #' @export
 #'
 #' @examples
-#' format_dob(dob = "2019-Mar-21")
-format_date <- function(df, dob) {
+#' format_dob(df, dob)
+format_date <- function(df, date) {
 
-  if (is.na(dob) || is.null(dob)) {
-    # handle missing values first
-    return(NA)
-  } else {
+  df %>%
+    mutate({{ date }} := ifelse(
+      test = is.na(DOB) | is.null({{ date }}),
+      yes =  NA,
+      no = format(lubridate::fast_strptime(
+        x = {{ date }},
+        # American way last
+        format = c(
+          # Ymd
+          "%Y-%m-%d",
+          "%Y%m%d",
+          "%Y/%m/%d",
+          "%Y %m %d",
+          "%Y-%b-%d",
+          "%Y%b%d",
+          "%Y/%b/%d",
+          "%Y %b %d",
+          # dmY
+          "%d-%m-%Y",
+          "%d%m%Y",
+          "%d/%m/%Y",
+          "%d %m %Y",
+          "%d-%b-%Y",
+          "%d%b%Y",
+          "%d/%b/%Y",
+          "%d %b %Y",
+          # dmy
+          "%d-%m-%y",
+          "%d%m%y",
+          "%d/%m/%y",
+          "%d %m %y",
+          "%d-%b-%y",
+          "%d%b%y",
+          "%d/%b/%y",
+          "%d %b %y",
+          # ymd
+          "%y-%m-%d",
+          "%y%m%d",
+          "%y/%m/%d",
+          "%y %m %d",
+          "%y-%b-%d",
+          "%y%b%d",
+          "%y/%b/%d",
+          "%y %b %d",
+          # Ydm
+          "%Y-%d-%m",
+          "%Y%d%m",
+          "%Y/%d/%m",
+          "%Y %d %m",
+          "%Y-%d-%b",
+          "%Y%d%b",
+          "%Y/%d/%b",
+          "%Y %d %b",
+          # mdY
+          "%m-%d-%Y",
+          "%m%d%Y",
+          "%m/%d/%Y",
+          "%m %d %Y",
+          "%b-%d-%Y",
+          "%b%d%Y",
+          "%b/%d/%Y",
+          "%b %d %Y",
 
-    # Try to parse using lubridate (returns NA quietly if unable to parse)
-    dob_final <- lubridate::fast_strptime(
-      x = dob,
-      # American way last
-      format = c(
-        # Ymd
-        "%Y-%m-%d",
-        "%Y%m%d",
-        "%Y/%m/%d",
-        "%Y %m %d",
-        "%Y-%b-%d",
-        "%Y%b%d",
-        "%Y/%b/%d",
-        "%Y %b %d",
-        # dmY
-        "%d-%m-%Y",
-        "%d%m%Y",
-        "%d/%m/%Y",
-        "%d %m %Y",
-        "%d-%b-%Y",
-        "%d%b%Y",
-        "%d/%b/%Y",
-        "%d %b %Y",
-        # dmy
-        "%d-%m-%y",
-        "%d%m%y",
-        "%d/%m/%y",
-        "%d %m %y",
-        "%d-%b-%y",
-        "%d%b%y",
-        "%d/%b/%y",
-        "%d %b %y",
-        # ymd
-        "%y-%m-%d",
-        "%y%m%d",
-        "%y/%m/%d",
-        "%y %m %d",
-        "%y-%b-%d",
-        "%y%b%d",
-        "%y/%b/%d",
-        "%y %b %d",
-        # Ydm
-        "%Y-%d-%m",
-        "%Y%d%m",
-        "%Y/%d/%m",
-        "%Y %d %m",
-        "%Y-%d-%b",
-        "%Y%d%b",
-        "%Y/%d/%b",
-        "%Y %d %b",
-        # mdY
-        "%m-%d-%Y",
-        "%m%d%Y",
-        "%m/%d/%Y",
-        "%m %d %Y",
-        "%b-%d-%Y",
-        "%b%d%Y",
-        "%b/%d/%Y",
-        "%b %d %Y",
-
-        # mdy
-        "%m-%d-%y",
-        "%m%d%y",
-        "%m/%d/%y",
-        "%m %d %y",
-        "%b-%d-%y",
-        "%b%d%y",
-        "%b/%d/%y",
-        "%b %d %y"
+          # mdy
+          "%m-%d-%y",
+          "%m%d%y",
+          "%m/%d/%y",
+          "%m %d %y",
+          "%b-%d-%y",
+          "%b%d%y",
+          "%b/%d/%y",
+          "%b %d %y"
+        )
+      ),
+      format = "%Y%m%d"
       )
-    )
-  }
-
-  if (is.na(dob_final)) {
-    return(NA)
-  }
-
-  return(format(dob_final, format = "%Y%m%d"))
+    ))
 }
