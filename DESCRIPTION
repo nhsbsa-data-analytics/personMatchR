@@ -40,7 +40,9 @@ RoxygenNote: 7.1.2
 Imports: 
     dplyr,
     stringr,
-    stringdist
+    stringdist,
+    anytime,
+    lubridate
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

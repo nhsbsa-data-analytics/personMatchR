@@ -2,20 +2,20 @@
 % Please edit documentation in R/format_postcode.R
 \name{format_postcode}
 \alias{format_postcode}
-\title{Format the postcode strings prior to matchin}
+\title{Format the postcode strings prior to matching}
 \usage{
-format_postcode(postcode)
+format_postcode(df, id, postcode)
 }
 \arguments{
-\item{strPostcode}{A string field to be cleansed}
+\item{df}{A dataframe to feed into function}
 }
 \value{
-A cleansed string
+A dataframe with cleansed postcode information
 }
 \description{
 Formatting includes conversion to upper case and removal of
 non alphanumeric characters
 }
 \examples{
-format_postcode(postcode)
+format_postcode(df)
 }
