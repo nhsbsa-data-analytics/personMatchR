@@ -31,19 +31,38 @@ calc_match_patients_db <- function(
   df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
   df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
   output_type = c("all", "key", "match"),
-  format_data = c(TRUE, FALSE)
+  format_data = c(TRUE, FALSE),
+  sw_forename = 0.3, sw_surname = 0.15, sw_dob = 0.4, sw_postcode = 0.15
 ){
 
   # Match arguments
   match.arg(output_type)
 
-  # Return id db tables have matching column names
+  # check if the match score weightings add up to 100%
+  # Check if any of the parameters have been entered as a non numeric value
+  if (!is.numeric(sw_forename) ||
+      !is.numeric(sw_surname) ||
+      !is.numeric(sw_dob) ||
+      !is.numeric(sw_postcode)) {
+    # non numeric value supplied as weighting factor
+    stop("Non numeric value supplied as weighting factor", call. = FALSE)
+  } else if (!dplyr::between(sw_forename, 0, 1) ||
+             !dplyr::between(sw_surname, 0, 1) ||
+             !dplyr::between(sw_dob, 0, 1) ||
+             !dplyr::between(sw_postcode, 0, 1)) {
+    # invalid values applied
+    stop("Individual field score weighting values must be between 0.0 and 1.0", call. = FALSE)
+  } else if ((sw_forename + sw_surname + sw_dob + sw_postcode) != 1) {
+    # if the proportions do not equal 100% abort the process and show an error message
+    stop("Supplied score weighting values do not total 100%", call. = FALSE)
+  }
+
+  # Check if matching db tables have matching column names
   if(max(colnames(df_one) %in% colnames(df_two)) == 1){
 
-    print("ERROR: Each dataset requires unique column names.")
-    print("REASON: Matched database tables cannot contain duplicate column names")
-    print("EDIT: Rename columns then use the function again.")
-    return()
+    stop("Each dataset requires unique column names.
+         Matched database tables cannot contain duplicate column names.
+         Rename columns then use the function again.", call. = FALSE)
   }
 
   # Rename columns
@@ -126,7 +145,7 @@ calc_match_patients_db <- function(
       JW_FORENAME = 1,
       JW_SURNAME = 1,
       JW_POSTCODE = 1,
-      DIFF_DOB = 0,
+      DOB_SCORE = 1,
       MATCH_TYPE = 'Exact',
     )
 
@@ -158,16 +177,10 @@ calc_match_patients_db <- function(
     purrr::reduce(function(x, y) union(x, y)) %>%
     dplyr::distinct()
 
-  id_pairs %>% tally()
-
   # Generate list of feasible dob-pairs with 6 identical characters
   cross <- id_pairs %>%
     filter_name_db(., FORENAME_ONE, FORENAME_TWO) %>%
-    filter_dob_db(., DOB_ONE, DOB_TWO, 2)
-
-  # Print Cross Join Permutation Count
-  #cross_join_count <-
-  #print(cross_join_count)
+    filter_dob_db(., DOB_ONE, DOB_TWO, 0.75)
 
   # Generate a list
   matches <- cross %>%
@@ -186,76 +199,93 @@ calc_match_patients_db <- function(
       JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, UTL_MATCH.JARO_WINKLER(POSTCODE_ONE, POSTCODE_TWO)),
       # Generate confident matches
       MATCH_TYPE = dplyr::case_when(
-        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Exact",
-        (JW_SURNAME == 1 & JW_FORENAME == 1 & DIFF_DOB == 0) ~ "Confident",
-        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB <= 2) ~ "Confident",
-        (JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
-        (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
-        (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & DIFF_DOB <= 2) ~ "Confident",
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DOB_SCORE == 1) ~ "Exact",
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & DOB_SCORE == 1) ~ "Confident",
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DOB_SCORE >= 0.75) ~ "Confident",
+        (JW_FORENAME == 1 & JW_POSTCODE == 1 & DOB_SCORE == 1) ~ "Confident",
+        (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & DOB_SCORE == 1) ~ "Confident",
+        (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & DOB_SCORE >= 0.75) ~ "Confident",
         TRUE ~ "No Match"
       )
     ) %>%
     # filter to only confident matches
     dplyr::filter(MATCH_TYPE != "No Match") %>%
+    # calculate an overall weighted score
+    dplyr::mutate(MATCH_SCORE = (
+      (ifelse(is.na(JW_FORENAME), 0, JW_FORENAME) * sw_forename) +
+        (ifelse(is.na(JW_SURNAME), 0, JW_SURNAME) * sw_surname) +
+        (ifelse(is.na(DOB_SCORE), 0, DOB_SCORE) * sw_dob) +
+        (ifelse(is.na(JW_POSTCODE), 0, JW_POSTCODE) * sw_postcode)
+    )) %>%
     # Add exact matches
-    dplyr::union_all(exact_matches)
-
-  # Determine missing non-match fields
-  non_matches <- df_one %>%
-    dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE)) %>%
-    dplyr::mutate(
-      ID_TWO = NA,
-      FORENAME_TWO = NA,
-      SURNAME_TWO= NA,
-      DOB_TWO = NA,
-      POSTCODE_TWO = NA,
-      JW_SURNAME = NA,
-      JW_FORENAME = NA,
-      JW_POSTCODE = NA,
-      DIFF_DOB = NA,
-      MATCH_TYPE = "No Match"
-    )
-
-  # Add non-matches
-  all_matches <- matches %>%
-    dplyr::union_all(non_matches) %>%
+    dplyr::union_all(exact_matches) %>%
     # Calculate match_count per primary df ID
     dplyr::group_by(ID_ONE) %>%
     dplyr::mutate(MATCH_COUNT = dplyr::n_distinct(ID_TWO)) %>%
     dplyr::ungroup()
 
+  # Whether or not to return non-matches
+  if(inc_no_match == TRUE){
+
+    # Determine missing non-match fields
+    non_matches <- df_one %>%
+      dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE)) %>%
+      dplyr::mutate(
+        ID_TWO = NA,
+        FORENAME_TWO = NA,
+        SURNAME_TWO= NA,
+        DOB_TWO = NA,
+        POSTCODE_TWO = NA,
+        JW_SURNAME = NA,
+        JW_FORENAME = NA,
+        JW_POSTCODE = NA,
+        DOB_SCORE = NA,
+        MATCH_TYPE = "No Match",
+        MATCH_SCORE = 0,
+        MATCH_COUNT = 0
+      )
+
+    # Add non-matches to all-matches
+    all_matches <- matches %>%
+      dplyr::union_all(non_matches)
+  }else{
+
+    # All matches doesn't include non-matches
+    all_matches <- matches
+  }
+
   # Determine final output format
-  if(output_type == "key"){
+  if (output_type == "key") {
 
     # Only select key columns
     all_matches <- all_matches %>%
       dplyr::select(
-        ID_ONE,
-        ID_TWO,
+        {{ id_one }} := ID_ONE,
+        {{ id_two }} := ID_TWO,
         MATCH_TYPE,
-        MATCH_COUNT
+        MATCH_COUNT,
+        MATCH_SCORE
       )
-
-  }else if(output_type == "match"){
+  } else if (output_type == "match") {
 
     # Only select key columns
     all_matches <- all_matches %>%
       dplyr::select(
-        ID_ONE,
-        FORENAME_ONE,
-        SURNAME_ONE,
-        DOB_ONE,
-        POSTCODE_ONE,
-        ID_TWO,
-        FORENAME_TWO,
-        SURNAME_TWO,
-        DOB_TWO,
-        POSTCODE_TWO,
+        {{ id_one }} := ID_ONE,
+        {{ forename_one }} := FORENAME_ONE,
+        {{ surname_one }} := SURNAME_ONE,
+        {{ dob_one }} := DOB_ONE,
+        {{ postcode_one }} := POSTCODE_ONE,
+        {{ id_two }} := ID_TWO,
+        {{ forename_two }} := FORENAME_TWO,
+        {{ surname_two }} := SURNAME_TWO,
+        {{ dob_two }} := DOB_TWO,
+        {{ postcode_two }} := POSTCODE_TWO,
         MATCH_TYPE,
-        MATCH_COUNT
+        MATCH_COUNT,
+        MATCH_SCORE
       )
-
-  }else if(output_type == "all"){
+  } else if (output_type == "all") {
 
     # Only select key columns
     all_matches <- all_matches %>%
@@ -272,24 +302,50 @@ calc_match_patients_db <- function(
         POSTCODE_TWO,
         MATCH_TYPE,
         MATCH_COUNT,
+        MATCH_SCORE,
+        FORENAME_SCORE = JW_FORENAME,
+        SURNAME_SCORE = JW_SURNAME,
+        DOB_SCORE,
+        POSTCODE_SCORE = JW_POSTCODE
+      )
+
+    # join back to df1 and df2 to get any missing columns
+    # remove any of the key columns from df1 and df2 to stop duplicates
+    # prefix the additional columns with an identifier for the source dataset
+    all_matches <- all_matches %>%
+      dplyr::left_join(
+        df_one %>%
+          dplyr::select(-FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE) %>%
+          rename_all(list(~ paste0("DF1_", .))),
+        by = c("ID_ONE" = "DF1_ID_ONE")
+      ) %>%
+      dplyr::left_join(df_two %>% dplyr::select(
+        -FORENAME_TWO, -SURNAME_TWO, -DOB_TWO, -POSTCODE_TWO,
+        -PERM1, -PERM2, -PERM3, -PERM4, -PERM5, -PERM6, -PERM7, -PERM8, -PERM9
+      ) %>%
+        rename_all(list(~ paste0("DF2_", .))),
+      by = c("ID_TWO" = "DF2_ID_TWO")
+      )
+
+    # rename to match with input
+    all_matches <- all_matches %>%
+      dplyr::select(
+        {{ id_one }} := ID_ONE,
+        {{ forename_one }} := FORENAME_ONE,
+        {{ surname_one }} := SURNAME_ONE,
+        {{ dob_one }} := DOB_ONE,
+        {{ postcode_one }} := POSTCODE_ONE,
+        {{ id_two }} := ID_TWO,
+        {{ forename_two }} := FORENAME_TWO,
+        {{ surname_two }} := SURNAME_TWO,
+        {{ dob_two }} := DOB_TWO,
+        {{ postcode_two }} := POSTCODE_TWO,
+        MATCH_TYPE,
+        MATCH_COUNT,
+        MATCH_SCORE,
         dplyr::everything()
       )
   }
-
-  # Rename back to original column names
-  all_matches <- all_matches %>%
-    dplyr::rename(
-      {{ id_one }} := ID_ONE,
-      {{ forename_one }} := FORENAME_ONE,
-      {{ surname_one }} := SURNAME_ONE,
-      {{ dob_one }} := DOB_ONE,
-      {{ postcode_one }} := POSTCODE_ONE,
-      {{ id_two }} := ID_TWO,
-      {{ forename_two }} := FORENAME_TWO,
-      {{ surname_two }} := SURNAME_TWO,
-      {{ dob_two }} := DOB_TWO,
-      {{ postcode_two }} := POSTCODE_TWO
-    )
 
   # Return data
   return(all_matches)

@@ -11,7 +11,7 @@
 #'
 #' @examples
 #' dob_substr(df, dob_one, dob_two, dob_diff
-filter_dob_db <- function(df, dob_one, dob_two, diff_threshold){
+filter_dob_db <- function(df, dob_one, dob_two, dob_score_threshold){
 
   df %>%
     dplyr::mutate(
@@ -25,8 +25,8 @@ filter_dob_db <- function(df, dob_one, dob_two, diff_threshold){
       CHAR7 = ifelse(substr({{ dob_one }},7,7) == substr({{ dob_two }},7,7), 1, 0),
       CHAR8 = ifelse(substr({{ dob_one }},8,8) == substr({{ dob_two }},8,8), 1, 0),
       # Total scores and present as DOB difference
-      DIFF_DOB = 8 - (CHAR1 + CHAR2 + CHAR3 + CHAR4 + CHAR5 + CHAR6 + CHAR7 + CHAR8)
+      DOB_SCORE =  round((CHAR1 + CHAR2 + CHAR3 + CHAR4 + CHAR5 + CHAR6 + CHAR7 + CHAR8) / 8, 2)
     ) %>%
-    dplyr::filter(DIFF_DOB <= diff_threshold) %>%
+    dplyr::filter(DOB_SCORE >= dob_score_threshold) %>%
     dplyr::select(-c(CHAR1, CHAR2, CHAR3, CHAR4, CHAR5, CHAR6, CHAR7, CHAR8))
 }

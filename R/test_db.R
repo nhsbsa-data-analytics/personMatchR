@@ -113,6 +113,54 @@ source("R/filter_dob_db.R")
 source("R/calc_permutations_db.R")
 source("R/calc_match_patients_db.R")
 
+# Set up connection to the DB
+con <- nhsbsaR::con_nhsbsa(database = "DALP")
+
+# Db pds table
+df_one <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_DATASET_A"))
+
+# Db eibss table
+df_two <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_DATASET_B"))
+
+df_two <- con %>%
+  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_DATASET_C"))
+
+df_two <- df_two %>%
+  rename(
+    ID_TWO = ID,
+    DOB_TWO = DOB,
+    SURNAME_TWO = SURNAME,
+    FORENAME_TWO = FORENAME,
+    POSTCODE_TWO = POSTCODE,
+    NOTES_TWO = NOTES
+  )
+
+df_one
+df_two
+
+# Function output
+calc_match_patients_db(
+  # Data to be matched
+  df_one = df_one,
+  id_one = ID,
+  forename_one = FORENAME,
+  surname_one = SURNAME,
+  dob_one = DOB,
+  postcode_one = POSTCODE,
+  # Lookup data
+  df_two = df_two,
+  id_two = ID_TWO,
+  forename_two = FORENAME_TWO,
+  surname_two = SURNAME_TWO,
+  dob_two = DOB_TWO,
+  postcode_two = POSTCODE_TWO,
+  # Other Information
+  output_type = "all",
+  format_data = TRUE
+)
+
 #-------------------------------------------------------------------------------
 # Part One: Table Formatting - Required prior due to multiple joins later
 

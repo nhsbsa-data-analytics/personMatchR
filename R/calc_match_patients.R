@@ -291,7 +291,6 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
         ))
     }
 
-
     # Re-determine non-matches
     non_matches <- non_matches %>%
       dplyr::anti_join(y = final_matches %>% dplyr::select(ID_ONE))
@@ -413,14 +412,18 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
     # remove any of the key columns from df1 and df2 to stop duplicates
     # prefix the additional columns with an identifier for the source dataset
     all_matches <- all_matches %>%
-      dplyr::left_join(df_one %>% dplyr::select(-FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE) %>%
+      dplyr::left_join(
+        df_one %>%
+          dplyr::select(-FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE) %>%
         rename_all(list(~ paste0("DF1_", .))),
       by = c("ID_ONE" = "DF1_ID_ONE")
       ) %>%
-      dplyr::left_join(df_two %>% dplyr::select(
+      dplyr::left_join(
+        df_two %>%
+          dplyr::select(
         -FORENAME_TWO, -SURNAME_TWO, -DOB_TWO, -POSTCODE_TWO,
         -PERM1, -PERM2, -PERM3, -PERM4, -PERM5, -PERM6, -PERM7, -PERM8, -PERM9
-      ) %>%
+        ) %>%
         rename_all(list(~ paste0("DF2_", .))),
       by = c("ID_TWO" = "DF2_ID_TWO")
       )
