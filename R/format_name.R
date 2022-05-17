@@ -12,13 +12,11 @@
 #'
 #' @examples
 #' format_name(str_name)
-format_name <- function(str_name) {
-
-  # handle missing variables
-  if (is.na(str_name) || is.null(str_name) || str_name == "") {
-    return(NA)
-  }
-
-  # convert string to uppercase remove non alphabetic characters
-  return(toupper(gsub("[^[:alpha:]]", "", str_name)))
+format_name <- function(df, name) {
+  df %>%
+    dplyr::mutate(
+      # Remove non-alpha chars and convert emtpy string to NA
+      {{ name }} := toupper(gsub("[^[:alpha:]]", "", {{ name }})),
+      {{ name }} := ifelse({{ name }} == "", NA, {{ name }})
+    )
 }

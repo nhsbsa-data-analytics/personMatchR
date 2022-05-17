@@ -1,13 +1,6 @@
-test_that("NA values are skipped and returned as null", {
-  expect_equal(format_postcode(NA), NA)
-})
+test_that("Postcode string formatting", {
+  test_run <- format_postcode(readRDS("./testdata/test_postcode_input.rds"), ID, POSTCODE)
+  expected_results <- readRDS("./testdata/test_postcode_expected.rds")
 
-
-test_that("NULL values are skipped and returned as null", {
-  expect_equal(format_postcode(NULL), NA)
-})
-
-
-test_that("Blank string values are skipped and returned as null", {
-  expect_equal(format_postcode(""), NA)
+  expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
 })
