@@ -10,15 +10,15 @@
 #'
 #' @examples
 #' format_postcode(df)
-format_postcode = function(df, id, postcode){
+format_postcode <- function(df, id, postcode) {
 
   # Helper function to replace numbers for characters
-  replace_number_for_char = function(x){
+  replace_number_for_char <- function(x) {
     stringr::str_replace_all(x, c("0" = "O", "5" = "S"))
   }
 
   # Helper function to replace characters for numbers
-  replace_char_for_number = function(x){
+  replace_char_for_number <- function(x) {
     stringr::str_replace_all(x, c("O" = "0", "I" = "1", "L" = "1", "S" = "5"))
   }
 
@@ -27,7 +27,11 @@ format_postcode = function(df, id, postcode){
     dplyr::mutate(
       {{ postcode }} := toupper(gsub("[^[:alnum:]]", "", {{ postcode }}))
     ) %>%
-    tidytext::unnest_characters(., 'CHAR', {{ postcode }}, to_lower = F) %>%
+    # convert blank strings ("") to NA
+    dplyr::mutate(
+      {{ postcode }} := na_if({{ postcode }}, "")
+    ) %>%
+    tidytext::unnest_characters(., "CHAR", {{ postcode }}, to_lower = F) %>%
     dplyr::mutate(NUM = ifelse(grepl("[1-9]", CHAR), 1, 0)) %>%
     dplyr::group_by({{ id }}) %>%
     # Determine total chars and char position per postcode
@@ -68,5 +72,9 @@ format_postcode = function(df, id, postcode){
     dplyr::ungroup() %>%
     # Select and distinct to remove split-char rows
     dplyr::select(-c(CHAR, ROW)) %>%
-    dplyr::distinct()
+    dplyr::distinct() %>%
+    # convert "NA" to NA
+    dplyr::mutate(
+      {{ postcode }} := na_if({{ postcode }}, "NA")
+    )
 }

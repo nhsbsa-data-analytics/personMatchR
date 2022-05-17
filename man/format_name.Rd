@@ -4,7 +4,7 @@
 \alias{format_name}
 \title{Formatting either a Forename or Surname}
 \usage{
-format_name(str_name)
+format_name(df, name)
 }
 \arguments{
 \item{str_name}{A string field to be cleansed}

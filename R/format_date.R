@@ -8,11 +8,10 @@
 #' @examples
 #' format_dob(df, dob)
 format_date <- function(df, date) {
-
   df %>%
     mutate({{ date }} := ifelse(
-      test = is.na(DOB) | is.null({{ date }}),
-      yes =  NA,
+      test = is.na({{ date }}) | is.null({{ date }}) | {{ date }} == "",
+      yes = NA,
       no = format(lubridate::fast_strptime(
         x = {{ date }},
         # American way last

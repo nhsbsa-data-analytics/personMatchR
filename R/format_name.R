@@ -12,8 +12,7 @@
 #'
 #' @examples
 #' format_name(str_name)
-format_name <- function(df, name){
-
+format_name <- function(df, name) {
   df %>%
     dplyr::mutate(
       # Remove non-alpha chars and convert emtpy string to NA
