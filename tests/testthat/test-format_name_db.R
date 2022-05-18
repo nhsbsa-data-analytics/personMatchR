@@ -1,30 +1,30 @@
 
 # Load function to test
-source("R/format_postcode_db.R")
+source("R/format_name_db.R")
 
-testthat::test_that("Postcode string formatting", {
+testthat::test_that("Name string formatting", {
 
   # Set up connection to the DB
   con <- nhsbsaR::con_nhsbsa(database = "DALP")
 
   # Load df1
   test_run <- con %>%
-    dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_POSTCODE_INPUT"))
+    dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_NAME_INPUT"))
 
   # Load df2
   expected_results <- con %>%
-    dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_POSTCODE_EXPECTED"))
+    dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_NAME_EXPECTED"))
 
   # Process df1
   test_run <- test_run %>%
-    format_postcode_db(., POSTCODE) %>%
+    format_name_db(., NAME) %>%
     collect()
 
   # Process df2
   expected_results <- expected_results %>%
     collect()
 
-  # Print to view results
+  # Print to double-check
   print(test_run)
   print(expected_results)
 

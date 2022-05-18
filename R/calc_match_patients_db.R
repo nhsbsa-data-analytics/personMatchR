@@ -32,6 +32,7 @@ calc_match_patients_db <- function(
   df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
   output_type = c("all", "key", "match"),
   format_data = c(TRUE, FALSE),
+  inc_no_match = c(TRUE, FALSE),
   sw_forename = 0.3, sw_surname = 0.15, sw_dob = 0.4, sw_postcode = 0.15
 ){
 
@@ -147,6 +148,7 @@ calc_match_patients_db <- function(
       JW_POSTCODE = 1,
       DOB_SCORE = 1,
       MATCH_TYPE = 'Exact',
+      MATCH_SCORE = 1
     )
 
   # Remaining records
