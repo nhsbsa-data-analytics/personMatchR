@@ -189,14 +189,14 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
       JW_FORENAME = dplyr::case_when(
         length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
         FORENAME_ONE == FORENAME_TWO ~ 1,
-        T ~ stringdist::stringsim(FORENAME_ONE, FORENAME_TWO, method = "jw")
+        T ~ stringdist::stringsim(FORENAME_ONE, FORENAME_TWO, method = "jw", p = 0.1)
       )
     ) %>%
     dplyr::filter(JW_FORENAME >= 0.75) %>%
     dplyr::mutate(
       # JW match, bypassing exact string matches (DIFF_DOB already calculated)
-      JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, stringdist::stringsim(SURNAME_ONE, SURNAME_TWO, method = "jw")),
-      JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, stringdist::stringsim(POSTCODE_ONE, POSTCODE_TWO, method = "jw")),
+      JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, stringdist::stringsim(SURNAME_ONE, SURNAME_TWO, method = "jw", p = 0.1)),
+      JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, stringdist::stringsim(POSTCODE_ONE, POSTCODE_TWO, method = "jw", p = 0.1)),
       # Generate confident matches
       MATCH_TYPE = dplyr::case_when(
         (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Exact",
@@ -254,7 +254,7 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
         JW_FORENAME = dplyr::case_when(
           length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
           FORENAME_ONE == FORENAME_TWO ~ 1,
-          T ~ stringdist::stringsim(FORENAME_ONE, FORENAME_TWO, method = "jw")
+          T ~ stringdist::stringsim(FORENAME_ONE, FORENAME_TWO, method = "jw", p = 0.1)
         )
       ) %>%
       dplyr::filter(JW_FORENAME >= 0.75)
@@ -263,8 +263,8 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
       final_matches <- final_matches %>%
         dplyr::mutate(
           # JW match, bypassing exact string matches (DIFF_DOB already calculated)
-          JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, stringdist::stringsim(SURNAME_ONE, SURNAME_TWO, method = "jw")),
-          JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, stringdist::stringsim(POSTCODE_ONE, POSTCODE_TWO, method = "jw")),
+          JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, stringdist::stringsim(SURNAME_ONE, SURNAME_TWO, method = "jw", p = 0.1)),
+          JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, stringdist::stringsim(POSTCODE_ONE, POSTCODE_TWO, method = "jw", p = 0.1)),
           # Generate confident matches
           MATCH_TYPE = dplyr::case_when(
             (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Exact",

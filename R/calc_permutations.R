@@ -33,7 +33,7 @@ calc_permutations <- function(df, forename, surname, postcode, dob) {
       ),
       # Last 3 chars forename - 3 chars of surname & postcode
       PERM6 = paste0(
-        substr({{ forename }}, nchar({{ forename }}) - 2, 3),
+        substr({{ forename }}, nchar({{ forename }}) - 2, nchar({{ forename }})),
         substr({{ surname }}, 1, 3),
         substr({{ postcode }}, 1, 3)
       ),

@@ -34,7 +34,8 @@ calc_permutations_db <- function(df, forename, surname, postcode, dob){
       ),
       # Last 3 chars forename - 3 chars of surname & postcode
       PERM6 = paste0(
-        SUBSTR({{ forename }}, nchar({{ forename }})-2, 3),
+        # Only use Oracle SUBSTR() in this instance
+        SUBSTR({{ forename }}, nchar({{ forename }}) -2, 3),
         substr({{ surname }}, 1, 3),
         substr({{ postcode }}, 1, 3)
       ),
