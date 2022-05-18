@@ -1,76 +1,32 @@
 
+# Load function to test
+source("R/format_postcode_db.R")
 
-
-# Set up connection to the DB
-con <- nhsbsaR::con_nhsbsa(database = "DALP")
-
-test_run <- readRDS("tests/testthat/testdata/test_postcode_input.rds")
-
-
-
-
-TEST_RUN <- dbplyr::src_memdb() %>% copy_to(test_run, overwrite = TRUE)
-
-TEST_RUN
-
-
-expect_results <- dbplyr::memdb_frame(readRDS("tests/testthat/testdata/test_postcode_expected.rds"))
-
-test_run
-
-df_one
-
-format_postcode_db(TEST_RUN, POSTCODE)
-test_run
-
-
-setwd("tests/testthat/testdata/")
-
-files_to_save = list.files()[grepl(".rds", list.files())]
-
-file_name = files_to_save[1]
-
-save_db_table <- function(file_name){
+testthat::test_that("Postcode string formatting", {
 
   # Set up connection to the DB
   con <- nhsbsaR::con_nhsbsa(database = "DALP")
 
-  # Read File
-  file = readRDS(file_name)
+  # Load df1
+  test_run <- con %>%
+    dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_POSTCODE_INPUT"))
 
-  # Field names
-  fields = colnames(file)
+  # Load df2
+  expected_results <- con %>%
+    dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_POSTCODE_EXPECTED"))
 
-  # Save name
-  db_table_name = toupper(gsub(".rds", "", file_name))
+  # Process df1
+  test_run <- test_run %>%
+    format_postcode_db(., POSTCODE) %>%
+    collect()
 
-  # See if table exissts
-  if(DBI::dbExistsTable(con, db_table_name) == TRUE){
-    DBI::dbRemoveTable(con, db_table_name)
-  }
+  # Process df2
+  expected_results <- expected_results %>%
+    collect()
 
-  #Create Table
-  DBI::dbWriteTable(con, "ZZZ", file)
-
-  #Create Table
-  DBI::dbAppendTable(con, db_table_name, file)
-
-  #Disconnect
+  # Disconnnect
   DBI::dbDisconnect(con)
-}
 
-?DBI::dbCreateTable
-
-toupper(gsub(".rds", "", file))
-
-save_db_table(files_to_save[1])
-
-DBI::dbCreateTable(con, "XYZ_XYZ", file)
-
-DBI::dbCreateTable(con, file, "XYZ_XYZ")
-
-
-
-save_db_table("tests/testthat/testdata/test_postcode_input.rds", "TEST_123")
-
-?DBI::dbCreateTable
+  # Cheeck if equal
+  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+})
