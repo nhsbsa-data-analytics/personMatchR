@@ -318,7 +318,7 @@ calc_match_patients_db <- function(
       dplyr::left_join(
         df_one %>%
           dplyr::select(-FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE) %>%
-          rename_all(list(~ paste0("DF1_", .))),
+          dplyr::rename_all(list(~ paste0("DF1_", .))),
         by = c("ID_ONE" = "DF1_ID_ONE")
       ) %>%
       dplyr::left_join(
@@ -327,7 +327,7 @@ calc_match_patients_db <- function(
             -FORENAME_TWO, -SURNAME_TWO, -DOB_TWO, -POSTCODE_TWO,
             -PERM1, -PERM2, -PERM3, -PERM4, -PERM5, -PERM6, -PERM7, -PERM8, -PERM9
       ) %>%
-        rename_all(list(~ paste0("DF2_", .))),
+        dplyr::rename_all(list(~ paste0("DF2_", .))),
       by = c("ID_TWO" = "DF2_ID_TWO")
       )
 

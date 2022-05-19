@@ -41,6 +41,8 @@ Imports:
     dplyr,
     stringr,
     stringdist,
+    purrr,
+    tidytext,
     anytime,
     lubridate
 Suggests: 
