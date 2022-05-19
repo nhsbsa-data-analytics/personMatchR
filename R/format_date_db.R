@@ -12,96 +12,14 @@
 #'
 #' @examples
 #' format_db_date(df, date_col)
-format_date_db <- function(df, date){
+format_date_db <- function(df, date_col){
 
-  # Format distinct collected dates
-  dates <- df %>%
-    dplyr::select({{ date }}) %>%
-    dplyr::distinct() %>%
-    dplyr::collect() %>%
+  df %>%
     dplyr::mutate(
-      TMP = as.character({{ date }}),
-      TMP = ifelse(
-        test = is.na(TMP) | is.null(TMP) | TMP == "",
-        yes = NA,
-        no = format(lubridate::fast_strptime(
-          x = TMP,
-          # American way last
-          format = c(
-            # Ymd
-            "%Y-%m-%d",
-            "%Y%m%d",
-            "%Y/%m/%d",
-            "%Y %m %d",
-            "%Y-%b-%d",
-            "%Y%b%d",
-            "%Y/%b/%d",
-            "%Y %b %d",
-            # dmY
-            "%d-%m-%Y",
-            "%d%m%Y",
-            "%d/%m/%Y",
-            "%d %m %Y",
-            "%d-%b-%Y",
-            "%d%b%Y",
-            "%d/%b/%Y",
-            "%d %b %Y",
-            # dmy
-            "%d-%m-%y",
-            "%d%m%y",
-            "%d/%m/%y",
-            "%d %m %y",
-            "%d-%b-%y",
-            "%d%b%y",
-            "%d/%b/%y",
-            "%d %b %y",
-            # ymd
-            "%y-%m-%d",
-            "%y%m%d",
-            "%y/%m/%d",
-            "%y %m %d",
-            "%y-%b-%d",
-            "%y%b%d",
-            "%y/%b/%d",
-            "%y %b %d",
-            # Ydm
-            "%Y-%d-%m",
-            "%Y%d%m",
-            "%Y/%d/%m",
-            "%Y %d %m",
-            "%Y-%d-%b",
-            "%Y%d%b",
-            "%Y/%d/%b",
-            "%Y %d %b",
-            # mdY
-            "%m-%d-%Y",
-            "%m%d%Y",
-            "%m/%d/%Y",
-            "%m %d %Y",
-            "%b-%d-%Y",
-            "%b%d%Y",
-            "%b/%d/%Y",
-            "%b %d %Y",
-
-            # mdy
-            "%m-%d-%y",
-            "%m%d%y",
-            "%m/%d/%y",
-            "%m %d %y",
-            "%b-%d-%y",
-            "%b%d%y",
-            "%b/%d/%y",
-            "%b %d %y"
-          )
-        ),
-        format = "%Y%m%d"
-        )
-      )) %>%
-    dbplyr::memdb_frame()
-
-  # Rejoin and rename dates
-  df <- df %>%
-    dplyr::left_join(dates, copy = TRUE) %>%
-    dplyr::select(-{{ date }}) %>%
-    dplyr::rename({{ date }} := TMP)
+      {{ date_col }} := ifelse(
+        REGEXP_INSTR({{ date_col }}, '[0-9]{8}$') == 1,
+        TO_NUMBER({{ date_col }}),
+        TO_NUMBER(TO_CHAR({{ date_col }},'YYYYMMDD'))
+      )
+    )
 }

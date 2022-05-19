@@ -32,3 +32,7 @@ save_db_table <- function(file_name){
 
 # Save all Files
 lapply(X = files_to_save, FUN = save_db_table)
+
+files_to_save[11]
+
+save_db_table(files_to_save[11])

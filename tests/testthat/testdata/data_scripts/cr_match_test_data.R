@@ -321,9 +321,9 @@ OUTPUT_TEST02 <- data.frame(
   POSTCODE_TWO = "NE158NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
-  MATCH_SCORE = 0.9938,
+  MATCH_SCORE = 0.99625,
   FORENAME_SCORE = 1.0000,
-  SURNAME_SCORE = 0.9583,
+  SURNAME_SCORE = 0.975,
   DOB_DIFFERENCE = 0,
   DOB_SCORE = 1.00,
   POSTCODE_SCORE = 1.0000,
@@ -342,8 +342,8 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_TWO = "NE158NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
-  MATCH_SCORE = 0.9857,
-  FORENAME_SCORE = 0.9524,
+  MATCH_SCORE = 0.99142,
+  FORENAME_SCORE = 0.9714,
   SURNAME_SCORE = 1.0000,
   DOB_DIFFERENCE = 0,
   DOB_SCORE = 1.00,
@@ -363,12 +363,12 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_TWO = "NE61JS",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
-  MATCH_SCORE = 0.9464,
+  MATCH_SCORE = 0.9571,
   FORENAME_SCORE = 1.0000,
   SURNAME_SCORE = 1.0000,
   DOB_DIFFERENCE = 0,
   DOB_SCORE = 1.00,
-  POSTCODE_SCORE = 0.6429,
+  POSTCODE_SCORE = 0.7143,
   DF2_NOTES = "Confident - postcode close"
 ))
 OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
@@ -468,12 +468,12 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_TWO = "NE15NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
-  MATCH_SCORE = 0.9243,
-  FORENAME_SCORE = 0.9524,
-  SURNAME_SCORE = 0.9583,
+  MATCH_SCORE = 0.9354,
+  FORENAME_SCORE = 0.9714,
+  SURNAME_SCORE = 0.975,
   DOB_DIFFERENCE = 1,
   DOB_SCORE = 0.88,
-  POSTCODE_SCORE = 0.9524,
+  POSTCODE_SCORE = 0.9714,
   DF2_NOTES = "Confident - all close"
 ))
 
@@ -483,7 +483,7 @@ OUTPUT_TEST02 <- OUTPUT_TEST02 %>%
 
 # save output
 saveRDS(OUTPUT_TEST02, file = "./tests/testthat/testdata/match_test_output_test02.rds")
-
+setwd("C:/Users/ADNSH/OneDrive - NHS Business Services Authority/GitHub/PersonMatchR/")
 
 # OUTPUT TEST03- INPUT_A_MULTIPLE_CASE v INPUT_B_INC_EXACT_MATCH --------------------------------
 # output will be a single row showing the exact match

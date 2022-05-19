@@ -144,7 +144,7 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
       JW_FORENAME = 1,
       JW_SURNAME = 1,
       JW_POSTCODE = 1,
-      DIFF_DOB = 0,
+      DOB_SCORE = 0,
       MATCH_TYPE = "Exact",
       MATCH_SCORE = 1
     )
@@ -180,7 +180,7 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
   # Generate list of feasible dob-pairs with 6 identical characters
   cross <- id_pairs %>%
     filter_name(., FORENAME_ONE, FORENAME_TWO) %>%
-    filter_dob(., DOB_ONE, DOB_TWO, 2)
+    filter_dob(., DOB_ONE, DOB_TWO, 0.75)
 
   # Generate a list
   matches <- cross %>%
@@ -194,32 +194,28 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
     ) %>%
     dplyr::filter(JW_FORENAME >= 0.75) %>%
     dplyr::mutate(
-      # JW match, bypassing exact string matches (DIFF_DOB already calculated)
+      # JW match, bypassing exact string matches (DOB_SCORE already calculated)
       JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, stringdist::stringsim(SURNAME_ONE, SURNAME_TWO, method = "jw", p = 0.1)),
       JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, stringdist::stringsim(POSTCODE_ONE, POSTCODE_TWO, method = "jw", p = 0.1)),
       # Generate confident matches
       MATCH_TYPE = dplyr::case_when(
-        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Exact",
-        (JW_SURNAME == 1 & JW_FORENAME == 1 & DIFF_DOB == 0) ~ "Confident",
-        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB <= 2) ~ "Confident",
-        (JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
-        (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
-        (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & DIFF_DOB <= 2) ~ "Confident",
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DOB_SCORE == 1) ~ "Exact",
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & DOB_SCORE == 1) ~ "Confident",
+        (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DOB_SCORE >= 0.75) ~ "Confident",
+        (JW_FORENAME == 1 & JW_POSTCODE == 1 & DOB_SCORE == 1) ~ "Confident",
+        (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & DOB_SCORE == 1) ~ "Confident",
+        (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & DOB_SCORE >= 0.75) ~ "Confident",
         TRUE ~ "No Match"
       )
     ) %>%
     # filter to only confident matches
     dplyr::filter(MATCH_TYPE != "No Match") %>%
     # calculate an overall weighted score
-    dplyr::mutate(MATCH_SCORE = ((ifelse(is.na(JW_FORENAME), 0, JW_FORENAME) * sw_forename) +
-      (ifelse(is.na(JW_SURNAME), 0, JW_SURNAME) * sw_surname) +
-      (case_when(
-        is.na(DIFF_DOB) ~ 0,
-        DIFF_DOB == 0 ~ 1,
-        DIFF_DOB == 1 ~ 0.88,
-        DIFF_DOB == 2 ~ 0.75
-      ) * sw_dob) +
-      (ifelse(is.na(JW_POSTCODE), 0, JW_POSTCODE) * sw_postcode)
+    dplyr::mutate(MATCH_SCORE = (
+      (ifelse(is.na(JW_FORENAME), 0, JW_FORENAME) * sw_forename) +
+        (ifelse(is.na(JW_SURNAME), 0, JW_SURNAME) * sw_surname) +
+        (ifelse(is.na(DOB_SCORE), 0, DOB_SCORE) * sw_dob) +
+        (ifelse(is.na(JW_POSTCODE), 0, JW_POSTCODE) * sw_postcode)
     )) %>%
     # Add exact matches
     dplyr::union_all(exact_matches)
@@ -262,32 +258,28 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
     if (nrow(final_matches) > 0) {
       final_matches <- final_matches %>%
         dplyr::mutate(
-          # JW match, bypassing exact string matches (DIFF_DOB already calculated)
+          # JW match, bypassing exact string matches (DOB_SCORE already calculated)
           JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, stringdist::stringsim(SURNAME_ONE, SURNAME_TWO, method = "jw", p = 0.1)),
           JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, stringdist::stringsim(POSTCODE_ONE, POSTCODE_TWO, method = "jw", p = 0.1)),
           # Generate confident matches
           MATCH_TYPE = dplyr::case_when(
-            (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Exact",
-            (JW_SURNAME == 1 & JW_FORENAME == 1 & DIFF_DOB == 0) ~ "Confident",
-            (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB <= 2) ~ "Confident",
-            (JW_FORENAME == 1 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
-            (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & DIFF_DOB == 0) ~ "Confident",
-            (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & DIFF_DOB <= 2) ~ "Confident",
+            (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DOB_SCORE == 1) ~ "Exact",
+            (JW_SURNAME == 1 & JW_FORENAME == 1 & DOB_SCORE == 1) ~ "Confident",
+            (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DOB_SCORE >= 0.75) ~ "Confident",
+            (JW_FORENAME == 1 & JW_POSTCODE == 1 & DOB_SCORE == 1) ~ "Confident",
+            (JW_SURNAME == 1 & JW_FORENAME >= 0.75 & JW_POSTCODE == 1 & DOB_SCORE == 1) ~ "Confident",
+            (JW_SURNAME >= 0.85 & JW_FORENAME >= 0.75 & JW_POSTCODE >= 0.85 & DOB_SCORE >= 0.75) ~ "Confident",
             TRUE ~ "No Match"
           )
         ) %>%
         # filter to only confident matches
         dplyr::filter(MATCH_TYPE != "No Match") %>%
         # calculate an overall weighted score
-        dplyr::mutate(MATCH_SCORE = ((ifelse(is.na(JW_FORENAME), 0, JW_FORENAME) * sw_forename) +
-          (ifelse(is.na(JW_SURNAME), 0, JW_SURNAME) * sw_surname) +
-          (case_when(
-            is.na(DIFF_DOB) ~ 0,
-            DIFF_DOB == 0 ~ 1,
-            DIFF_DOB == 1 ~ 0.88,
-            DIFF_DOB == 2 ~ 0.75
-          ) * sw_dob) +
-          (ifelse(is.na(JW_POSTCODE), 0, JW_POSTCODE) * sw_postcode)
+        dplyr::mutate(MATCH_SCORE = (
+          (ifelse(is.na(JW_FORENAME), 0, JW_FORENAME) * sw_forename) +
+            (ifelse(is.na(JW_SURNAME), 0, JW_SURNAME) * sw_surname) +
+            (ifelse(is.na(DOB_SCORE), 0, DOB_SCORE) * sw_dob) +
+            (ifelse(is.na(JW_POSTCODE), 0, JW_POSTCODE) * sw_postcode)
         ))
     }
 
@@ -376,15 +368,6 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
       )
   } else if (output_type == "all") {
 
-    # caclulate the DOB_SCORE based on equivalent of DIFF_DOB
-    all_matches <- all_matches %>%
-      dplyr::mutate(DOB_SCORE = case_when(
-        DIFF_DOB == 0 ~ 1,
-        DIFF_DOB == 1 ~ 0.88,
-        DIFF_DOB == 2 ~ 0.75,
-        is.na(DIFF_DOB) ~ 0
-      ))
-
     # Only select key columns
     all_matches <- all_matches %>%
       dplyr::select(
@@ -403,7 +386,6 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
         MATCH_SCORE,
         FORENAME_SCORE = JW_FORENAME,
         SURNAME_SCORE = JW_SURNAME,
-        DOB_DIFFERENCE = DIFF_DOB,
         DOB_SCORE,
         POSTCODE_SCORE = JW_POSTCODE
       )
@@ -447,7 +429,6 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
         dplyr::everything()
       )
   }
-
 
   # Return data
   return(all_matches)

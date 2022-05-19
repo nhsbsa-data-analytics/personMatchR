@@ -1,48 +1,4 @@
-#-------------------------------------------------------------------------------
-# Patient Matching Code Example
 
-# Install patientMatchR Package
-install.packages("devtools")
-devtools::install_github("nhsbsa-data-analytics/patieentMatchR")
-
-# Library
-library(patientMatchR)
-
-# Set Wroking Directory
-setwd("C:/Users/ADNSH/Desktop/")
-
-# DF One
-df_one <- read.csv("PATIENT_MATCHING_DF_ONE")
-
-# DF One
-df_two <- read.csv("PATIENT_MATCHING_DF_TWO")
-
-# Function output
-results <- calc_match_patients(
-  # Data to be matched
-  df_one = df_one,
-  id_one = REFERENCE,
-  forename_one = FORENAME,
-  surname_one = SURNAME,
-  dob_one = DOB,
-  postcode_one = POSTCODE,
-  # Lookup data
-  df_two = df_two,
-  id_two = ID_PDS,
-  forename_two = FORENAME_PDS,
-  surname_two = SURNAME_PDS,
-  dob_two = DOB_PDS,
-  postcode_two = POSTCODE_PDS,
-  # Other Information
-  output_type = "all",
-  format_data = TRUE
-)
-
-# Write data back
-write.csv(results, "MATCHING_OUTPUT.csv")
-
-#-------------------------------------------------------------------------------
-getwd()
 #-------------------------------------------------------------------------------
 # Patient Matching Code Example
 
@@ -98,7 +54,11 @@ results %>%
 DBI::dbDisconnect(con)
 
 #-------------------------------------------------------------------------------
+# Patient Matching Code Example
 
+# Install patientMatchR Package
+install.packages("devtools")
+devtools::install_github("nhsbsa-data-analytics/patieentMatchR")
 
 # Library
 library(dplyr)
@@ -112,116 +72,6 @@ source("R/filter_name_db.R")
 source("R/filter_dob_db.R")
 source("R/calc_permutations_db.R")
 source("R/calc_match_patients_db.R")
-
-# Set up connection to the DB
-con <- nhsbsaR::con_nhsbsa(database = "DALP")
-
-# Db pds table
-df_one <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_DATASET_A"))
-
-# Db eibss table
-df_two <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_DATASET_B"))
-
-df_two <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_DATASET_C"))
-
-df_two <- df_two %>%
-  rename(
-    ID_TWO = ID,
-    DOB_TWO = DOB,
-    SURNAME_TWO = SURNAME,
-    FORENAME_TWO = FORENAME,
-    POSTCODE_TWO = POSTCODE,
-    NOTES_TWO = NOTES
-  )
-
-df_one
-df_two
-
-# Function output
-calc_match_patients_db(
-  # Data to be matched
-  df_one = df_one,
-  id_one = ID,
-  forename_one = FORENAME,
-  surname_one = SURNAME,
-  dob_one = DOB,
-  postcode_one = POSTCODE,
-  # Lookup data
-  df_two = df_two,
-  id_two = ID_TWO,
-  forename_two = FORENAME_TWO,
-  surname_two = SURNAME_TWO,
-  dob_two = DOB_TWO,
-  postcode_two = POSTCODE_TWO,
-  # Other Information
-  output_type = "all",
-  format_data = TRUE
-)
-
-#-------------------------------------------------------------------------------
-# Part One: Table Formatting - Required prior due to multiple joins later
-
-# Set up connection to the DB
-con <- nhsbsaR::con_nhsbsa(database = "DALP")
-
-# Db pds table
-leap_db <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("DALL_REF", "INT600_DWP_LEAP_FORMAT"))
-
-# Db eibss table
-pds_db <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("STBUC", "INT617_TMP_PDS"))
-
-# Tally
-leap_db %>% tally()
-pds_db %>% tally()
-
-# Format LEAP data
-leap <- leap_db %>%
-  format_db_postcode(., POSTCODE) %>%
-  format_db_name(., FORENAME) %>%
-  format_db_name(., SURNAME) %>%
-  format_db_date(., DATE_OF_BIRTH)
-
-# Format PDS data
-pds <- pds_db %>%
-  select(RECORD_ID, DOB, SURNAME, FORENAME, POSTCODE, NHS_NO_PDS, DOD) %>%
-  format_db_postcode(., POSTCODE) %>%
-  format_db_name(., FORENAME) %>%
-  format_db_name(., SURNAME) %>%
-  format_db_date(., DOB)
-
-# Write the table back to the DB: 1 min
-leap %>%
-  compute(
-    name = "INT600_LEAP_PROCESSED",
-    temporary = FALSE
-  )
-
-# Write the table back to the DB: 35 mins
-pds %>%
-  compute(
-    name = "INT600_PDS_PROCESSED",
-    temporary = FALSE
-  )
-
-# Disconnect
-DBI::dbDisconnect(con)
-
-
-#-------------------------------------------------------------------------------
-# Patient Matching Code Example
-
-# Install patientMatchR Package
-install.packages("devtools")
-devtools::install_github("nhsbsa-data-analytics/patieentMatchR")
-
-# Library
-library(dplyr)
-library(dbplyr)
 
 # Set up connection to the DB
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
@@ -248,34 +98,24 @@ pds_db <- pds_db %>%
     POSTCODE_PDS = POSTCODE
   )
 
-# Check data
-eib_db
-pds_db
-
-colnames(eib_db) %in% colnames(pds_db)
-
-# Set up connection to the DB
-con <- nhsbsaR::con_nhsbsa(database = "DALP")
-
-# Db pds table
-df_one <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "PATIENT_MATCHING_DF_ONE"))
-
-# Db eibss table
-df_two <- con %>%
-  dplyr::tbl(from = dbplyr::in_schema("ADNSH", "PATIENT_MATCHING_DF_TWO"))
+# Check formatting
+# eib_db %>%
+#   format_postcode_db(., POSTCODE) %>%
+#   format_name_db(., FORENAME) %>%
+#   format_name_db(., SURNAME) %>%
+#   format_date_db(., DOB)
 
 # Function output
 results <- calc_match_patients_db(
   # Data to be matched
-  df_one = df_one,
+  df_one = eib_db,
   id_one = REFERENCE,
   forename_one = FORENAME,
   surname_one = SURNAME,
   dob_one = DOB,
   postcode_one = POSTCODE,
   # Lookup data
-  df_two = df_two,
+  df_two = pds_db,
   id_two = ID_PDS,
   forename_two = FORENAME_PDS,
   surname_two = SURNAME_PDS,
@@ -283,19 +123,51 @@ results <- calc_match_patients_db(
   postcode_two = POSTCODE_PDS,
   # Other Information
   output_type = "all",
-  format_data = TRUE
-)
+  format_data = FALSE,
+  inc_no_match = TRUE
+  )
 
+# Function output
+results2 <- calc_match_patients_db(
+  # Data to be matched
+  df_one = eib_db,
+  id_one = REFERENCE,
+  forename_one = FORENAME,
+  surname_one = SURNAME,
+  dob_one = DOB,
+  postcode_one = POSTCODE,
+  # Lookup data
+  df_two = pds_db,
+  id_two = ID_PDS,
+  forename_two = FORENAME_PDS,
+  surname_two = SURNAME_PDS,
+  dob_two = DOB_PDS,
+  postcode_two = POSTCODE_PDS,
+  # Other Information
+  output_type = "all",
+  format_data = FALSE,
+  inc_no_match = TRUE
+  )
+
+Sys.time()
 # Write data back
 results %>%
   compute(
     name = "PATIENT_MATCHING_RESULTS",
     temporary = FALSE
   )
+Sys.time()
+
+# Write data back
+results2 %>%
+  compute(
+    name = "PATIENT_MATCHING_RESULTS2",
+    temporary = FALSE
+  )
+Sys.time()
 
 # Disconnect
 DBI::dbDisconnect()
-
 
 
 #-------------------------------------------------------------------------------

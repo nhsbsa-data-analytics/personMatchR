@@ -72,6 +72,11 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
   input_b <- con %>%
     dplyr::tbl(from = dbplyr::in_schema("ADNSH", "MATCH_TEST_INPUT_B_EXCL_EXACT_MATCH"))
 
+  # Process df1
+  input_a <- input_a %>%
+    format_postcode_db(., POSTCODE) %>%
+    mutate(DOB = REPLACE(DOB, "-", ""))
+
   # Process df2
   input_b <- input_b %>%
     dplyr::rename(
@@ -80,37 +85,41 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
       SURNAME_TWO = SURNAME,
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
-    )
+    ) %>%
+    format_postcode_db(., POSTCODE_TWO) %>%
+    mutate(DOB_TWO = REPLACE(DOB_TWO, "-", ""))
 
   # Process df1
   test_run <- calc_match_patients_db(
     input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
     input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
     output_type = "all",
-    format_data = TRUE,
+    format_data = FALSE,
     inc_no_match = TRUE
-  ) %>%
+    ) %>%
     collect()
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
     dplyr::arrange(ID, ID_TWO) %>%
-    mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
+    #mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
     as.data.frame()
 
   # round score values
-  test_run <- test_run %>% mutate(
-    MATCH_SCORE = round(MATCH_SCORE, 4),
-    FORENAME_SCORE = round(FORENAME_SCORE, 4),
-    SURNAME_SCORE = round(SURNAME_SCORE, 4),
-    DOB_SCORE = round(DOB_SCORE, 4),
-    POSTCODE_SCORE = round(POSTCODE_SCORE, 4)
+  test_run <- test_run %>%
+    mutate(
+      MATCH_SCORE = round(MATCH_SCORE, 4),
+      FORENAME_SCORE = round(FORENAME_SCORE, 4),
+      SURNAME_SCORE = round(SURNAME_SCORE, 4),
+      DOB_SCORE = round(DOB_SCORE, 4),
+      POSTCODE_SCORE = round(POSTCODE_SCORE, 4)
   )
 
   # Expected Results
   expected_results <- con %>%
     dplyr::tbl(from = dbplyr::in_schema("ADNSH", "MATCH_TEST_OUTPUT_TEST02")) %>%
-    collect()
+    collect() %>%
+    select(-DOB_DIFFERENCE)
 
   # Print to double-check
   print(test_run)
