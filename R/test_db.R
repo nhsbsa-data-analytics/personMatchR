@@ -99,11 +99,12 @@ pds_db <- pds_db %>%
   )
 
 # Check formatting
-# eib_db %>%
-#   format_postcode_db(., POSTCODE) %>%
-#   format_name_db(., FORENAME) %>%
-#   format_name_db(., SURNAME) %>%
-#   format_date_db(., DOB)
+eib_db %>%
+  format_postcode_db(., POSTCODE) %>%
+  format_name_db(., FORENAME) %>%
+  format_name_db(., SURNAME) %>%
+  format_date_db(., DOB) %>%
+  show_query()
 
 # Function output
 results <- calc_match_patients_db(

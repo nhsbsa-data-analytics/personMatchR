@@ -256,102 +256,100 @@ calc_match_patients_db <- function(
     all_matches <- matches
   }
 
-  return(all_matches)
-
   # Determine final output format
-  # if (output_type == "key") {
-  #
-  #   # Only select key columns
-  #   all_matches <- all_matches %>%
-  #     dplyr::select(
-  #       {{ id_one }} := ID_ONE,
-  #       {{ id_two }} := ID_TWO,
-  #       MATCH_TYPE,
-  #       MATCH_COUNT,
-  #       MATCH_SCORE
-  #     )
-  # } else if (output_type == "match") {
-  #
-  #   # Only select key columns
-  #   all_matches <- all_matches %>%
-  #     dplyr::select(
-  #       {{ id_one }} := ID_ONE,
-  #       {{ forename_one }} := FORENAME_ONE,
-  #       {{ surname_one }} := SURNAME_ONE,
-  #       {{ dob_one }} := DOB_ONE,
-  #       {{ postcode_one }} := POSTCODE_ONE,
-  #       {{ id_two }} := ID_TWO,
-  #       {{ forename_two }} := FORENAME_TWO,
-  #       {{ surname_two }} := SURNAME_TWO,
-  #       {{ dob_two }} := DOB_TWO,
-  #       {{ postcode_two }} := POSTCODE_TWO,
-  #       MATCH_TYPE,
-  #       MATCH_COUNT,
-  #       MATCH_SCORE
-  #     )
-  # } else if (output_type == "all") {
-  #
-  #   # Only select key columns
-  #   all_matches <- all_matches %>%
-  #     dplyr::select(
-  #       ID_ONE,
-  #       FORENAME_ONE,
-  #       SURNAME_ONE,
-  #       DOB_ONE,
-  #       POSTCODE_ONE,
-  #       ID_TWO,
-  #       FORENAME_TWO,
-  #       SURNAME_TWO,
-  #       DOB_TWO,
-  #       POSTCODE_TWO,
-  #       MATCH_TYPE,
-  #       MATCH_COUNT,
-  #       MATCH_SCORE,
-  #       FORENAME_SCORE = JW_FORENAME,
-  #       SURNAME_SCORE = JW_SURNAME,
-  #       DOB_SCORE,
-  #       POSTCODE_SCORE = JW_POSTCODE
-  #     )
-  #
-  #   # join back to df1 and df2 to get any missing columns
-  #   # remove any of the key columns from df1 and df2 to stop duplicates
-  #   # prefix the additional columns with an identifier for the source dataset
-  #   all_matches <- all_matches %>%
-  #     dplyr::left_join(
-  #       df_one %>%
-  #         dplyr::select(-FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE) %>%
-  #         rename_all(list(~ paste0("DF1_", .))),
-  #       by = c("ID_ONE" = "DF1_ID_ONE")
-  #     ) %>%
-  #     dplyr::left_join(
-  #       df_two %>%
-  #         dplyr::select(
-  #           -FORENAME_TWO, -SURNAME_TWO, -DOB_TWO, -POSTCODE_TWO,
-  #           -PERM1, -PERM2, -PERM3, -PERM4, -PERM5, -PERM6, -PERM7, -PERM8, -PERM9
-  #     ) %>%
-  #       rename_all(list(~ paste0("DF2_", .))),
-  #     by = c("ID_TWO" = "DF2_ID_TWO")
-  #     )
-  #
-  #   # rename to match with input
-  #   all_matches <- all_matches %>%
-  #     dplyr::select(
-  #       {{ id_one }} := ID_ONE,
-  #       {{ forename_one }} := FORENAME_ONE,
-  #       {{ surname_one }} := SURNAME_ONE,
-  #       {{ dob_one }} := DOB_ONE,
-  #       {{ postcode_one }} := POSTCODE_ONE,
-  #       {{ id_two }} := ID_TWO,
-  #       {{ forename_two }} := FORENAME_TWO,
-  #       {{ surname_two }} := SURNAME_TWO,
-  #       {{ dob_two }} := DOB_TWO,
-  #       {{ postcode_two }} := POSTCODE_TWO,
-  #       MATCH_TYPE,
-  #       MATCH_COUNT,
-  #       MATCH_SCORE,
-  #       dplyr::everything()
-  #     )
-  # }
+  if (output_type == "key") {
+
+    # Only select key columns
+    all_matches <- all_matches %>%
+      dplyr::select(
+        {{ id_one }} := ID_ONE,
+        {{ id_two }} := ID_TWO,
+        MATCH_TYPE,
+        MATCH_COUNT,
+        MATCH_SCORE
+      )
+  } else if (output_type == "match") {
+
+    # Only select key columns
+    all_matches <- all_matches %>%
+      dplyr::select(
+        {{ id_one }} := ID_ONE,
+        {{ forename_one }} := FORENAME_ONE,
+        {{ surname_one }} := SURNAME_ONE,
+        {{ dob_one }} := DOB_ONE,
+        {{ postcode_one }} := POSTCODE_ONE,
+        {{ id_two }} := ID_TWO,
+        {{ forename_two }} := FORENAME_TWO,
+        {{ surname_two }} := SURNAME_TWO,
+        {{ dob_two }} := DOB_TWO,
+        {{ postcode_two }} := POSTCODE_TWO,
+        MATCH_TYPE,
+        MATCH_COUNT,
+        MATCH_SCORE
+      )
+  } else if (output_type == "all") {
+
+    # Only select key columns
+    all_matches <- all_matches %>%
+      dplyr::select(
+        ID_ONE,
+        FORENAME_ONE,
+        SURNAME_ONE,
+        DOB_ONE,
+        POSTCODE_ONE,
+        ID_TWO,
+        FORENAME_TWO,
+        SURNAME_TWO,
+        DOB_TWO,
+        POSTCODE_TWO,
+        MATCH_TYPE,
+        MATCH_COUNT,
+        MATCH_SCORE,
+        FORENAME_SCORE = JW_FORENAME,
+        SURNAME_SCORE = JW_SURNAME,
+        DOB_SCORE,
+        POSTCODE_SCORE = JW_POSTCODE
+      )
+
+    # join back to df1 and df2 to get any missing columns
+    # remove any of the key columns from df1 and df2 to stop duplicates
+    # prefix the additional columns with an identifier for the source dataset
+    all_matches <- all_matches %>%
+      dplyr::left_join(
+        df_one %>%
+          dplyr::select(-FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE) %>%
+          rename_all(list(~ paste0("DF1_", .))),
+        by = c("ID_ONE" = "DF1_ID_ONE")
+      ) %>%
+      dplyr::left_join(
+        df_two %>%
+          dplyr::select(
+            -FORENAME_TWO, -SURNAME_TWO, -DOB_TWO, -POSTCODE_TWO,
+            -PERM1, -PERM2, -PERM3, -PERM4, -PERM5, -PERM6, -PERM7, -PERM8, -PERM9
+      ) %>%
+        rename_all(list(~ paste0("DF2_", .))),
+      by = c("ID_TWO" = "DF2_ID_TWO")
+      )
+
+    # rename to match with input
+    all_matches <- all_matches %>%
+      dplyr::select(
+        {{ id_one }} := ID_ONE,
+        {{ forename_one }} := FORENAME_ONE,
+        {{ surname_one }} := SURNAME_ONE,
+        {{ dob_one }} := DOB_ONE,
+        {{ postcode_one }} := POSTCODE_ONE,
+        {{ id_two }} := ID_TWO,
+        {{ forename_two }} := FORENAME_TWO,
+        {{ surname_two }} := SURNAME_TWO,
+        {{ dob_two }} := DOB_TWO,
+        {{ postcode_two }} := POSTCODE_TWO,
+        MATCH_TYPE,
+        MATCH_COUNT,
+        MATCH_SCORE,
+        dplyr::everything()
+      )
+  }
 
   # Return data
   return(all_matches)
