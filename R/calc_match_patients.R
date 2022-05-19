@@ -5,14 +5,14 @@
 #' can be used to specify the formatting of the output dataset and allow some customisation of the
 #' match scoring.
 #'
-#' @param df1 dataframe containing person level information representing people to look for
+#' @param df_one dataframe containing person level information representing people to look for
 #' @param id_one unique reference column for df1
 #' @param forename_one forename column for df1
 #' @param surname_one surname column for df1
 #' @param dob_one date of birth column for df1, ideally in dd/mm/yyyy format although others are
 #' handled
 #' @param postcode_one postcode field for df1
-#' @param df2 dataframe containing person level information representing people to look in for
+#' @param df_one dataframe containing person level information representing people to look in for
 #' matches
 #' @param id_two unique reference column for df2
 #' @param forename_two forename column for df2
@@ -33,7 +33,7 @@
 #' @export
 #'
 #' @examples
-#' find_matches(df1, df2, ...)
+#' calc_match_patients(df_one, id_one, ...)
 calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
                                 df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
                                 output_type = c("all", "key", "match"),

@@ -3,14 +3,14 @@
 #' Formatting includes conversion to upper case and removal of
 #' non alphanumeric characters
 #'
-#' @param df A df with postcode to be formatted
-#' @param postcode_col the postcode column to be formatted
+#' @param df A 'lazyframe' generated from a database connection with postcode to be formatted
+#' @param postcode the postcode column to be formatted
 #'
 #' @return A cleansed string
 #' @export
 #'
 #' @examples
-#' format_db_postcode(df, postcode_col)
+#' format_postcode_db(df, postcode)
 format_postcode_db <- function(df, postcode){
 
   # Simple formatting of postcode

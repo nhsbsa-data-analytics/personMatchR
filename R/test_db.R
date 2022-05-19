@@ -4,7 +4,9 @@
 
 # Install patientMatchR Package
 install.packages("devtools")
-devtools::install_github("nhsbsa-data-analytics/patieentMatchR")
+devtools::install_github("nhsbsa-data-analytics/PatientMatchR")
+
+devtools::install_github("nhsbsa-data-analytics/PersonMatchR")
 
 # Library
 library(dplyr)
@@ -67,6 +69,7 @@ library(dbplyr)
 # Functions
 source("R/format_name_db.R")
 source("R/format_date_db.R")
+source("R/format_date_parse_db.R")
 source("R/format_postcode_db.R")
 source("R/filter_name_db.R")
 source("R/filter_dob_db.R")

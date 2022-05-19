@@ -1,32 +1,39 @@
-#' Function to find all matches from the db
+#' Find all potential person matches between two datasets based on personal identifiable information
 #'
-#' Find the exact and confident matches of a lookup df to a primary df
+#' The two input datasets should be 'lazyframes', generated from a connnection to a database.
+#' The first dataset (df_one) containing the people to look for and the second dataset (df2)
+#' containing the data to be searched against. Parameters can be used to specify the formatting
+#' of the output dataset and allow some customisation of the match scoring.
 #'
-#' @param df_one The primary df
-#' @param df_two The lookup df (being matched against)
-#' @param id_one primary df unique identifier
-#' @param forename_one primary df forename
-#' @param surname_one primary df surname
-#' @param dob_one primary df DOB
-#' @param postcode_one primary df postcode
-#' @param id_two lookup df unique identifier
-#' @param forename_two lookup df forename
-#' @param surname_two lookup df surname
-#' @param dob_two lookup df DOB
-#' @param postcode_two lookup df postcode
-#' @param output_type which group of fields the user wants returning
-#' @param format_data whether or not to format the data (which adds runtime)
+#' @param df_one dataframe containing person level information representing people to look for
+#' @param id_one unique reference column for df1
+#' @param forename_one forename column for df1
+#' @param surname_one surname column for df1
+#' @param dob_one date of birth column for df1, ideally in dd/mm/yyyy format although others are
+#' handled
+#' @param postcode_one postcode field for df1
+#' @param df_one dataframe containing person level information representing people to look in for
+#' matches
+#' @param id_two unique reference column for df2
+#' @param forename_two forename column for df2
+#' @param surname_two surname column for df2
+#' @param dob_two date of birth column for df2, ideally in dd/mm/yyyy format although others are
+#' handled
+#' @param postcode_two postcode field for df2
+#' @param output_type One of the following: "key" / "match" / "all"
+#' @param format_data TRUE/FALSE : identifying if the input datasets should be passed through
+#' formatting functions to clean data prior to matching
+#' @param inc_no_match TRUE/FALSE : identifying if the output should include non matches
+#' @param sw_forename (default = 0.30) proportion weighting value (0.0-1.0) to be applied to the forename part of the match score
+#' @param sw_surname (default = 0.15) proportion weighting value (0.0-1.0) to be applied to the surname part of the match score
+#' @param sw_dob (default = 0.40) proportion weighting value (0.0-1.0) to be applied to the dob part of the match score
+#' @param sw_postcode (default = 0.15) proportion weighting value (0.0-1.0) to be applied to the postcode part of the match score
 #'
-#' @return The primary df matched against the lookup df
-#' @return This will a combinaation of exact, confident and non-matches
-#'
+#' @return A 'lazyframe' comprising of all potential matches between two datasets, to either be collected or written back to a database.
 #' @export
 #'
 #' @examples
-#' calc_match_patients_db(
-#' df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
-#' df_two, id_two, forename_two, surname_two, dob_two, postcode_two
-#' output_type, format_data)
+#' calc_match_patients_db(df_one, id_one, ...)
 calc_match_patients_db <- function(
   df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
   df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
