@@ -107,6 +107,7 @@ results <- calc_match_patients_db(
   postcode_two = POSTCODE_TWO,
   # Other Information
   output_type = "all",
+  # DATA ALREADY FORMATTED SO BELOW PARAMETER = 'FALSE'
   format_data = FALSE,
   inc_no_match = TRUE
 )
