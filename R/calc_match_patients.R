@@ -144,7 +144,7 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
       JW_FORENAME = 1,
       JW_SURNAME = 1,
       JW_POSTCODE = 1,
-      DOB_SCORE = 0,
+      DOB_SCORE = 1,
       MATCH_TYPE = "Exact",
       MATCH_SCORE = 1
     )

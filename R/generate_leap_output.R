@@ -24,9 +24,9 @@ source("R/calc_match_patients_db.R")
 con <- DBI::dbConnect(
   odbc::odbc(),
   Driver = "Oracle in OraClient19Home1",
-  DBQ = "10.95.192.238:1521/DALP.WORLD",
+  DBQ = "",
   UID = "CYPHER",
-  PWD = rstudioapi::askForPassword("Please enter your password")
+  PWD = rstudioapi::askForPassword("Please enter your DALP password")
 )
 
 # Part Two: Pre-process tables -------------------------------------------------
