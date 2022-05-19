@@ -121,6 +121,16 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
     collect() %>%
     select(-DOB_DIFFERENCE)
 
+  # Process expected results
+  expected_results <- expected_results %>%
+    mutate(
+      MATCH_SCORE = round(MATCH_SCORE, 4),
+      FORENAME_SCORE = round(FORENAME_SCORE, 4),
+      SURNAME_SCORE = round(SURNAME_SCORE, 4),
+      DOB_SCORE = round(DOB_SCORE, 4),
+      POSTCODE_SCORE = round(POSTCODE_SCORE, 4)
+    )
+
   # Print to double-check
   print(test_run)
   print(expected_results)
