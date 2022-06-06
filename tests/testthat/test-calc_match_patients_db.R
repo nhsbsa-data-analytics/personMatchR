@@ -5,8 +5,6 @@ testthat::test_that("MATCH TEST01: Single exact match (key fields only)", {
   # Check if db testing is to be included
   skip_db_tests()
 
-  source("../../R/calc_match_patients_db.R")
-
   # Set up connection to the DB
   con <- nhsbsaR::con_nhsbsa(database = db_connection)
 
