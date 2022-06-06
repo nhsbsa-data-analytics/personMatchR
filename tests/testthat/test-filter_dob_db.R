@@ -1,19 +1,19 @@
 
-# Load function to test
-source("R/filter_dob_db.R")
-
 testthat::test_that("DOB filter function for similar dates", {
 
+  # Check if db testing is to be included
+  skip_db_tests()
+
   # Set up connection to the DB
-  con <- nhsbsaR::con_nhsbsa(database = "DALP")
+  con <- nhsbsaR::con_nhsbsa(database = db_connection)
 
   # Load df1
   test_run <- con %>%
-    dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_FILTER_DOB_INPUT"))
+    dplyr::tbl(from = dbplyr::in_schema(db_cypher, "PERSONMATCHR_TEST_FILTER_DOB_INPUT"))
 
   # Load df2
   expected_results <- con %>%
-    dplyr::tbl(from = dbplyr::in_schema("ADNSH", "TEST_FILTER_DOB_EXPECTED"))
+    dplyr::tbl(from = dbplyr::in_schema(db_cypher, "PERSONMATCHR_TEST_FILTER_DOB_EXPECTED"))
 
   # Process df1
   test_run <- test_run %>%
@@ -22,13 +22,7 @@ testthat::test_that("DOB filter function for similar dates", {
 
   # Process df2
   expected_results <- expected_results %>%
-    collect() %>%
-    mutate(DOB_SCORE = round((8 - DIFF_DOB) / 8, 2)) %>%
-    select(-DIFF_DOB)
-
-  # Print to double-check
-  print(test_run)
-  print(expected_results)
+    collect()
 
   # Disconnnect
   DBI::dbDisconnect(con)

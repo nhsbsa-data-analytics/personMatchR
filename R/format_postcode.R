@@ -29,7 +29,7 @@ format_postcode <- function(df, id, postcode) {
     ) %>%
     # convert blank strings ("") to NA
     dplyr::mutate(
-      {{ postcode }} := na_if({{ postcode }}, "")
+      {{ postcode }} := dplyr::na_if({{ postcode }}, "")
     ) %>%
     tidytext::unnest_characters(., "CHAR", {{ postcode }}, to_lower = F) %>%
     dplyr::mutate(NUM = ifelse(grepl("[1-9]", CHAR), 1, 0)) %>%

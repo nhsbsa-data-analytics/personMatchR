@@ -321,10 +321,9 @@ OUTPUT_TEST02 <- data.frame(
   POSTCODE_TWO = "NE158NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
-  MATCH_SCORE = 0.99625,
+  MATCH_SCORE = 0.9962,
   FORENAME_SCORE = 1.0000,
   SURNAME_SCORE = 0.975,
-  DOB_DIFFERENCE = 0,
   DOB_SCORE = 1.00,
   POSTCODE_SCORE = 1.0000,
   DF2_NOTES = "Confident - surname close"
@@ -342,10 +341,9 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_TWO = "NE158NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
-  MATCH_SCORE = 0.99142,
+  MATCH_SCORE = 0.9914,
   FORENAME_SCORE = 0.9714,
   SURNAME_SCORE = 1.0000,
-  DOB_DIFFERENCE = 0,
   DOB_SCORE = 1.00,
   POSTCODE_SCORE = 1.0000,
   DF2_NOTES = "Confident - forename close"
@@ -366,7 +364,6 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   MATCH_SCORE = 0.9571,
   FORENAME_SCORE = 1.0000,
   SURNAME_SCORE = 1.0000,
-  DOB_DIFFERENCE = 0,
   DOB_SCORE = 1.00,
   POSTCODE_SCORE = 0.7143,
   DF2_NOTES = "Confident - postcode close"
@@ -387,7 +384,6 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   MATCH_SCORE = 0.9520,
   FORENAME_SCORE = 1.0000,
   SURNAME_SCORE = 1.0000,
-  DOB_DIFFERENCE = 1,
   DOB_SCORE = 0.88,
   POSTCODE_SCORE = 1.0000,
   DF2_NOTES = "Confident - DOB 1 out"
@@ -405,10 +401,9 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_TWO = "NE158NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
-  MATCH_SCORE = 0.90000,
+  MATCH_SCORE = 0.9000,
   FORENAME_SCORE = 1.0000,
   SURNAME_SCORE = 1.0000,
-  DOB_DIFFERENCE = 2,
   DOB_SCORE = 0.75,
   POSTCODE_SCORE = 1.0000,
   DF2_NOTES = "Confident - DOB 2 out"
@@ -426,10 +421,9 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_TWO = NA,
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
-  MATCH_SCORE = 0.85000,
+  MATCH_SCORE = 0.8500,
   FORENAME_SCORE = 1.0000,
   SURNAME_SCORE = 1.0000,
-  DOB_DIFFERENCE = 0,
   DOB_SCORE = 1.00,
   POSTCODE_SCORE = NA,
   DF2_NOTES = "Confident - postcode missing"
@@ -447,10 +441,9 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_TWO = "NE158NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
-  MATCH_SCORE = 0.85000,
+  MATCH_SCORE = 0.8500,
   FORENAME_SCORE = 1.0000,
   SURNAME_SCORE = NA,
-  DOB_DIFFERENCE = 0,
   DOB_SCORE = 1.00,
   POSTCODE_SCORE = 1.0000,
   DF2_NOTES = "Confident - surname missing"
@@ -471,7 +464,6 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   MATCH_SCORE = 0.9354,
   FORENAME_SCORE = 0.9714,
   SURNAME_SCORE = 0.975,
-  DOB_DIFFERENCE = 1,
   DOB_SCORE = 0.88,
   POSTCODE_SCORE = 0.9714,
   DF2_NOTES = "Confident - all close"
@@ -483,7 +475,7 @@ OUTPUT_TEST02 <- OUTPUT_TEST02 %>%
 
 # save output
 saveRDS(OUTPUT_TEST02, file = "./tests/testthat/testdata/match_test_output_test02.rds")
-setwd("C:/Users/ADNSH/OneDrive - NHS Business Services Authority/GitHub/PersonMatchR/")
+
 
 # OUTPUT TEST03- INPUT_A_MULTIPLE_CASE v INPUT_B_INC_EXACT_MATCH --------------------------------
 # output will be a single row showing the exact match

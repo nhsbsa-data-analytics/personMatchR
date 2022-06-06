@@ -9,7 +9,7 @@
 #' format_dob(df, dob)
 format_date <- function(df, date) {
   df %>%
-    mutate({{ date }} := ifelse(
+    dplyr::mutate({{ date }} := ifelse(
       test = is.na({{ date }}) | is.null({{ date }}) | {{ date }} == "",
       yes = NA,
       no = format(lubridate::fast_strptime(
