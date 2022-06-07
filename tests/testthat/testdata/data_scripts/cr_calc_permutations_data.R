@@ -38,7 +38,7 @@ TEST_OUTPUT <- data.frame(
       substr(POSTCODE, 1, 2) # first 2 characters of postcode
     ),
     PERM6 = paste0(
-      substr(FORENAME, nchar(FORENAME) - 2, 3), # last 3 characters of forename
+      substr(FORENAME, nchar(FORENAME) - 2, nchar(FORENAME)), # last 3 characters of forename
       substr(SURNAME, 1, 3), # first 3 characters of surname
       substr(POSTCODE, 1, 3) # first 3 characters of postcode
     ),

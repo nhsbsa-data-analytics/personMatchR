@@ -10,8 +10,8 @@
 #' @export
 #'
 #' @examples
-#' dob_filter(df, dob_one, dob_two, dob_diff)
-filter_dob <- function(df, dob_one, dob_two, dob_score_threshold) {
+#' filter_dob_db(df, dob_one, dob_two, dob_score_threshold)
+filter_dob_db <- function(df, dob_one, dob_two, dob_score_threshold) {
   df %>%
     dplyr::mutate(
       # Generate 8 character-level matching binary scores

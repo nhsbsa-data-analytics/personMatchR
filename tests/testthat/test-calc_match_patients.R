@@ -16,7 +16,7 @@ test_that("MATCH TEST01: Single exact match (key fields only)", {
   )
   expected_results <- readRDS("./testdata/match_test_output_test01.rds")
 
-  expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
 })
 
 
@@ -47,14 +47,14 @@ test_that("MATCH TEST02: multiple confident matches (all fields)", {
   test_run <- test_run %>% mutate(
     MATCH_SCORE = round(MATCH_SCORE, 4),
     FORENAME_SCORE = round(FORENAME_SCORE, 4),
-    SURNAME_SCORE = round(SURNAME_SCORE, 4),
-    DOB_SCORE = round(DOB_SCORE, 4),
+    SURNAME_SCORE = round(SURNAME_SCORE, 3),
+    DOB_SCORE = round(DOB_SCORE, 2),
     POSTCODE_SCORE = round(POSTCODE_SCORE, 4)
   )
 
   expected_results <- readRDS("./testdata/match_test_output_test02.rds")
 
-  expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
 })
 
 
@@ -84,7 +84,7 @@ test_that("MATCH TEST03: single exact match, plus no match (match fields)", {
 
   expected_results <- readRDS("./testdata/match_test_output_test03.rds")
 
-  expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
 })
 
 
@@ -114,7 +114,7 @@ test_that("MATCH TEST04: single no match (key fields)", {
 
   expected_results <- readRDS("./testdata/match_test_output_test04.rds")
 
-  expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
 })
 
 
@@ -143,7 +143,7 @@ test_that("MATCH TEST05: date formats - multiple exact matches (key fields)", {
 
   expected_results <- readRDS("./testdata/match_test_output_test05.rds")
 
-  expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
 })
 
 
@@ -172,7 +172,7 @@ test_that("MATCH TEST06: postcode formats - multiple exact matches (key fields)"
 
   expected_results <- readRDS("./testdata/match_test_output_test06.rds")
 
-  expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
 })
 
 
@@ -187,7 +187,7 @@ test_that("MW01: Match weighting error message thrown when supplied weightings d
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -209,7 +209,7 @@ test_that("MW02: Match weighting error message thrown when supplied weightings p
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -231,7 +231,7 @@ test_that("MW03: Match weighting error message thrown when supplied weightings p
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -253,7 +253,7 @@ test_that("MW04: Match weighting error message thrown when supplied weightings p
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -275,7 +275,7 @@ test_that("MW05: Match weighting error message thrown when supplied weightings p
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -297,7 +297,7 @@ test_that("MW06: Match weighting error message thrown when invalid weightings pa
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -319,7 +319,7 @@ test_that("MW07: Match weighting error message thrown when invalid weightings pa
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -341,7 +341,7 @@ test_that("MW08: Match weighting error message thrown when invalid weightings pa
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -363,7 +363,7 @@ test_that("MW09: Match weighting error message thrown when invalid weightings pa
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -385,7 +385,7 @@ test_that("MW10: Match weighting error message thrown when invalid weightings pa
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -407,7 +407,7 @@ test_that("MW11: Match weighting error message thrown when invalid weightings pa
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -429,7 +429,7 @@ test_that("MW12: Match weighting error message thrown when invalid weightings pa
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -451,7 +451,7 @@ test_that("MW13: Match weighting error message thrown when invalid weightings pa
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",
@@ -473,7 +473,7 @@ test_that("MW14: Match weighting error message thrown when invalid weightings pa
       DOB_TWO = DOB,
       POSTCODE_TWO = POSTCODE
     )
-  expect_error(
+  testthat::expect_error(
     calc_match_patients(input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
       input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
       output_type = "all",

@@ -30,25 +30,25 @@ TEST_INPUT <- rbind(TEST_INPUT, data.frame(DOB_A = "19901225", DOB_B = "20222512
 
 
 # create test input to cover all scenarios
-TEST_OUTPUT <- data.frame(DOB_A = "20001225", DOB_B = "20001225", DIFF_DOB = 0) # date strings identical
-TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "10001225", DIFF_DOB = 1)) # 1 character difference (position 1)
-TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "21001225", DIFF_DOB = 1)) # 1 character difference (position 2)
-TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20101225", DIFF_DOB = 1)) # 1 character difference (position 3)
-TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20011225", DIFF_DOB = 1)) # 1 character difference (position 4)
-TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20000225", DIFF_DOB = 1)) # 1 character difference (position 5)
-TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20001125", DIFF_DOB = 1)) # 1 character difference (position 6)
-TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20001215", DIFF_DOB = 1)) # 1 character difference (position 7)
-TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20001226", DIFF_DOB = 1)) # 1 character difference (position 8)
-TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20221225", DIFF_DOB = 2)) # 2 character difference
-# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20000915", DIFF_DOB = 3)) # 3 character difference
-# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "19991225", DIFF_DOB = 4)) # 4 character difference
-# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "19990225", DIFF_DOB = 5)) # 5 character difference
-# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "19990725", DIFF_DOB = 6)) # 6 character difference
-# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "19990715", DIFF_DOB = 7)) # 7 character difference
-# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "19990716", DIFF_DOB = 8)) # 8 character difference
-# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20002512", DIFF_DOB = 4)) # day/month swap (4 character difference)
-TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20221225", DIFF_DOB = 2)) # latest year captured (2 character difference)
-# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "19901225", DOB_B = "20222512", DIFF_DOB = 4)) # latest year captured (4 character difference)
+TEST_OUTPUT <- data.frame(DOB_A = "20001225", DOB_B = "20001225", DOB_SCORE = 1.00) # date strings identical
+TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "10001225", DOB_SCORE = 0.88)) # 1 character difference (position 1)
+TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "21001225", DOB_SCORE = 0.88)) # 1 character difference (position 2)
+TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20101225", DOB_SCORE = 0.88)) # 1 character difference (position 3)
+TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20011225", DOB_SCORE = 0.88)) # 1 character difference (position 4)
+TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20000225", DOB_SCORE = 0.88)) # 1 character difference (position 5)
+TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20001125", DOB_SCORE = 0.88)) # 1 character difference (position 6)
+TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20001215", DOB_SCORE = 0.88)) # 1 character difference (position 7)
+TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20001226", DOB_SCORE = 0.88)) # 1 character difference (position 8)
+TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20221225", DOB_SCORE = 0.75)) # 2 character difference
+# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20000915", DOB_SCORE = 3)) # 3 character difference
+# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "19991225", DOB_SCORE = 4)) # 4 character difference
+# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "19990225", DOB_SCORE = 5)) # 5 character difference
+# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "19990725", DOB_SCORE = 6)) # 6 character difference
+# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "19990715", DOB_SCORE = 7)) # 7 character difference
+# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "19990716", DOB_SCORE = 8)) # 8 character difference
+# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20002512", DOB_SCORE = 4)) # day/month swap (4 character difference)
+TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "20221225", DOB_SCORE = 0.75)) # latest year captured (2 character difference)
+# TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "19901225", DOB_B = "20222512", DOB_SCORE = 4)) # latest year captured (4 character difference)
 
 
 
