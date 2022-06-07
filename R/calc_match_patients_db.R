@@ -183,7 +183,7 @@ calc_match_patients_db <- function(
         ) %>%
         dplyr::select(- {{.x}})
     }) %>%
-    purrr::reduce(function(x, y) union(x, y)) %>%
+    purrr::reduce(function(x, y) dplyr::union(x, y)) %>%
     dplyr::distinct()
 
   # Generate list of feasible dob-pairs with 6 identical characters
