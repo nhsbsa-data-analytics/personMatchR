@@ -34,14 +34,12 @@
 #'
 #' @examples
 #' calc_match_patients_db(df_one, id_one, ...)
-calc_match_patients_db <- function(
-  df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
-  df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
-  output_type = c("all", "key", "match"),
-  format_data = c(TRUE, FALSE),
-  inc_no_match = c(TRUE, FALSE),
-  sw_forename = 0.3, sw_surname = 0.15, sw_dob = 0.4, sw_postcode = 0.15
-){
+calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
+                                   df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
+                                   output_type = c("all", "key", "match"),
+                                   format_data = c(TRUE, FALSE),
+                                   inc_no_match = c(TRUE, FALSE),
+                                   sw_forename = 0.3, sw_surname = 0.15, sw_dob = 0.4, sw_postcode = 0.15) {
 
   # Match arguments
   match.arg(output_type)
@@ -49,15 +47,15 @@ calc_match_patients_db <- function(
   # check if the match score weightings add up to 100%
   # Check if any of the parameters have been entered as a non numeric value
   if (!is.numeric(sw_forename) ||
-      !is.numeric(sw_surname) ||
-      !is.numeric(sw_dob) ||
-      !is.numeric(sw_postcode)) {
+    !is.numeric(sw_surname) ||
+    !is.numeric(sw_dob) ||
+    !is.numeric(sw_postcode)) {
     # non numeric value supplied as weighting factor
     stop("Non numeric value supplied as weighting factor", call. = FALSE)
   } else if (!dplyr::between(sw_forename, 0, 1) ||
-             !dplyr::between(sw_surname, 0, 1) ||
-             !dplyr::between(sw_dob, 0, 1) ||
-             !dplyr::between(sw_postcode, 0, 1)) {
+    !dplyr::between(sw_surname, 0, 1) ||
+    !dplyr::between(sw_dob, 0, 1) ||
+    !dplyr::between(sw_postcode, 0, 1)) {
     # invalid values applied
     stop("Individual field score weighting values must be between 0.0 and 1.0", call. = FALSE)
   } else if ((sw_forename + sw_surname + sw_dob + sw_postcode) != 1) {
@@ -66,8 +64,7 @@ calc_match_patients_db <- function(
   }
 
   # Check if matching db tables have matching column names
-  if(max(colnames(df_one) %in% colnames(df_two)) == 1){
-
+  if (max(colnames(df_one) %in% colnames(df_two)) == 1) {
     stop("Each dataset requires unique column names.
          Matched database tables cannot contain duplicate column names.
          Rename columns then use the function again.", call. = FALSE)
@@ -94,7 +91,7 @@ calc_match_patients_db <- function(
     )
 
   # Format data depending on function input selection
-  if(format_data == TRUE){
+  if (format_data == TRUE) {
 
     # Format df one
     df_one <- df_one %>%
@@ -154,7 +151,7 @@ calc_match_patients_db <- function(
       JW_SURNAME = 1,
       JW_POSTCODE = 1,
       DOB_SCORE = 1,
-      MATCH_TYPE = 'Exact',
+      MATCH_TYPE = "Exact",
       MATCH_SCORE = 1
     )
 
@@ -172,16 +169,15 @@ calc_match_patients_db <- function(
 
   # Distinct list of ID perm-join pairs
   id_pairs <- perm_num %>%
-    purrr::map(~{
-
+    purrr::map(~ {
       remain %>%
-        dplyr::select(all_of(df_one_cols), {{.x}}) %>%
+        dplyr::select(all_of(df_one_cols), {{ .x }}) %>%
         dplyr::inner_join(
           df_two %>%
-            dplyr::select(all_of(df_two_cols), {{.x}}),
-          by = {{.x}}
+            dplyr::select(all_of(df_two_cols), {{ .x }}),
+          by = {{ .x }}
         ) %>%
-        dplyr::select(- {{.x}})
+        dplyr::select(-{{ .x }})
     }) %>%
     purrr::reduce(function(x, y) dplyr::union(x, y)) %>%
     dplyr::distinct()
@@ -234,7 +230,7 @@ calc_match_patients_db <- function(
     dplyr::ungroup()
 
   # Whether or not to return non-matches
-  if(inc_no_match == TRUE){
+  if (inc_no_match == TRUE) {
 
     # Determine missing non-match fields
     non_matches <- df_one %>%
@@ -242,7 +238,7 @@ calc_match_patients_db <- function(
       dplyr::mutate(
         ID_TWO = NA,
         FORENAME_TWO = NA,
-        SURNAME_TWO= NA,
+        SURNAME_TWO = NA,
         DOB_TWO = NA,
         POSTCODE_TWO = NA,
         JW_SURNAME = NA,
@@ -257,7 +253,7 @@ calc_match_patients_db <- function(
     # Add non-matches to all-matches
     all_matches <- matches %>%
       dplyr::union_all(non_matches)
-  }else{
+  } else {
 
     # All matches doesn't include non-matches
     all_matches <- matches
@@ -333,9 +329,9 @@ calc_match_patients_db <- function(
           dplyr::select(
             -FORENAME_TWO, -SURNAME_TWO, -DOB_TWO, -POSTCODE_TWO,
             -PERM1, -PERM2, -PERM3, -PERM4, -PERM5, -PERM6, -PERM7, -PERM8, -PERM9
-      ) %>%
-        dplyr::rename_all(list(~ paste0("DF2_", .))),
-      by = c("ID_TWO" = "DF2_ID_TWO")
+          ) %>%
+          dplyr::rename_all(list(~ paste0("DF2_", .))),
+        by = c("ID_TWO" = "DF2_ID_TWO")
       )
 
     # rename to match with input

@@ -14,7 +14,7 @@
 #'
 #' @examples
 #' format_date_parse_db(df, date_col)
-format_date_parse_db <- function(df, date){
+format_date_parse_db <- function(df, date) {
 
   # Format distinct collected dates
   dates <- df %>%
@@ -98,7 +98,8 @@ format_date_parse_db <- function(df, date){
         ),
         format = "%Y%m%d"
         )
-      )) %>%
+      )
+    ) %>%
     dbplyr::memdb_frame()
 
   # Rejoin and rename dates

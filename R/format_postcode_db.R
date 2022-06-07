@@ -11,7 +11,7 @@
 #'
 #' @examples
 #' format_postcode_db(df, postcode)
-format_postcode_db <- function(df, postcode){
+format_postcode_db <- function(df, postcode) {
 
   # Simple formatting of postcode
   df <- df %>%
@@ -34,64 +34,64 @@ format_postcode_db <- function(df, postcode){
 
         # 7 Character postcodes
         # Postcode Length 7 - # 1st Character
-        LEN == 7 & substr({{ postcode }}, 1, 1) == '5' ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), 'S'),
-        LEN == 7 & substr({{ postcode }}, 1, 1) == '0' ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), 'O'),
+        LEN == 7 & substr({{ postcode }}, 1, 1) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "S"),
+        LEN == 7 & substr({{ postcode }}, 1, 1) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "O"),
         # Postcode Length 7 - 2nd Character
-        LEN == 7 & substr({{ postcode }}, 2, 2) == '5' ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), 'S'),
-        LEN == 7 & substr({{ postcode }}, 2, 2) == '0' ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), 'O'),
+        LEN == 7 & substr({{ postcode }}, 2, 2) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "S"),
+        LEN == 7 & substr({{ postcode }}, 2, 2) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "O"),
         # Postcode Length 7 - 3nd Character
-        LEN == 7 & substr({{ postcode }}, 3, 3) == 'O' ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), '0'),
-        LEN == 7 & substr({{ postcode }}, 3, 3) == 'I' ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), '1'),
-        LEN == 7 & substr({{ postcode }}, 3, 3) == 'L' ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), '1'),
-        LEN == 7 & substr({{ postcode }}, 3, 3) == 'S' ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), '5'),
+        LEN == 7 & substr({{ postcode }}, 3, 3) == "O" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "0"),
+        LEN == 7 & substr({{ postcode }}, 3, 3) == "I" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "1"),
+        LEN == 7 & substr({{ postcode }}, 3, 3) == "L" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "1"),
+        LEN == 7 & substr({{ postcode }}, 3, 3) == "S" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "5"),
         # Postcode Length 7 - 5th Character
-        LEN == 7 & substr({{ postcode }}, 5, 5) == 'O' ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), '0'),
-        LEN == 7 & substr({{ postcode }}, 5, 5) == 'I' ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), '1'),
-        LEN == 7 & substr({{ postcode }}, 5, 5) == 'L' ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), '1'),
-        LEN == 7 & substr({{ postcode }}, 5, 5) == 'S' ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), '5'),
+        LEN == 7 & substr({{ postcode }}, 5, 5) == "O" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "0"),
+        LEN == 7 & substr({{ postcode }}, 5, 5) == "I" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "1"),
+        LEN == 7 & substr({{ postcode }}, 5, 5) == "L" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "1"),
+        LEN == 7 & substr({{ postcode }}, 5, 5) == "S" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "5"),
         # Postcode Length 7 - 6th Character
-        LEN == 7 & substr({{ postcode }}, 6, 6) == '5' ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), 'S'),
-        LEN == 7 & substr({{ postcode }}, 6, 6) == '0' ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), 'O'),
+        LEN == 7 & substr({{ postcode }}, 6, 6) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), "S"),
+        LEN == 7 & substr({{ postcode }}, 6, 6) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), "O"),
         # Postcode Length 7 - 7th Character
-        LEN == 7 & substr({{ postcode }}, 7, 7) == '5' ~ replace({{ postcode }}, substr({{ postcode }}, 7, 7), 'S'),
-        LEN == 7 & substr({{ postcode }}, 7, 7) == '0' ~ replace({{ postcode }}, substr({{ postcode }}, 7, 7), 'O'),
+        LEN == 7 & substr({{ postcode }}, 7, 7) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 7, 7), "S"),
+        LEN == 7 & substr({{ postcode }}, 7, 7) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 7, 7), "O"),
 
         # 6 Character postcodes
         # Postcode Length 6 - # 1st Character
-        LEN == 6 & substr({{ postcode }}, 1, 1) == '5' ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), 'S'),
-        LEN == 6 & substr({{ postcode }}, 1, 1) == '0' ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), 'O'),
+        LEN == 6 & substr({{ postcode }}, 1, 1) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "S"),
+        LEN == 6 & substr({{ postcode }}, 1, 1) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "O"),
         # Postcode Length 7 - 3nd Character
-        LEN == 6 & substr({{ postcode }}, 4, 4) == 'O' ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), '0'),
-        LEN == 6 & substr({{ postcode }}, 4, 4) == 'I' ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), '1'),
-        LEN == 6 & substr({{ postcode }}, 4, 4) == 'L' ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), '1'),
-        LEN == 6 & substr({{ postcode }}, 4, 4) == 'S' ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), '5'),
+        LEN == 6 & substr({{ postcode }}, 4, 4) == "O" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "0"),
+        LEN == 6 & substr({{ postcode }}, 4, 4) == "I" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "1"),
+        LEN == 6 & substr({{ postcode }}, 4, 4) == "L" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "1"),
+        LEN == 6 & substr({{ postcode }}, 4, 4) == "S" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "5"),
         # Postcode Length 7 - 2nd Character
-        LEN == 6 & substr({{ postcode }}, 5, 5) == '5' ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), 'S'),
-        LEN == 6 & substr({{ postcode }}, 5, 5) == '0' ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), 'O'),
+        LEN == 6 & substr({{ postcode }}, 5, 5) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "S"),
+        LEN == 6 & substr({{ postcode }}, 5, 5) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "O"),
         # Postcode Length 7 - 2nd Character
-        LEN == 6 & substr({{ postcode }}, 6, 6) == '5' ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), 'S'),
-        LEN == 6 & substr({{ postcode }}, 6, 6) == '0' ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), 'O'),
+        LEN == 6 & substr({{ postcode }}, 6, 6) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), "S"),
+        LEN == 6 & substr({{ postcode }}, 6, 6) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), "O"),
 
         # 5 Character postcodes
         # Postcode Length 7 - # 1st Character
-        LEN == 5 & substr({{ postcode }}, 1, 1) == '5' ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), 'S'),
-        LEN == 5 & substr({{ postcode }}, 1, 1) == '0' ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), 'O'),
+        LEN == 5 & substr({{ postcode }}, 1, 1) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "S"),
+        LEN == 5 & substr({{ postcode }}, 1, 1) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "O"),
         # Postcode Length 7 - 5th Character
-        LEN == 5 & substr({{ postcode }}, 2, 2) == 'O' ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), '0'),
-        LEN == 5 & substr({{ postcode }}, 2, 2) == 'I' ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), '1'),
-        LEN == 5 & substr({{ postcode }}, 2, 2) == 'L' ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), '1'),
-        LEN == 5 & substr({{ postcode }}, 2, 2) == 'S' ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), '5'),
+        LEN == 5 & substr({{ postcode }}, 2, 2) == "O" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "0"),
+        LEN == 5 & substr({{ postcode }}, 2, 2) == "I" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "1"),
+        LEN == 5 & substr({{ postcode }}, 2, 2) == "L" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "1"),
+        LEN == 5 & substr({{ postcode }}, 2, 2) == "S" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "5"),
         # Postcode Length 7 - 3nd Character
-        LEN == 5 & substr({{ postcode }}, 3, 3) == 'O' ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), '0'),
-        LEN == 5 & substr({{ postcode }}, 3, 3) == 'I' ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), '1'),
-        LEN == 5 & substr({{ postcode }}, 3, 3) == 'L' ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), '1'),
-        LEN == 5 & substr({{ postcode }}, 3, 3) == 'S' ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), '5'),
+        LEN == 5 & substr({{ postcode }}, 3, 3) == "O" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "0"),
+        LEN == 5 & substr({{ postcode }}, 3, 3) == "I" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "1"),
+        LEN == 5 & substr({{ postcode }}, 3, 3) == "L" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "1"),
+        LEN == 5 & substr({{ postcode }}, 3, 3) == "S" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "5"),
         # Postcode Length 7 - 6th Character
-        LEN == 5 & substr({{ postcode }}, 4, 4) == '5' ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), 'S'),
-        LEN == 5 & substr({{ postcode }}, 4, 4) == '0' ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), 'O'),
+        LEN == 5 & substr({{ postcode }}, 4, 4) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "S"),
+        LEN == 5 & substr({{ postcode }}, 4, 4) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "O"),
         # Postcode Length 7 - 2nd Character
-        LEN == 5 & substr({{ postcode }}, 5, 5) == '5' ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), 'S'),
-        LEN == 5 & substr({{ postcode }}, 5, 5) == '0' ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), 'O'),
+        LEN == 5 & substr({{ postcode }}, 5, 5) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "S"),
+        LEN == 5 & substr({{ postcode }}, 5, 5) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "O"),
 
         # Remaining postcodes
         T ~ {{ postcode }}
@@ -100,7 +100,7 @@ format_postcode_db <- function(df, postcode){
 
   # Rejoin back to original data
   df <- df %>%
-    dplyr::select(- {{ postcode }}) %>%
+    dplyr::select(-{{ postcode }}) %>%
     dplyr::left_join(y = output, by = "POSTCODE_OLD") %>%
     dplyr::select(-c(LEN, POSTCODE_OLD))
 

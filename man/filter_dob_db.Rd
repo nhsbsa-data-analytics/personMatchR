@@ -17,5 +17,5 @@ Through doing so, it mirrors an edit distance of 2 on an 8-digit string
 For this very particular use case, is faster than LV within SQL
 }
 \examples{
-dob_substr(df, dob_one, dob_two, dob_diff
+filter_dob_db(df, dob_one, dob_two, dob_score_threshold)
 }

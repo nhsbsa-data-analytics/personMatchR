@@ -13,8 +13,7 @@
 #'
 #' @examples
 #' format_db_name(df, name_col)
-format_name_db <- function(df, name_col){
-
+format_name_db <- function(df, name_col) {
   df %>%
     dplyr::mutate(
       # Remove non-alpha chars and convert emtpy string to NA

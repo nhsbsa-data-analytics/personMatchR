@@ -34,7 +34,7 @@ testthat::test_that("MATCH TEST01: Single exact match (key fields only)", {
     format_data = FALSE,
     inc_no_match = TRUE
   ) %>%
-  collect()
+    collect()
 
   # Expected Results
   expected_results <- con %>%
@@ -82,7 +82,7 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
     output_type = "all",
     format_data = FALSE,
     inc_no_match = TRUE
-    ) %>%
+  ) %>%
     collect()
 
   # order outputs and apply consistent formatting
@@ -98,7 +98,7 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
       SURNAME_SCORE = round(SURNAME_SCORE, 4),
       DOB_SCORE = round(DOB_SCORE, 4),
       POSTCODE_SCORE = round(POSTCODE_SCORE, 4)
-  )
+    )
 
   # Expected Results
   expected_results <- con %>%
@@ -156,7 +156,7 @@ testthat::test_that("MATCH TEST03: single exact match, plus no match (match fiel
     output_type = "match",
     format_data = FALSE,
     inc_no_match = TRUE
-    ) %>%
+  ) %>%
     collect()
 
   # order outputs and apply consistent formatting

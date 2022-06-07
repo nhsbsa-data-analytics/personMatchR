@@ -12,14 +12,13 @@
 #'
 #' @examples
 #' format_db_date(df, date_col)
-format_date_db <- function(df, date_col){
-
+format_date_db <- function(df, date_col) {
   df %>%
     dplyr::mutate(
       {{ date_col }} := ifelse(
-        REGEXP_INSTR({{ date_col }}, '[0-9]{8}$') == 1,
+        REGEXP_INSTR({{ date_col }}, "[0-9]{8}$") == 1,
         TO_NUMBER({{ date_col }}),
-        TO_NUMBER(TO_CHAR({{ date_col }},'YYYYMMDD'))
+        TO_NUMBER(TO_CHAR({{ date_col }}, "YYYYMMDD"))
       )
     )
 }

@@ -13,8 +13,7 @@
 #'
 #' @examples
 #' name_db_filter(df, name_one, name_two)
-filter_name_db <- function(df, name_one, name_two){
-
+filter_name_db <- function(df, name_one, name_two) {
   df %>%
     dplyr::filter(
       # Tokens share the same first letter
@@ -22,7 +21,7 @@ filter_name_db <- function(df, name_one, name_two){
         # Tokens share same second letter
         SUBSTR({{ name_one }}, 2, 1) == SUBSTR({{ name_two }}, 2, 1) |
         # Tokens share same last letter
-        SUBSTR({{ name_one  }}, LENGTH({{ name_one }}), 1) == SUBSTR({{ name_two }}, LENGTH({{ name_two }}), 1) |
+        SUBSTR({{ name_one }}, LENGTH({{ name_one }}), 1) == SUBSTR({{ name_two }}, LENGTH({{ name_two }}), 1) |
         # One token is a substring of the other
         INSTR({{ name_one }}, {{ name_two }}) > 0 |
         INSTR({{ name_two }}, {{ name_one }}) > 0
