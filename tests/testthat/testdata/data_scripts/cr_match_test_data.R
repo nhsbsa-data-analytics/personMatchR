@@ -128,8 +128,8 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   SURNAME = "CORLEON",
   FORENAME = "MICHEAL",
   POSTCODE = "NE1 5NY",
-  DOB = "1972-08-25",
-  NOTES = "Confident - all close"
+  DOB = "1972-08-24",
+  NOTES = "Confident - DOB match and others close"
 ))
 INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   ID = "10",
@@ -290,8 +290,8 @@ saveRDS(INPUT_B_POSTCODE_FORMAT_MIX, file = "./tests/testthat/testdata/match_tes
 # OUTPUT TEST01- INPUT_A_SINGLE_CASE v INPUT_B_INC_EXACT_MATCH --------------------------------
 # output will be a single row showing the exact match
 OUTPUT_TEST01 <- data.frame(
-  ID = "1",
-  ID_TWO = "1",
+  DF1_ID = "1",
+  DF2_ID = "1",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 1,
   MATCH_SCORE = 1
@@ -309,16 +309,16 @@ saveRDS(OUTPUT_TEST01, file = "./tests/testthat/testdata/match_test_output_test0
 # output will be multiple rows for all the confident matches
 # output dataset will include all fields from both datasets
 OUTPUT_TEST02 <- data.frame(
-  ID = "1",
-  FORENAME = "MICHAEL",
-  SURNAME = "CORLEONE",
-  DOB = "19720824",
-  POSTCODE = "NE158NY",
-  ID_TWO = "2",
-  FORENAME_TWO = "MICHAEL",
-  SURNAME_TWO = "CORLEON",
-  DOB_TWO = "19720824",
-  POSTCODE_TWO = "NE158NY",
+  DF1_ID = "1",
+  DF1_FORENAME = "MICHAEL",
+  DF1_SURNAME = "CORLEONE",
+  DF1_DOB = "19720824",
+  DF1_POSTCODE = "NE158NY",
+  DF2_ID = "2",
+  DF2_FORENAME = "MICHAEL",
+  DF2_SURNAME = "CORLEON",
+  DF2_DOB = "19720824",
+  DF2_POSTCODE = "NE158NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
   MATCH_SCORE = 0.9962,
@@ -329,16 +329,16 @@ OUTPUT_TEST02 <- data.frame(
   DF2_NOTES = "Confident - surname close"
 )
 OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
-  ID = "1",
-  FORENAME = "MICHAEL",
-  SURNAME = "CORLEONE",
-  DOB = "19720824",
-  POSTCODE = "NE158NY",
-  ID_TWO = "3",
-  FORENAME_TWO = "MICHEAL",
-  SURNAME_TWO = "CORLEONE",
-  DOB_TWO = "19720824",
-  POSTCODE_TWO = "NE158NY",
+  DF1_ID = "1",
+  DF1_FORENAME = "MICHAEL",
+  DF1_SURNAME = "CORLEONE",
+  DF1_DOB = "19720824",
+  DF1_POSTCODE = "NE158NY",
+  DF2_ID = "3",
+  DF2_FORENAME = "MICHEAL",
+  DF2_SURNAME = "CORLEONE",
+  DF2_DOB = "19720824",
+  DF2_POSTCODE = "NE158NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
   MATCH_SCORE = 0.9914,
@@ -349,16 +349,16 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   DF2_NOTES = "Confident - forename close"
 ))
 OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
-  ID = "1",
-  FORENAME = "MICHAEL",
-  SURNAME = "CORLEONE",
-  DOB = "19720824",
-  POSTCODE = "NE158NY",
-  ID_TWO = "4",
-  FORENAME_TWO = "MICHAEL",
-  SURNAME_TWO = "CORLEONE",
-  DOB_TWO = "19720824",
-  POSTCODE_TWO = "NE61JS",
+  DF1_ID = "1",
+  DF1_FORENAME = "MICHAEL",
+  DF1_SURNAME = "CORLEONE",
+  DF1_DOB = "19720824",
+  DF1_POSTCODE = "NE158NY",
+  DF2_ID = "4",
+  DF2_FORENAME = "MICHAEL",
+  DF2_SURNAME = "CORLEONE",
+  DF2_DOB = "19720824",
+  DF2_POSTCODE = "NE61JS",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
   MATCH_SCORE = 0.9571,
@@ -369,16 +369,16 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   DF2_NOTES = "Confident - postcode close"
 ))
 OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
-  ID = "1",
-  FORENAME = "MICHAEL",
-  SURNAME = "CORLEONE",
-  DOB = "19720824",
-  POSTCODE = "NE158NY",
-  ID_TWO = "5",
-  FORENAME_TWO = "MICHAEL",
-  SURNAME_TWO = "CORLEONE",
-  DOB_TWO = "19720825",
-  POSTCODE_TWO = "NE158NY",
+  DF1_ID = "1",
+  DF1_FORENAME = "MICHAEL",
+  DF1_SURNAME = "CORLEONE",
+  DF1_DOB = "19720824",
+  DF1_POSTCODE = "NE158NY",
+  DF2_ID = "5",
+  DF2_FORENAME = "MICHAEL",
+  DF2_SURNAME = "CORLEONE",
+  DF2_DOB = "19720825",
+  DF2_POSTCODE = "NE158NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
   MATCH_SCORE = 0.9520,
@@ -389,16 +389,16 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   DF2_NOTES = "Confident - DOB 1 out"
 ))
 OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
-  ID = "1",
-  FORENAME = "MICHAEL",
-  SURNAME = "CORLEONE",
-  DOB = "19720824",
-  POSTCODE = "NE158NY",
-  ID_TWO = "6",
-  FORENAME_TWO = "MICHAEL",
-  SURNAME_TWO = "CORLEONE",
-  DOB_TWO = "19730825",
-  POSTCODE_TWO = "NE158NY",
+  DF1_ID = "1",
+  DF1_FORENAME = "MICHAEL",
+  DF1_SURNAME = "CORLEONE",
+  DF1_DOB = "19720824",
+  DF1_POSTCODE = "NE158NY",
+  DF2_ID = "6",
+  DF2_FORENAME = "MICHAEL",
+  DF2_SURNAME = "CORLEONE",
+  DF2_DOB = "19730825",
+  DF2_POSTCODE = "NE158NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
   MATCH_SCORE = 0.9000,
@@ -409,16 +409,16 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   DF2_NOTES = "Confident - DOB 2 out"
 ))
 OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
-  ID = "1",
-  FORENAME = "MICHAEL",
-  SURNAME = "CORLEONE",
-  DOB = "19720824",
-  POSTCODE = "NE158NY",
-  ID_TWO = "7",
-  FORENAME_TWO = "MICHAEL",
-  SURNAME_TWO = "CORLEONE",
-  DOB_TWO = "19720824",
-  POSTCODE_TWO = NA,
+  DF1_ID = "1",
+  DF1_FORENAME = "MICHAEL",
+  DF1_SURNAME = "CORLEONE",
+  DF1_DOB = "19720824",
+  DF1_POSTCODE = "NE158NY",
+  DF2_ID = "7",
+  DF2_FORENAME = "MICHAEL",
+  DF2_SURNAME = "CORLEONE",
+  DF2_DOB = "19720824",
+  DF2_POSTCODE = NA,
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
   MATCH_SCORE = 0.8500,
@@ -429,16 +429,16 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   DF2_NOTES = "Confident - postcode missing"
 ))
 OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
-  ID = "1",
-  FORENAME = "MICHAEL",
-  SURNAME = "CORLEONE",
-  DOB = "19720824",
-  POSTCODE = "NE158NY",
-  ID_TWO = "8",
-  FORENAME_TWO = "MICHAEL",
-  SURNAME_TWO = NA,
-  DOB_TWO = "19720824",
-  POSTCODE_TWO = "NE158NY",
+  DF1_ID = "1",
+  DF1_FORENAME = "MICHAEL",
+  DF1_SURNAME = "CORLEONE",
+  DF1_DOB = "19720824",
+  DF1_POSTCODE = "NE158NY",
+  DF2_ID = "8",
+  DF2_FORENAME = "MICHAEL",
+  DF2_SURNAME = NA,
+  DF2_DOB = "19720824",
+  DF2_POSTCODE = "NE158NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
   MATCH_SCORE = 0.8500,
@@ -449,24 +449,24 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   DF2_NOTES = "Confident - surname missing"
 ))
 OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
-  ID = "1",
-  FORENAME = "MICHAEL",
-  SURNAME = "CORLEONE",
-  DOB = "19720824",
-  POSTCODE = "NE158NY",
-  ID_TWO = "9",
-  FORENAME_TWO = "MICHEAL",
-  SURNAME_TWO = "CORLEON",
-  DOB_TWO = "19720825",
-  POSTCODE_TWO = "NE15NY",
+  DF1_ID = "1",
+  DF1_FORENAME = "MICHAEL",
+  DF1_SURNAME = "CORLEONE",
+  DF1_DOB = "19720824",
+  DF1_POSTCODE = "NE158NY",
+  DF2_ID = "9",
+  DF2_FORENAME = "MICHEAL",
+  DF2_SURNAME = "CORLEON",
+  DF2_DOB = "19720824",
+  DF2_POSTCODE = "NE15NY",
   MATCH_TYPE = "Confident",
   MATCH_COUNT = 8,
-  MATCH_SCORE = 0.9354,
+  MATCH_SCORE = 0.9834,
   FORENAME_SCORE = 0.9714,
   SURNAME_SCORE = 0.975,
-  DOB_SCORE = 0.88,
+  DOB_SCORE = 1.00,
   POSTCODE_SCORE = 0.9714,
-  DF2_NOTES = "Confident - all close"
+  DF2_NOTES = "Confident - DOB match and others close"
 ))
 
 # format dataset
@@ -480,31 +480,31 @@ saveRDS(OUTPUT_TEST02, file = "./tests/testthat/testdata/match_test_output_test0
 # OUTPUT TEST03- INPUT_A_MULTIPLE_CASE v INPUT_B_INC_EXACT_MATCH --------------------------------
 # output will be a single row showing the exact match
 OUTPUT_TEST03 <- data.frame(
-  ID = "1",
-  FORENAME = "MICHAEL",
-  SURNAME = "CORLEONE",
-  DOB = "19720824",
-  POSTCODE = "NE158NY",
-  ID_TWO = "1",
-  FORENAME_TWO = "MICHAEL",
-  SURNAME_TWO = "CORLEONE",
-  DOB_TWO = "19720824",
-  POSTCODE_TWO = "NE158NY",
+  DF1_ID = "1",
+  DF1_FORENAME = "MICHAEL",
+  DF1_SURNAME = "CORLEONE",
+  DF1_DOB = "19720824",
+  DF1_POSTCODE = "NE158NY",
+  DF2_ID = "1",
+  DF2_FORENAME = "MICHAEL",
+  DF2_SURNAME = "CORLEONE",
+  DF2_DOB = "19720824",
+  DF2_POSTCODE = "NE158NY",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 1,
   MATCH_SCORE = 1
 )
 OUTPUT_TEST03 <- rbind(OUTPUT_TEST03, data.frame(
-  ID = "2",
-  FORENAME = "LUCA",
-  SURNAME = "BRASI",
-  DOB = "19720101",
-  POSTCODE = "NE61JS",
-  ID_TWO = NA,
-  FORENAME_TWO = NA,
-  SURNAME_TWO = NA,
-  DOB_TWO = NA,
-  POSTCODE_TWO = NA,
+  DF1_ID = "2",
+  DF1_FORENAME = "LUCA",
+  DF1_SURNAME = "BRASI",
+  DF1_DOB = "19720101",
+  DF1_POSTCODE = "NE61JS",
+  DF2_ID = NA,
+  DF2_FORENAME = NA,
+  DF2_SURNAME = NA,
+  DF2_DOB = NA,
+  DF2_POSTCODE = NA,
   MATCH_TYPE = "No Match",
   MATCH_COUNT = 0,
   MATCH_SCORE = 0
@@ -521,8 +521,8 @@ saveRDS(OUTPUT_TEST03, file = "./tests/testthat/testdata/match_test_output_test0
 # OUTPUT TEST04- INPUT_A_NO_MATCH_CASE v INPUT_B_INC_EXACT_MATCH --------------------------------
 # output will be a single row showing the exact match
 OUTPUT_TEST04 <- data.frame(
-  ID = "2",
-  ID_TWO = NA,
+  DF1_ID = "2",
+  DF2_ID = NA,
   MATCH_TYPE = "No Match",
   MATCH_COUNT = 0,
   MATCH_SCORE = 0
@@ -539,43 +539,43 @@ saveRDS(OUTPUT_TEST04, file = "./tests/testthat/testdata/match_test_output_test0
 # OUTPUT TEST05- INPUT_A_SINGLE_CASE v INPUT_B_FORMAT_DATES --------------------------------
 # output will be a single row showing the exact match
 OUTPUT_TEST05 <- data.frame(
-  ID = "1",
-  ID_TWO = "1",
+  DF1_ID = "1",
+  DF2_ID = "1",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 )
 OUTPUT_TEST05 <- rbind(OUTPUT_TEST05, data.frame(
-  ID = "1",
-  ID_TWO = "2",
+  DF1_ID = "1",
+  DF2_ID = "2",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
 OUTPUT_TEST05 <- rbind(OUTPUT_TEST05, data.frame(
-  ID = "1",
-  ID_TWO = "3",
+  DF1_ID = "1",
+  DF2_ID = "3",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
 OUTPUT_TEST05 <- rbind(OUTPUT_TEST05, data.frame(
-  ID = "1",
-  ID_TWO = "4",
+  DF1_ID = "1",
+  DF2_ID = "4",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
 OUTPUT_TEST05 <- rbind(OUTPUT_TEST05, data.frame(
-  ID = "1",
-  ID_TWO = "5",
+  DF1_ID = "1",
+  DF2_ID = "5",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
 OUTPUT_TEST05 <- rbind(OUTPUT_TEST05, data.frame(
-  ID = "1",
-  ID_TWO = "6",
+  DF1_ID = "1",
+  DF2_ID = "6",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
@@ -592,43 +592,43 @@ saveRDS(OUTPUT_TEST05, file = "./tests/testthat/testdata/match_test_output_test0
 # OUTPUT TEST05- INPUT_A_SINGLE_CASE v INPUT_B_FORMAT_DATES --------------------------------
 # output will be a single row showing the exact match
 OUTPUT_TEST06 <- data.frame(
-  ID = "1",
-  ID_TWO = "1",
+  DF1_ID = "1",
+  DF2_ID = "1",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 )
 OUTPUT_TEST06 <- rbind(OUTPUT_TEST06, data.frame(
-  ID = "1",
-  ID_TWO = "2",
+  DF1_ID = "1",
+  DF2_ID = "2",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
 OUTPUT_TEST06 <- rbind(OUTPUT_TEST06, data.frame(
-  ID = "1",
-  ID_TWO = "3",
+  DF1_ID = "1",
+  DF2_ID = "3",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
 OUTPUT_TEST06 <- rbind(OUTPUT_TEST06, data.frame(
-  ID = "1",
-  ID_TWO = "4",
+  DF1_ID = "1",
+  DF2_ID = "4",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
 OUTPUT_TEST06 <- rbind(OUTPUT_TEST06, data.frame(
-  ID = "1",
-  ID_TWO = "5",
+  DF1_ID = "1",
+  DF2_ID = "5",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
 OUTPUT_TEST06 <- rbind(OUTPUT_TEST06, data.frame(
-  ID = "1",
-  ID_TWO = "6",
+  DF1_ID = "1",
+  DF2_ID = "6",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1

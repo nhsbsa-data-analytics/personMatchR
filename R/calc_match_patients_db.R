@@ -63,13 +63,6 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
     stop("Supplied score weighting values do not total 100%", call. = FALSE)
   }
 
-  # Check if matching db tables have matching column names
-  if (max(colnames(df_one) %in% colnames(df_two)) == 1) {
-    stop("Each dataset requires unique column names.
-         Matched database tables cannot contain duplicate column names.
-         Rename columns then use the function again.", call. = FALSE)
-  }
-
   # Rename columns
   df_one <- df_one %>%
     rename(
@@ -265,8 +258,8 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
     # Only select key columns
     all_matches <- all_matches %>%
       dplyr::select(
-        {{ id_one }} := ID_ONE,
-        {{ id_two }} := ID_TWO,
+        DF1_ID := ID_ONE,
+        DF2_ID := ID_TWO,
         MATCH_TYPE,
         MATCH_COUNT,
         MATCH_SCORE
@@ -276,16 +269,16 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
     # Only select key columns
     all_matches <- all_matches %>%
       dplyr::select(
-        {{ id_one }} := ID_ONE,
-        {{ forename_one }} := FORENAME_ONE,
-        {{ surname_one }} := SURNAME_ONE,
-        {{ dob_one }} := DOB_ONE,
-        {{ postcode_one }} := POSTCODE_ONE,
-        {{ id_two }} := ID_TWO,
-        {{ forename_two }} := FORENAME_TWO,
-        {{ surname_two }} := SURNAME_TWO,
-        {{ dob_two }} := DOB_TWO,
-        {{ postcode_two }} := POSTCODE_TWO,
+        DF1_ID := ID_ONE,
+        DF1_FORENAME := FORENAME_ONE,
+        DF1_SURNAME := SURNAME_ONE,
+        DF1_DOB := DOB_ONE,
+        DF1_POSTCODE := POSTCODE_ONE,
+        DF2_ID := ID_TWO,
+        DF2_FORENAME := FORENAME_TWO,
+        DF2_SURNAME := SURNAME_TWO,
+        DF2_DOB := DOB_TWO,
+        DF2_POSTCODE := POSTCODE_TWO,
         MATCH_TYPE,
         MATCH_COUNT,
         MATCH_SCORE
@@ -337,16 +330,16 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
     # rename to match with input
     all_matches <- all_matches %>%
       dplyr::select(
-        {{ id_one }} := ID_ONE,
-        {{ forename_one }} := FORENAME_ONE,
-        {{ surname_one }} := SURNAME_ONE,
-        {{ dob_one }} := DOB_ONE,
-        {{ postcode_one }} := POSTCODE_ONE,
-        {{ id_two }} := ID_TWO,
-        {{ forename_two }} := FORENAME_TWO,
-        {{ surname_two }} := SURNAME_TWO,
-        {{ dob_two }} := DOB_TWO,
-        {{ postcode_two }} := POSTCODE_TWO,
+        DF1_ID := ID_ONE,
+        DF1_FORENAME := FORENAME_ONE,
+        DF1_SURNAME := SURNAME_ONE,
+        DF1_DOB := DOB_ONE,
+        DF1_POSTCODE := POSTCODE_ONE,
+        DF2_ID := ID_TWO,
+        DF2_FORENAME := FORENAME_TWO,
+        DF2_SURNAME := SURNAME_TWO,
+        DF2_DOB := DOB_TWO,
+        DF2_POSTCODE := POSTCODE_TWO,
         MATCH_TYPE,
         MATCH_COUNT,
         MATCH_SCORE,
