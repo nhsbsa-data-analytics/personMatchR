@@ -31,7 +31,6 @@ testthat::test_that("MATCH TEST01: Single exact match (key fields only)", {
     input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
     input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
     output_type = "key",
-    format_data = FALSE,
     inc_no_match = TRUE
   ) %>%
     collect()
@@ -80,7 +79,6 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
     input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
     input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
     output_type = "all",
-    format_data = FALSE,
     inc_no_match = TRUE
   ) %>%
     collect()
@@ -154,7 +152,6 @@ testthat::test_that("MATCH TEST03: single exact match, plus no match (match fiel
     input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
     input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
     output_type = "match",
-    format_data = FALSE,
     inc_no_match = TRUE
   ) %>%
     collect()
@@ -208,7 +205,6 @@ testthat::test_that("MATCH TEST04: single no match (key fields)", {
     input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
     input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
     output_type = "key",
-    format_data = FALSE,
     inc_no_match = TRUE
   ) %>%
     collect()

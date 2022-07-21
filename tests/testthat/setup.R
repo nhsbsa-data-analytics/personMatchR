@@ -5,6 +5,11 @@
 #'
 
 
+# Initialise test mode ------------------------------------------------------------------------
+original_test_mode <- getOption("my_package.test_mode")
+options("my_package.test_mode" = TRUE)
+
+
 # Create Function: save_db_table --------------------------------------------------------------
 # this funciton will create a copy of the data tables in the specified NHSBSA database
 # connections to databases are handled by the con_nhsbsa function in the nhsbsaR package

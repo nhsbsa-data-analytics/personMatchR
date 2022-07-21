@@ -21,7 +21,6 @@
 #' handled
 #' @param postcode_two postcode field for df2
 #' @param output_type One of the following: "key" / "match" / "all"
-#' @param format_data TRUE/FALSE : identifying if the input datasets should be passed through
 #' formatting functions to clean data prior to matching
 #' @param inc_no_match TRUE/FALSE : identifying if the output should include non matches
 #' @param sw_forename (default = 0.30) proportion weighting value (0.0-1.0) to be applied to the forename part of the match score
@@ -37,7 +36,6 @@
 calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
                                    df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
                                    output_type = c("all", "key", "match"),
-                                   format_data = c(TRUE, FALSE),
                                    inc_no_match = c(TRUE, FALSE),
                                    sw_forename = 0.3, sw_surname = 0.15, sw_dob = 0.4, sw_postcode = 0.15) {
 
@@ -63,6 +61,20 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
     stop("Supplied score weighting values do not total 100%", call. = FALSE)
   }
 
+  # show warning prompt to user to make sure they have applied the formatting functions
+  cat("\nWARNING: Input datasets should have been formatted using available functions and output saved:\n\n")
+  cat("df_one <- df_one %>%\n")
+  cat("   personMatchR::format_name_db(., forename) %>%\n")
+  cat("   personMatchR::format_name_db(., surname) %>%\n")
+  cat("   personMatchR::format_date_db(., date_of_birth) %>%\n")
+  cat("   personMatchR::format_postcode_db(., postcode)\n")
+  # request input from user to confirm continuation (if not in test mode)
+  if (getOption("my_package.test_mode", TRUE) || toupper(readline("Continue matching process (Y/N):")) == "Y") {
+    # no action required
+  } else {
+    stop("Process aborted!", call. = FALSE)
+  }
+
   # Rename columns
   df_one <- df_one %>%
     rename(
@@ -82,24 +94,6 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
       DOB_TWO := {{ dob_two }},
       POSTCODE_TWO := {{ postcode_two }}
     )
-
-  # Format data depending on function input selection
-  if (format_data == TRUE) {
-
-    # Format df one
-    df_one <- df_one %>%
-      format_postcode_db(., POSTCODE_ONE) %>%
-      format_name_db(., FORENAME_ONE) %>%
-      format_name_db(., SURNAME_ONE) %>%
-      format_date_db(., DOB_ONE)
-
-    # Format df two
-    df_two <- df_two %>%
-      format_postcode_db(., POSTCODE_TWO) %>%
-      format_name_db(., FORENAME_TWO) %>%
-      format_name_db(., SURNAME_TWO) %>%
-      format_date_db(., DOB_TWO)
-  }
 
   # Df column names
   df_one_cols <- colnames(df_one)
