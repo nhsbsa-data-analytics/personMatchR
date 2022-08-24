@@ -65,7 +65,7 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
 
   # Rename columns
   df_one <- df_one %>%
-    rename(
+    dplyr::rename(
       ID_ONE := {{ id_one }},
       FORENAME_ONE := {{ forename_one }},
       SURNAME_ONE := {{ surname_one }},
@@ -75,7 +75,7 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
 
   # Rename columns
   df_two <- df_two %>%
-    rename(
+    dplyr::rename(
       ID_TWO := {{ id_two }},
       FORENAME_TWO := {{ forename_two }},
       SURNAME_TWO := {{ surname_two }},

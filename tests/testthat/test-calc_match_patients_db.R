@@ -34,12 +34,12 @@ testthat::test_that("MATCH TEST01: Single exact match (key fields only)", {
     format_data = FALSE,
     inc_no_match = TRUE
   ) %>%
-    collect()
+    dplyr::collect()
 
   # Expected Results
   expected_results <- con %>%
     dplyr::tbl(from = dbplyr::in_schema(db_cypher, "PERSONMATCHR_MATCH_TEST_OUTPUT_TEST01")) %>%
-    collect()
+    dplyr::collect()
 
   # Disconnect
   DBI::dbDisconnect(con)
@@ -83,7 +83,7 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
     format_data = FALSE,
     inc_no_match = TRUE
   ) %>%
-    collect()
+    dplyr::collect()
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
@@ -103,7 +103,7 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
   # Expected Results
   expected_results <- con %>%
     dplyr::tbl(from = dbplyr::in_schema(db_cypher, "PERSONMATCHR_MATCH_TEST_OUTPUT_TEST02")) %>%
-    collect()
+    dplyr::collect()
 
   # Process expected results
   expected_results <- expected_results %>%
@@ -167,7 +167,7 @@ testthat::test_that("MATCH TEST03: single exact match, plus no match (match fiel
   # Expected Results
   expected_results <- con %>%
     dplyr::tbl(from = dbplyr::in_schema(db_cypher, "PERSONMATCHR_MATCH_TEST_OUTPUT_TEST03")) %>%
-    collect()
+    dplyr::collect()
 
   # Disconnect
   DBI::dbDisconnect(con)
@@ -211,7 +211,7 @@ testthat::test_that("MATCH TEST04: single no match (key fields)", {
     format_data = FALSE,
     inc_no_match = TRUE
   ) %>%
-    collect()
+    dplyr::collect()
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
@@ -222,7 +222,7 @@ testthat::test_that("MATCH TEST04: single no match (key fields)", {
   expected_results <- con %>%
     dplyr::tbl(from = dbplyr::in_schema(db_cypher, "PERSONMATCHR_MATCH_TEST_OUTPUT_TEST04")) %>%
     dplyr::mutate(DF2_ID = as.character(DF2_ID)) %>%
-    collect()
+    dplyr::collect()
 
   # Disconnnect
   DBI::dbDisconnect(con)
