@@ -87,7 +87,7 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
-    dplyr::arrange(DF1_ID, DF2_ID) %>%
+    dplyr::arrange(DF1_INPUT_ID, DF2_INPUT_ID) %>%
     as.data.frame()
 
   # round score values
@@ -161,7 +161,7 @@ testthat::test_that("MATCH TEST03: single exact match, plus no match (match fiel
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
-    dplyr::arrange(DF1_ID, DF2_ID) %>%
+    dplyr::arrange(DF1_INPUT_ID, DF2_INPUT_ID) %>%
     as.data.frame()
 
   # Expected Results
@@ -215,13 +215,13 @@ testthat::test_that("MATCH TEST04: single no match (key fields)", {
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
-    dplyr::arrange(DF1_ID, DF2_ID) %>%
+    dplyr::arrange(DF1_INPUT_ID, DF2_INPUT_ID) %>%
     as.data.frame()
 
   # Expected Results
   expected_results <- con %>%
     dplyr::tbl(from = dbplyr::in_schema(db_cypher, "PERSONMATCHR_MATCH_TEST_OUTPUT_TEST04")) %>%
-    dplyr::mutate(DF2_ID = as.character(DF2_ID)) %>%
+    dplyr::mutate(DF2_INPUT_ID = as.character(DF2_INPUT_ID)) %>%
     dplyr::collect()
 
   # Disconnnect

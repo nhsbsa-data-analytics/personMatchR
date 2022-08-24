@@ -65,7 +65,7 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
 
   # Rename columns
   df_one <- df_one %>%
-    dplyr::rename(
+    dplyr::mutate(
       ID_ONE := {{ id_one }},
       FORENAME_ONE := {{ forename_one }},
       SURNAME_ONE := {{ surname_one }},
@@ -75,7 +75,7 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
 
   # Rename columns
   df_two <- df_two %>%
-    dplyr::rename(
+    dplyr::mutate(
       ID_TWO := {{ id_two }},
       FORENAME_TWO := {{ forename_two }},
       SURNAME_TWO := {{ surname_two }},
@@ -258,8 +258,8 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
     # Only select key columns
     all_matches <- all_matches %>%
       dplyr::select(
-        DF1_ID := ID_ONE,
-        DF2_ID := ID_TWO,
+        DF1_INPUT_ID := ID_ONE,
+        DF2_INPUT_ID := ID_TWO,
         MATCH_TYPE,
         MATCH_COUNT,
         MATCH_SCORE
@@ -269,16 +269,16 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
     # Only select key columns
     all_matches <- all_matches %>%
       dplyr::select(
-        DF1_ID := ID_ONE,
-        DF1_FORENAME := FORENAME_ONE,
-        DF1_SURNAME := SURNAME_ONE,
-        DF1_DOB := DOB_ONE,
-        DF1_POSTCODE := POSTCODE_ONE,
-        DF2_ID := ID_TWO,
-        DF2_FORENAME := FORENAME_TWO,
-        DF2_SURNAME := SURNAME_TWO,
-        DF2_DOB := DOB_TWO,
-        DF2_POSTCODE := POSTCODE_TWO,
+        DF1_INPUT_ID := ID_ONE,
+        DF1_INPUT_FORENAME := FORENAME_ONE,
+        DF1_INPUT_SURNAME := SURNAME_ONE,
+        DF1_INPUT_DOB := DOB_ONE,
+        DF1_INPUT_POSTCODE := POSTCODE_ONE,
+        DF2_INPUT_ID := ID_TWO,
+        DF2_INPUT_FORENAME := FORENAME_TWO,
+        DF2_INPUT_SURNAME := SURNAME_TWO,
+        DF2_INPUT_DOB := DOB_TWO,
+        DF2_INPUT_POSTCODE := POSTCODE_TWO,
         MATCH_TYPE,
         MATCH_COUNT,
         MATCH_SCORE
@@ -313,14 +313,17 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
     all_matches <- all_matches %>%
       dplyr::left_join(
         df_one %>%
-          dplyr::select(-FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE) %>%
+          dplyr::select(
+            -{{ id_one }}, -{{ forename_one }}, -{{ surname_one }}, -{{ dob_one }}, -{{ postcode_one }},
+            -FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE
+            ) %>%
           dplyr::rename_all(list(~ paste0("DF1_", .))),
         by = c("ID_ONE" = "DF1_ID_ONE")
       ) %>%
       dplyr::left_join(
         df_two %>%
           dplyr::select(
-            -FORENAME_TWO, -SURNAME_TWO, -DOB_TWO, -POSTCODE_TWO,
+            -{{ forename_two }}, -{{ surname_two }}, -{{ dob_two }}, -{{ postcode_two }},
             -PERM1, -PERM2, -PERM3, -PERM4, -PERM5, -PERM6, -PERM7, -PERM8, -PERM9
           ) %>%
           dplyr::rename_all(list(~ paste0("DF2_", .))),
@@ -330,16 +333,16 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
     # rename to match with input
     all_matches <- all_matches %>%
       dplyr::select(
-        DF1_ID := ID_ONE,
-        DF1_FORENAME := FORENAME_ONE,
-        DF1_SURNAME := SURNAME_ONE,
-        DF1_DOB := DOB_ONE,
-        DF1_POSTCODE := POSTCODE_ONE,
-        DF2_ID := ID_TWO,
-        DF2_FORENAME := FORENAME_TWO,
-        DF2_SURNAME := SURNAME_TWO,
-        DF2_DOB := DOB_TWO,
-        DF2_POSTCODE := POSTCODE_TWO,
+        DF1_INPUT_ID := ID_ONE,
+        DF1_INPUT_FORENAME := FORENAME_ONE,
+        DF1_INPUT_SURNAME := SURNAME_ONE,
+        DF1_INPUT_DOB := DOB_ONE,
+        DF1_INPUT_POSTCODE := POSTCODE_ONE,
+        DF2_INPUT_ID := ID_TWO,
+        DF2_INPUT_FORENAME := FORENAME_TWO,
+        DF2_INPUT_SURNAME := SURNAME_TWO,
+        DF2_INPUT_DOB := DOB_TWO,
+        DF2_INPUT_POSTCODE := POSTCODE_TWO,
         MATCH_TYPE,
         MATCH_COUNT,
         MATCH_SCORE,
