@@ -51,6 +51,8 @@ POSTCODE_TEST <- c(
   "AAlA lAA", # 7 digit postcode : L instead of 1 in numeric location
   "AAoA oAA", # 7 digit postcode : O instead of 0 in numeric location
   "AA5A 5AA", # 7 digit postcode : S instead of 5 in numeric location
+  "5A5A 5AA", # 7 digit postcode : S instead of 5 in numeric location
+  "505A5AA", # 7 digit postcode : S instead of 5 in numeric location 1 and 0 instead of O in pos.2
   # misc
   NA, # NA value
   "", # Empty text string
@@ -102,6 +104,8 @@ POSTCODE_RESULT <- c(
   "AA1A1AA", # "AAlA lAA", # 7 digit postcode : L instead of 1 in numeric location
   "AA0A0AA", # "AAoA oAA", # 7 digit postcode : O instead of 0 in numeric location
   "AA5A5AA", # "AA5A 5AA", # 7 digit postcode : S instead of 5 in numeric location
+  "SA5A5AA", # 7 digit postcode : S instead of 5 in numeric location
+  "SO5A5AA", # 7 digit postcode : S instead of 5 in numeric location 1 and 0 instead of O in pos.2
   # misc
   NA, # NA, # NA value
   NA, # "", # Empty text string
