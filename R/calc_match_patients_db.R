@@ -45,15 +45,15 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
   # check if the match score weightings add up to 100%
   # Check if any of the parameters have been entered as a non numeric value
   if (!is.numeric(sw_forename) ||
-      !is.numeric(sw_surname) ||
-      !is.numeric(sw_dob) ||
-      !is.numeric(sw_postcode)) {
+    !is.numeric(sw_surname) ||
+    !is.numeric(sw_dob) ||
+    !is.numeric(sw_postcode)) {
     # non numeric value supplied as weighting factor
     stop("Non numeric value supplied as weighting factor", call. = FALSE)
   } else if (!dplyr::between(sw_forename, 0, 1) ||
-             !dplyr::between(sw_surname, 0, 1) ||
-             !dplyr::between(sw_dob, 0, 1) ||
-             !dplyr::between(sw_postcode, 0, 1)) {
+    !dplyr::between(sw_surname, 0, 1) ||
+    !dplyr::between(sw_dob, 0, 1) ||
+    !dplyr::between(sw_postcode, 0, 1)) {
     # invalid values applied
     stop("Individual field score weighting values must be between 0.0 and 1.0", call. = FALSE)
   } else if ((sw_forename + sw_surname + sw_dob + sw_postcode) != 1) {
@@ -73,38 +73,61 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
     # no action required
   } else {
     stop("Process aborted!", call. = FALSE)
+  }
+
+
   # All columns names from both input dfs
-  all_cols = c(colnames(df_one), colnames(df_two))
+  all_cols <- c(colnames(df_one), colnames(df_two))
 
   # List of illegible names for non function-input columns
-  error_cols = c(
+  error_cols <- c(
     "ID_ONE", "FORENAME_ONE", "SURNAME_ONE", "DOB_ONE", "POSTCODE_ONE",
     "ID_TWO", "FORENAME_TWO", "SURNAME_TWO", "DOB_TWO", "POSTCODE_TWO"
   )
 
   # List of function-input column names
-  input_cols = c(
-    {deparse(substitute(id_one))},
-    {deparse(substitute(forename_one))},
-    {deparse(substitute(surname_one))},
-    {deparse(substitute(dob_one))},
-    {deparse(substitute(postcode_one))},
-    {deparse(substitute(id_two))},
-    {deparse(substitute(forename_two))},
-    {deparse(substitute(surname_two))},
-    {deparse(substitute(dob_two))},
-    {deparse(substitute(postcode_two))}
+  input_cols <- c(
+    {
+      deparse(substitute(id_one))
+    },
+    {
+      deparse(substitute(forename_one))
+    },
+    {
+      deparse(substitute(surname_one))
+    },
+    {
+      deparse(substitute(dob_one))
+    },
+    {
+      deparse(substitute(postcode_one))
+    },
+    {
+      deparse(substitute(id_two))
+    },
+    {
+      deparse(substitute(forename_two))
+    },
+    {
+      deparse(substitute(surname_two))
+    },
+    {
+      deparse(substitute(dob_two))
+    },
+    {
+      deparse(substitute(postcode_two))
+    }
   )
 
   # List of non function-input columns
-  non_input_cols = c(setdiff(all_cols, input_cols), setdiff(input_cols, all_cols))
+  non_input_cols <- c(setdiff(all_cols, input_cols), setdiff(input_cols, all_cols))
 
   # Stop if any non function-input columns have illegible names
-  if(max(error_cols %in% non_input_cols) == 1){
+  if (max(error_cols %in% non_input_cols) == 1) {
     stop(
       paste0(
         "Non function-input columns cannot have any of the following names: ",
-        paste(error_cols, collapse = ', ')
+        paste(error_cols, collapse = ", ")
       ),
       call. = FALSE
     )
