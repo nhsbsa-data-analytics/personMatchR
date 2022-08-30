@@ -20,7 +20,6 @@ test_that("MATCH TEST01: Single exact match (key fields only)", {
 })
 
 
-
 test_that("MATCH TEST02: multiple confident matches (all fields)", {
   input_a <- readRDS("./testdata/match_test_input_a_single.rds")
   input_b <- readRDS("./testdata/match_test_input_b_excl_exact_match.rds") %>%
@@ -40,23 +39,23 @@ test_that("MATCH TEST02: multiple confident matches (all fields)", {
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
-    dplyr::arrange(DF1_ID, DF2_ID) %>%
-    mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
+    dplyr::arrange(DF1_INPUT_ID, DF2_INPUT_ID) %>%
+    dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
     as.data.frame()
   # round score values
-  test_run <- test_run %>% mutate(
-    MATCH_SCORE = round(MATCH_SCORE, 4),
-    FORENAME_SCORE = round(FORENAME_SCORE, 4),
-    SURNAME_SCORE = round(SURNAME_SCORE, 3),
-    DOB_SCORE = round(DOB_SCORE, 2),
-    POSTCODE_SCORE = round(POSTCODE_SCORE, 4)
-  )
+  test_run <- test_run %>%
+    dplyr::mutate(
+      MATCH_SCORE = round(MATCH_SCORE, 4),
+      FORENAME_SCORE = round(FORENAME_SCORE, 4),
+      SURNAME_SCORE = round(SURNAME_SCORE, 3),
+      DOB_SCORE = round(DOB_SCORE, 2),
+      POSTCODE_SCORE = round(POSTCODE_SCORE, 4)
+    )
 
   expected_results <- readRDS("./testdata/match_test_output_test02.rds")
 
   testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
 })
-
 
 
 test_that("MATCH TEST03: single exact match, plus no match (match fields)", {
@@ -78,8 +77,8 @@ test_that("MATCH TEST03: single exact match, plus no match (match fields)", {
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
-    dplyr::arrange(DF1_ID, DF2_ID) %>%
-    mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
+    dplyr::arrange(DF1_INPUT_ID, DF2_INPUT_ID) %>%
+    dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
     as.data.frame()
 
   expected_results <- readRDS("./testdata/match_test_output_test03.rds")
@@ -108,8 +107,8 @@ test_that("MATCH TEST04: single no match (key fields)", {
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
-    dplyr::arrange(DF1_ID, DF2_ID) %>%
-    mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
+    dplyr::arrange(DF1_INPUT_ID, DF2_INPUT_ID) %>%
+    dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
     as.data.frame()
 
   expected_results <- readRDS("./testdata/match_test_output_test04.rds")
@@ -137,8 +136,8 @@ test_that("MATCH TEST05: date formats - multiple exact matches (key fields)", {
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
-    dplyr::arrange(DF1_ID, DF2_ID) %>%
-    mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
+    dplyr::arrange(DF1_INPUT_ID, DF2_INPUT_ID) %>%
+    dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
     as.data.frame()
 
   expected_results <- readRDS("./testdata/match_test_output_test05.rds")
@@ -166,8 +165,8 @@ test_that("MATCH TEST06: postcode formats - multiple exact matches (key fields)"
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
-    dplyr::arrange(DF1_ID, DF2_ID) %>%
-    mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
+    dplyr::arrange(DF1_INPUT_ID, DF2_INPUT_ID) %>%
+    dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) %>%
     as.data.frame()
 
   expected_results <- readRDS("./testdata/match_test_output_test06.rds")

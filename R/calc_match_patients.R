@@ -56,9 +56,46 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
     stop("Supplied score weighting values do not total 100%", call. = FALSE)
   }
 
+  # All columns names from both input dfs
+  all_cols = c(colnames(df_one), colnames(df_two))
+
+  # List of illegible names for non function-input columns
+  error_cols = c(
+    "ID_ONE", "FORENAME_ONE", "SURNAME_ONE", "DOB_ONE", "POSTCODE_ONE",
+    "ID_TWO", "FORENAME_TWO", "SURNAME_TWO", "DOB_TWO", "POSTCODE_TWO"
+  )
+
+  # List of function-input column names
+  input_cols = c(
+    {deparse(substitute(id_one))},
+    {deparse(substitute(forename_one))},
+    {deparse(substitute(surname_one))},
+    {deparse(substitute(dob_one))},
+    {deparse(substitute(postcode_one))},
+    {deparse(substitute(id_two))},
+    {deparse(substitute(forename_two))},
+    {deparse(substitute(surname_two))},
+    {deparse(substitute(dob_two))},
+    {deparse(substitute(postcode_two))}
+  )
+
+  # List of non function-input columns
+  non_input_cols = c(setdiff(all_cols, input_cols), setdiff(input_cols, all_cols))
+
+  # Stop if any non function-input columns have illegible names
+  if(max(error_cols %in% non_input_cols) == 1){
+    stop(
+      paste0(
+        "Non function-input columns cannot have any of the following names: ",
+        paste(error_cols, collapse = ', ')
+      ),
+      call. = FALSE
+    )
+  }
+
   # Rename columns
   df_one <- df_one %>%
-    dplyr::rename(
+    dplyr::mutate(
       ID_ONE := {{ id_one }},
       FORENAME_ONE := {{ forename_one }},
       SURNAME_ONE := {{ surname_one }},
@@ -68,7 +105,7 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
 
   # Rename columns
   df_two <- df_two %>%
-    dplyr::rename(
+    dplyr::mutate(
       ID_TWO := {{ id_two }},
       FORENAME_TWO := {{ forename_two }},
       SURNAME_TWO := {{ surname_two }},
@@ -165,7 +202,7 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
         ) %>%
         dplyr::select(-{{ .x }})
     }) %>%
-    purrr::reduce(function(x, y) bind_rows(x, y)) %>%
+    purrr::reduce(function(x, y) dplyr::bind_rows(x, y)) %>%
     dplyr::distinct()
 
 
@@ -245,7 +282,8 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
           T ~ stringdist::stringsim(FORENAME_ONE, FORENAME_TWO, method = "jw", p = 0.1)
         )
       ) %>%
-      dplyr::filter(JW_FORENAME >= 0.75)
+      dplyr::filter(JW_FORENAME >= 0.75) %>%
+      filter_dob(., DOB_ONE, DOB_TWO, 0.75)
 
     if (nrow(final_matches) > 0) {
       final_matches <- final_matches %>%
@@ -301,7 +339,7 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
       JW_SURNAME = NA,
       JW_FORENAME = NA,
       JW_POSTCODE = NA,
-      ED_DOB = NA,
+      DOB_SCORE = NA,
       MATCH_TYPE = "No Match",
       MATCH_SCORE = 0
     )
@@ -333,8 +371,8 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
     # Only select key columns
     all_matches <- all_matches %>%
       dplyr::select(
-        DF1_ID := ID_ONE,
-        DF2_ID := ID_TWO,
+        DF1_INPUT_ID := ID_ONE,
+        DF2_INPUT_ID := ID_TWO,
         MATCH_TYPE,
         MATCH_COUNT,
         MATCH_SCORE
@@ -344,16 +382,16 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
     # Only select key columns
     all_matches <- all_matches %>%
       dplyr::select(
-        DF1_ID := ID_ONE,
-        DF1_FORENAME := FORENAME_ONE,
-        DF1_SURNAME := SURNAME_ONE,
-        DF1_DOB := DOB_ONE,
-        DF1_POSTCODE := POSTCODE_ONE,
-        DF2_ID := ID_TWO,
-        DF2_FORENAME := FORENAME_TWO,
-        DF2_SURNAME := SURNAME_TWO,
-        DF2_DOB := DOB_TWO,
-        DF2_POSTCODE := POSTCODE_TWO,
+        DF1_INPUT_ID := ID_ONE,
+        DF1_INPUT_FORENAME := FORENAME_ONE,
+        DF1_INPUT_SURNAME := SURNAME_ONE,
+        DF1_INPUT_DOB := DOB_ONE,
+        DF1_INPUT_POSTCODE := POSTCODE_ONE,
+        DF2_INPUT_ID := ID_TWO,
+        DF2_INPUT_FORENAME := FORENAME_TWO,
+        DF2_INPUT_SURNAME := SURNAME_TWO,
+        DF2_INPUT_DOB := DOB_TWO,
+        DF2_INPUT_POSTCODE := POSTCODE_TWO,
         MATCH_TYPE,
         MATCH_COUNT,
         MATCH_SCORE
@@ -388,33 +426,36 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
     all_matches <- all_matches %>%
       dplyr::left_join(
         df_one %>%
-          dplyr::select(-FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE) %>%
-          rename_all(list(~ paste0("DF1_", .))),
+          dplyr::select(
+            -{{ id_one }}, -{{ forename_one }}, -{{ surname_one }}, -{{ dob_one }}, -{{ postcode_one }},
+            -FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE
+            ) %>%
+          dplyr::rename_all(list(~ paste0("DF1_", .))),
         by = c("ID_ONE" = "DF1_ID_ONE")
       ) %>%
       dplyr::left_join(
         df_two %>%
           dplyr::select(
-            -FORENAME_TWO, -SURNAME_TWO, -DOB_TWO, -POSTCODE_TWO,
+            -{{ forename_two }}, -{{ surname_two }}, -{{ dob_two }}, -{{ postcode_two }},
             -PERM1, -PERM2, -PERM3, -PERM4, -PERM5, -PERM6, -PERM7, -PERM8, -PERM9
           ) %>%
-          rename_all(list(~ paste0("DF2_", .))),
+          dplyr::rename_all(list(~ paste0("DF2_", .))),
         by = c("ID_TWO" = "DF2_ID_TWO")
       )
 
     # rename to match with input
     all_matches <- all_matches %>%
       dplyr::select(
-        DF1_ID := ID_ONE,
-        DF1_FORENAME := FORENAME_ONE,
-        DF1_SURNAME := SURNAME_ONE,
-        DF1_DOB := DOB_ONE,
-        DF1_POSTCODE := POSTCODE_ONE,
-        DF2_ID := ID_TWO,
-        DF2_FORENAME := FORENAME_TWO,
-        DF2_SURNAME := SURNAME_TWO,
-        DF2_DOB := DOB_TWO,
-        DF2_POSTCODE := POSTCODE_TWO,
+        DF1_INPUT_ID := ID_ONE,
+        DF1_INPUT_FORENAME := FORENAME_ONE,
+        DF1_INPUT_SURNAME := SURNAME_ONE,
+        DF1_INPUT_DOB := DOB_ONE,
+        DF1_INPUT_POSTCODE := POSTCODE_ONE,
+        DF2_INPUT_ID := ID_TWO,
+        DF2_INPUT_FORENAME := FORENAME_TWO,
+        DF2_INPUT_SURNAME := SURNAME_TWO,
+        DF2_INPUT_DOB := DOB_TWO,
+        DF2_INPUT_POSTCODE := POSTCODE_TWO,
         MATCH_TYPE,
         MATCH_COUNT,
         MATCH_SCORE,
