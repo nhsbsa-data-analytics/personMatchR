@@ -18,7 +18,6 @@ calc_match_patients_db(
   dob_two,
   postcode_two,
   output_type = c("all", "key", "match"),
-  format_data = c(TRUE, FALSE),
   inc_no_match = c(TRUE, FALSE),
   sw_forename = 0.3,
   sw_surname = 0.15,
@@ -52,9 +51,7 @@ handled}
 
 \item{postcode_two}{postcode field for df2}
 
-\item{output_type}{One of the following: "key" / "match" / "all"}
-
-\item{format_data}{TRUE/FALSE : identifying if the input datasets should be passed through
+\item{output_type}{One of the following: "key" / "match" / "all"
 formatting functions to clean data prior to matching}
 
 \item{inc_no_match}{TRUE/FALSE : identifying if the output should include non matches}

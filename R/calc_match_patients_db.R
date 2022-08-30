@@ -21,7 +21,6 @@
 #' handled
 #' @param postcode_two postcode field for df2
 #' @param output_type One of the following: "key" / "match" / "all"
-#' @param format_data TRUE/FALSE : identifying if the input datasets should be passed through
 #' formatting functions to clean data prior to matching
 #' @param inc_no_match TRUE/FALSE : identifying if the output should include non matches
 #' @param sw_forename (default = 0.30) proportion weighting value (0.0-1.0) to be applied to the forename part of the match score
@@ -37,7 +36,6 @@
 calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
                                    df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
                                    output_type = c("all", "key", "match"),
-                                   format_data = c(TRUE, FALSE),
                                    inc_no_match = c(TRUE, FALSE),
                                    sw_forename = 0.3, sw_surname = 0.15, sw_dob = 0.4, sw_postcode = 0.15) {
 
@@ -47,15 +45,15 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
   # check if the match score weightings add up to 100%
   # Check if any of the parameters have been entered as a non numeric value
   if (!is.numeric(sw_forename) ||
-      !is.numeric(sw_surname) ||
-      !is.numeric(sw_dob) ||
-      !is.numeric(sw_postcode)) {
+    !is.numeric(sw_surname) ||
+    !is.numeric(sw_dob) ||
+    !is.numeric(sw_postcode)) {
     # non numeric value supplied as weighting factor
     stop("Non numeric value supplied as weighting factor", call. = FALSE)
   } else if (!dplyr::between(sw_forename, 0, 1) ||
-             !dplyr::between(sw_surname, 0, 1) ||
-             !dplyr::between(sw_dob, 0, 1) ||
-             !dplyr::between(sw_postcode, 0, 1)) {
+    !dplyr::between(sw_surname, 0, 1) ||
+    !dplyr::between(sw_dob, 0, 1) ||
+    !dplyr::between(sw_postcode, 0, 1)) {
     # invalid values applied
     stop("Individual field score weighting values must be between 0.0 and 1.0", call. = FALSE)
   } else if ((sw_forename + sw_surname + sw_dob + sw_postcode) != 1) {
@@ -63,38 +61,73 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
     stop("Supplied score weighting values do not total 100%", call. = FALSE)
   }
 
+  # show warning prompt to user to make sure they have applied the formatting functions
+  cat("\nWARNING: Input datasets should have been formatted using available functions and output saved:\n\n")
+  cat("df_one <- df_one %>%\n")
+  cat("   personMatchR::format_name_db(., forename) %>%\n")
+  cat("   personMatchR::format_name_db(., surname) %>%\n")
+  cat("   personMatchR::format_date_db(., date_of_birth) %>%\n")
+  cat("   personMatchR::format_postcode_db(., postcode)\n")
+  # request input from user to confirm continuation (if not in test mode)
+  if (getOption("my_package.test_mode", TRUE) || toupper(readline("Continue matching process (Y/N):")) == "Y") {
+    # no action required
+  } else {
+    stop("Process aborted!", call. = FALSE)
+  }
+
+
   # All columns names from both input dfs
-  all_cols = c(colnames(df_one), colnames(df_two))
+  all_cols <- c(colnames(df_one), colnames(df_two))
 
   # List of illegible names for non function-input columns
-  error_cols = c(
+  error_cols <- c(
     "ID_ONE", "FORENAME_ONE", "SURNAME_ONE", "DOB_ONE", "POSTCODE_ONE",
     "ID_TWO", "FORENAME_TWO", "SURNAME_TWO", "DOB_TWO", "POSTCODE_TWO"
   )
 
   # List of function-input column names
-  input_cols = c(
-    {deparse(substitute(id_one))},
-    {deparse(substitute(forename_one))},
-    {deparse(substitute(surname_one))},
-    {deparse(substitute(dob_one))},
-    {deparse(substitute(postcode_one))},
-    {deparse(substitute(id_two))},
-    {deparse(substitute(forename_two))},
-    {deparse(substitute(surname_two))},
-    {deparse(substitute(dob_two))},
-    {deparse(substitute(postcode_two))}
+  input_cols <- c(
+    {
+      deparse(substitute(id_one))
+    },
+    {
+      deparse(substitute(forename_one))
+    },
+    {
+      deparse(substitute(surname_one))
+    },
+    {
+      deparse(substitute(dob_one))
+    },
+    {
+      deparse(substitute(postcode_one))
+    },
+    {
+      deparse(substitute(id_two))
+    },
+    {
+      deparse(substitute(forename_two))
+    },
+    {
+      deparse(substitute(surname_two))
+    },
+    {
+      deparse(substitute(dob_two))
+    },
+    {
+      deparse(substitute(postcode_two))
+    }
   )
 
   # List of non function-input columns
-  non_input_cols = c(setdiff(all_cols, input_cols), setdiff(input_cols, all_cols))
+  non_input_cols <- c(setdiff(all_cols, input_cols), setdiff(input_cols, all_cols))
 
   # Stop if any non function-input columns have illegible names
-  if(max(error_cols %in% non_input_cols) == 1){
+  if (max(error_cols %in% non_input_cols) == 1) {
     stop(
       paste0(
         "Non function-input columns cannot have any of the following names: ",
-        paste(error_cols, collapse = ', ')
+        paste(error_cols, collapse = ", ")
       ),
       call. = FALSE
     )
@@ -119,24 +152,6 @@ calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, do
       DOB_TWO := {{ dob_two }},
       POSTCODE_TWO := {{ postcode_two }}
     )
-
-  # Format data depending on function input selection
-  if (format_data == TRUE) {
-
-    # Format df one
-    df_one <- df_one %>%
-      format_postcode_db(., POSTCODE_ONE) %>%
-      format_name_db(., FORENAME_ONE) %>%
-      format_name_db(., SURNAME_ONE) %>%
-      format_date_db(., DOB_ONE)
-
-    # Format df two
-    df_two <- df_two %>%
-      format_postcode_db(., POSTCODE_TWO) %>%
-      format_name_db(., FORENAME_TWO) %>%
-      format_name_db(., SURNAME_TWO) %>%
-      format_date_db(., DOB_TWO)
-  }
 
   # Df column names
   df_one_cols <- colnames(df_one)
