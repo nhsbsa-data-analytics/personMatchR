@@ -28,81 +28,74 @@ format_postcode_db <- function(df, postcode) {
       {{ postcode }} := toupper(REGEXP_REPLACE({{ postcode }}, "[^[:alnum:]]", "")),
       # Length vars to aid below logic
       LEN = nchar({{ postcode }}),
-
-      # Long case-statement to correct postcode errors
-      {{ postcode }} := dplyr::case_when(
-
-        # 7 Character postcodes
-        # Postcode Length 7 - # 1st Character
-        LEN == 7 & substr({{ postcode }}, 1, 1) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "S"),
-        LEN == 7 & substr({{ postcode }}, 1, 1) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "O"),
-        # Postcode Length 7 - 2nd Character
-        LEN == 7 & substr({{ postcode }}, 2, 2) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "S"),
-        LEN == 7 & substr({{ postcode }}, 2, 2) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "O"),
-        # Postcode Length 7 - 3nd Character
-        LEN == 7 & substr({{ postcode }}, 3, 3) == "O" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "0"),
-        LEN == 7 & substr({{ postcode }}, 3, 3) == "I" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "1"),
-        LEN == 7 & substr({{ postcode }}, 3, 3) == "L" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "1"),
-        LEN == 7 & substr({{ postcode }}, 3, 3) == "S" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "5"),
-        # Postcode Length 7 - 5th Character
-        LEN == 7 & substr({{ postcode }}, 5, 5) == "O" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "0"),
-        LEN == 7 & substr({{ postcode }}, 5, 5) == "I" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "1"),
-        LEN == 7 & substr({{ postcode }}, 5, 5) == "L" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "1"),
-        LEN == 7 & substr({{ postcode }}, 5, 5) == "S" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "5"),
-        # Postcode Length 7 - 6th Character
-        LEN == 7 & substr({{ postcode }}, 6, 6) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), "S"),
-        LEN == 7 & substr({{ postcode }}, 6, 6) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), "O"),
-        # Postcode Length 7 - 7th Character
-        LEN == 7 & substr({{ postcode }}, 7, 7) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 7, 7), "S"),
-        LEN == 7 & substr({{ postcode }}, 7, 7) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 7, 7), "O"),
-
-        # 6 Character postcodes
-        # Postcode Length 6 - # 1st Character
-        LEN == 6 & substr({{ postcode }}, 1, 1) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "S"),
-        LEN == 6 & substr({{ postcode }}, 1, 1) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "O"),
-        # Postcode Length 6 - 4th Character
-        LEN == 6 & substr({{ postcode }}, 4, 4) == "O" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "0"),
-        LEN == 6 & substr({{ postcode }}, 4, 4) == "I" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "1"),
-        LEN == 6 & substr({{ postcode }}, 4, 4) == "L" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "1"),
-        LEN == 6 & substr({{ postcode }}, 4, 4) == "S" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "5"),
-        # Postcode Length 6 - 5th Character
-        LEN == 6 & substr({{ postcode }}, 5, 5) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "S"),
-        LEN == 6 & substr({{ postcode }}, 5, 5) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "O"),
-        # Postcode Length 6 - 6th Character
-        LEN == 6 & substr({{ postcode }}, 6, 6) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), "S"),
-        LEN == 6 & substr({{ postcode }}, 6, 6) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 6, 6), "O"),
-
-        # 5 Character postcodes
-        # Postcode Length 5 - # 1st Character
-        LEN == 5 & substr({{ postcode }}, 1, 1) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "S"),
-        LEN == 5 & substr({{ postcode }}, 1, 1) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 1, 1), "O"),
-        # Postcode Length 5 - 2nd Character
-        LEN == 5 & substr({{ postcode }}, 2, 2) == "O" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "0"),
-        LEN == 5 & substr({{ postcode }}, 2, 2) == "I" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "1"),
-        LEN == 5 & substr({{ postcode }}, 2, 2) == "L" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "1"),
-        LEN == 5 & substr({{ postcode }}, 2, 2) == "S" ~ replace({{ postcode }}, substr({{ postcode }}, 2, 2), "5"),
-        # Postcode Length 5 - 3rd Character
-        LEN == 5 & substr({{ postcode }}, 3, 3) == "O" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "0"),
-        LEN == 5 & substr({{ postcode }}, 3, 3) == "I" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "1"),
-        LEN == 5 & substr({{ postcode }}, 3, 3) == "L" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "1"),
-        LEN == 5 & substr({{ postcode }}, 3, 3) == "S" ~ replace({{ postcode }}, substr({{ postcode }}, 3, 3), "5"),
-        # Postcode Length 5 - 4th Character
-        LEN == 5 & substr({{ postcode }}, 4, 4) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "S"),
-        LEN == 5 & substr({{ postcode }}, 4, 4) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 4, 4), "O"),
-        # Postcode Length 5 - 5th Character
-        LEN == 5 & substr({{ postcode }}, 5, 5) == "5" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "S"),
-        LEN == 5 & substr({{ postcode }}, 5, 5) == "0" ~ replace({{ postcode }}, substr({{ postcode }}, 5, 5), "O"),
-
-        # Remaining postcodes
-        T ~ {{ postcode }}
-      )
+      # copy the postcode
+      PCD_TEMP = {{ postcode }},
+      # each potential transposition needs to be handled as a separate if statement
+      # 7 character postcodes : 1st character (should be alpha)
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 1, 1) == "5", paste0("S", substr(PCD_TEMP, 2, 7)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 1, 1) == "0", paste0("O", substr(PCD_TEMP, 2, 7)), PCD_TEMP),
+      # 7 character postcodes : 2nd character  (should be alpha)
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 2, 2) == "5", paste0(substr(PCD_TEMP, 1, 1), "S", substr(PCD_TEMP, 3, 7)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 2, 2) == "0", paste0(substr(PCD_TEMP, 1, 1), "O", substr(PCD_TEMP, 3, 7)), PCD_TEMP),
+      # 7 character postcodes : 3rd character  (should be number)
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 3, 3) == "S", paste0(substr(PCD_TEMP, 1, 2), "5", substr(PCD_TEMP, 4, 7)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 3, 3) == "O", paste0(substr(PCD_TEMP, 1, 2), "0", substr(PCD_TEMP, 4, 7)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 3, 3) == "I", paste0(substr(PCD_TEMP, 1, 2), "1", substr(PCD_TEMP, 4, 7)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 3, 3) == "L", paste0(substr(PCD_TEMP, 1, 2), "1", substr(PCD_TEMP, 4, 7)), PCD_TEMP),
+      # 7 character postcodes : 5th character  (should be number)
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 5, 5) == "S", paste0(substr(PCD_TEMP, 1, 4), "5", substr(PCD_TEMP, 6, 7)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 5, 5) == "O", paste0(substr(PCD_TEMP, 1, 4), "0", substr(PCD_TEMP, 6, 7)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 5, 5) == "I", paste0(substr(PCD_TEMP, 1, 4), "1", substr(PCD_TEMP, 6, 7)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 5, 5) == "L", paste0(substr(PCD_TEMP, 1, 4), "1", substr(PCD_TEMP, 6, 7)), PCD_TEMP),
+      # 7 character postcodes : 6th character  (should be alpha)
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 6, 6) == "5", paste0(substr(PCD_TEMP, 1, 5), "S", substr(PCD_TEMP, 7, 7)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 6, 6) == "0", paste0(substr(PCD_TEMP, 1, 5), "O", substr(PCD_TEMP, 7, 7)), PCD_TEMP),
+      # 7 character postcodes : 7th character  (should be alpha)
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 7, 7) == "5", paste0(substr(PCD_TEMP, 1, 6), "S"), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 7 & substr(PCD_TEMP, 7, 7) == "0", paste0(substr(PCD_TEMP, 1, 6), "O"), PCD_TEMP),
+      # 6 character postcodes : 1st character (should be alpha)
+      PCD_TEMP = dplyr::if_else(LEN == 6 & substr(PCD_TEMP, 1, 1) == "5", paste0("S", substr(PCD_TEMP, 2, 6)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 6 & substr(PCD_TEMP, 1, 1) == "0", paste0("O", substr(PCD_TEMP, 2, 6)), PCD_TEMP),
+      # 6 character postcodes : 4th character  (should be number)
+      PCD_TEMP = dplyr::if_else(LEN == 6 & substr(PCD_TEMP, 4, 4) == "S", paste0(substr(PCD_TEMP, 1, 3), "5", substr(PCD_TEMP, 5, 6)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 6 & substr(PCD_TEMP, 4, 4) == "O", paste0(substr(PCD_TEMP, 1, 3), "0", substr(PCD_TEMP, 5, 6)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 6 & substr(PCD_TEMP, 4, 4) == "I", paste0(substr(PCD_TEMP, 1, 3), "1", substr(PCD_TEMP, 5, 6)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 6 & substr(PCD_TEMP, 4, 4) == "L", paste0(substr(PCD_TEMP, 1, 3), "1", substr(PCD_TEMP, 5, 6)), PCD_TEMP),
+      # 6 character postcodes : 5th character  (should be alpha)
+      PCD_TEMP = dplyr::if_else(LEN == 6 & substr(PCD_TEMP, 5, 5) == "5", paste0(substr(PCD_TEMP, 1, 4), "S", substr(PCD_TEMP, 6, 6)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 6 & substr(PCD_TEMP, 5, 5) == "0", paste0(substr(PCD_TEMP, 1, 4), "O", substr(PCD_TEMP, 6, 6)), PCD_TEMP),
+      # 6 character postcodes : 6th character  (should be alpha)
+      PCD_TEMP = dplyr::if_else(LEN == 6 & substr(PCD_TEMP, 6, 6) == "5", paste0(substr(PCD_TEMP, 1, 5), "S"), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 6 & substr(PCD_TEMP, 6, 6) == "0", paste0(substr(PCD_TEMP, 1, 5), "O"), PCD_TEMP),
+      # 5 character postcodes : 1st character (should be alpha)
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 1, 1) == "5", paste0("S", substr(PCD_TEMP, 2, 5)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 1, 1) == "0", paste0("O", substr(PCD_TEMP, 2, 5)), PCD_TEMP),
+      # 5 character postcodes : 2nd character  (should be number)
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 2, 2) == "S", paste0(substr(PCD_TEMP, 1, 1), "5", substr(PCD_TEMP, 3, 5)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 2, 2) == "O", paste0(substr(PCD_TEMP, 1, 1), "0", substr(PCD_TEMP, 3, 5)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 2, 2) == "I", paste0(substr(PCD_TEMP, 1, 1), "1", substr(PCD_TEMP, 3, 5)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 2, 2) == "L", paste0(substr(PCD_TEMP, 1, 1), "1", substr(PCD_TEMP, 3, 5)), PCD_TEMP),
+      # 5 character postcodes : 3rd character  (should be number)
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 3, 3) == "S", paste0(substr(PCD_TEMP, 1, 2), "5", substr(PCD_TEMP, 4, 5)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 3, 3) == "O", paste0(substr(PCD_TEMP, 1, 2), "0", substr(PCD_TEMP, 4, 5)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 3, 3) == "I", paste0(substr(PCD_TEMP, 1, 2), "1", substr(PCD_TEMP, 4, 5)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 3, 3) == "L", paste0(substr(PCD_TEMP, 1, 2), "1", substr(PCD_TEMP, 4, 5)), PCD_TEMP),
+      # 5 character postcodes : 4th character  (should be alpha)
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 4, 4) == "5", paste0(substr(PCD_TEMP, 1, 3), "S", substr(PCD_TEMP, 5, 5)), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 4, 4) == "0", paste0(substr(PCD_TEMP, 1, 3), "O", substr(PCD_TEMP, 5, 5)), PCD_TEMP),
+      # 5 character postcodes : 6th character  (should be alpha)
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 5, 5) == "5", paste0(substr(PCD_TEMP, 1, 4), "S"), PCD_TEMP),
+      PCD_TEMP = dplyr::if_else(LEN == 5 & substr(PCD_TEMP, 5, 5) == "0", paste0(substr(PCD_TEMP, 1, 4), "O"), PCD_TEMP),
+      # replace postcode with formatted string
+      {{ postcode }} := PCD_TEMP
     )
+
 
   # Rejoin back to original data
   df <- df %>%
     dplyr::select(-{{ postcode }}) %>%
     dplyr::left_join(y = output, by = "POSTCODE_OLD") %>%
-    dplyr::select(-c(LEN, POSTCODE_OLD))
+    dplyr::select(-c(LEN, POSTCODE_OLD, PCD_TEMP))
 
   # Return formatted df
   return(df)
