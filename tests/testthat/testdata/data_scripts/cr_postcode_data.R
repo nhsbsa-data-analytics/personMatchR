@@ -51,11 +51,67 @@ POSTCODE_TEST <- c(
   "AAlA lAA", # 7 digit postcode : L instead of 1 in numeric location
   "AAoA oAA", # 7 digit postcode : O instead of 0 in numeric location
   "AA5A 5AA", # 7 digit postcode : S instead of 5 in numeric location
+  "5A5A 5AA", # 7 digit postcode : S instead of 5 in numeric location
+  "505A5AA", # 7 digit postcode : S instead of 5 in numeric location 1 and 0 instead of O in pos.2
   # misc
   NA, # NA value
   "", # Empty text string
   "No Postcode", # Non postcode text string
-  "AA99A 9AA" # Additional characters
+  "AA99A 9AA", # Additional characters
+  "POSTCODE", # Non postcode text string
+  "Address postcode", # Non postcode text string
+  "NE15 8NY", # Valid postcode
+  "Ne15-8ny", # Valid postcode - mixed case - special characters
+  "**Ne15-8ny**", # Valid postcode - mixed case - special characters
+  "AA9A 9AA", # Homoglyph issue - 7 characters - valid
+  "AA99 9AA", # Homoglyph issue - 7 characters - valid
+  "5E15 8NY", # Homoglyph issue - 7 characters - position 1 - 5 instead of S
+  "0E15 0NY", # Homoglyph issue - 7 characters - position 1 - 0 instead of O
+  "N515 8NY", # Homoglyph issue - 7 characters - position 2 - 5 instead of S
+  "N015 0NY", # Homoglyph issue - 7 characters - position 2 - 0 instead of O
+  "NES5 0NY", # Homoglyph issue - 7 characters - position 3 - S instead of 5
+  "NEo5 0NY", # Homoglyph issue - 7 characters - position 3 - O instead of 0
+  "NEi5 0NY", # Homoglyph issue - 7 characters - position 3 - i instead of 1
+  "NEL5 0NY", # Homoglyph issue - 7 characters - position 3 - L instead of 1
+  "NE15 SNY", # Homoglyph issue - 7 characters - position 5 - S instead of 5
+  "NE15 oNY", # Homoglyph issue - 7 characters - position 5 - O instead of 0
+  "NE15 INY", # Homoglyph issue - 7 characters - position 5 - i instead of 1
+  "NE15 lny", # Homoglyph issue - 7 characters - position 5 - L instead of 1
+  "NE15 85Y", # Homoglyph issue - 7 characters - position 6 - 5 instead of S
+  "NE15 80Y", # Homoglyph issue - 7 characters - position 6 - 0 instead of O
+  "NE15 8N5", # Homoglyph issue - 7 characters - position 7- 5 instead of S
+  "NE15 8N0", # Homoglyph issue - 7 characters - position 7 - 0 instead of O
+  "50SA i50", # Homoglyph issue - 7 characters - all positions
+  "A9A 9AA", # Homoglyph issue - 6 characters - valid
+  "A99 9AA", # Homoglyph issue - 6 characters - valid
+  "AA9 9AA", # Homoglyph issue - 6 characters - valid
+  "5A9 5AA", # Homoglyph issue - 6 characters - position 1 - 5 instead of S
+  "0A9 0AA", # Homoglyph issue - 6 characters - position 1 - 0 instead of O
+  "A99 sAA", # Homoglyph issue - 6 characters - position 4 - S instead of 5
+  "A99 oAA", # Homoglyph issue - 6 characters - position 4 - O instead of 0
+  "A99 iAA", # Homoglyph issue - 6 characters - position 4 - i instead of 1
+  "A99 LAA", # Homoglyph issue - 6 characters - position 4 - L instead of 1
+  "A99 95A", # Homoglyph issue - 6 characters - position 5 - 5 instead of S
+  "A99 90A", # Homoglyph issue - 6 characters - position 5 - 0 instead of O
+  "A99 9A5", # Homoglyph issue - 6 characters - position 6 - 5 instead of S
+  "A99 9A0", # Homoglyph issue - 6 characters - position 6 - 0 instead of O
+  "5A9 o50", # Homoglyph issue - 6 characters - all positions
+  "A9 9AA", # Homoglyph issue - 5 characters - valid
+  "59 9AA", # Homoglyph issue - 5 characters - position 1 - 5 instead of S
+  "09 9AA", # Homoglyph issue - 5 characters - position 1 - 0 instead of O
+  "AS 9AA", # Homoglyph issue - 5 characters - position 2 - S instead of 5
+  "Ao 9AA", # Homoglyph issue - 5 characters - position 2 - O instead of 0
+  "Ai 9AA", # Homoglyph issue - 5 characters - position 2 - i instead of 1
+  "AL 9AA", # Homoglyph issue - 5 characters - position 2 - L instead of 1
+  "A9 SAA", # Homoglyph issue - 5 characters - position 3 - S instead of 5
+  "A9 oAA", # Homoglyph issue - 5 characters - position 3 - O instead of 0
+  "A9 iaa", # Homoglyph issue - 5 characters - position 3 - i instead of 1
+  "A9 Laa", # Homoglyph issue - 5 characters - position 3 - L instead of 1
+  "A9 95A", # Homoglyph issue - 5 characters - position 4 - 5 instead of S
+  "A9 90A", # Homoglyph issue - 5 characters - position 4 - 0 instead of O
+  "A9 9A5", # Homoglyph issue - 5 characters - position 5 - 5 instead of S
+  "A9 9A0", # Homoglyph issue - 5 characters - position 5 - 0 instead of O
+  "5o i50" # Homoglyph issue - 5 characters - all positions
 )
 
 # Correct postcodes: Output that should be achieved by format function
@@ -102,11 +158,67 @@ POSTCODE_RESULT <- c(
   "AA1A1AA", # "AAlA lAA", # 7 digit postcode : L instead of 1 in numeric location
   "AA0A0AA", # "AAoA oAA", # 7 digit postcode : O instead of 0 in numeric location
   "AA5A5AA", # "AA5A 5AA", # 7 digit postcode : S instead of 5 in numeric location
+  "SA5A5AA", # 7 digit postcode : S instead of 5 in numeric location
+  "SO5A5AA", # 7 digit postcode : S instead of 5 in numeric location 1 and 0 instead of O in pos.2
   # misc
   NA, # NA, # NA value
   NA, # "", # Empty text string
   "NOPOSTCODE", # "MISSING", # Non postcode text string
-  "AA99A9AA" # "AA99A 9AA" # Additional characters
+  "AA99A9AA", # "AA99A 9AA" # Additional characters
+  "POSTCODE", # Non postcode text string
+  "ADDRESSPOSTCODE", # Non postcode text string
+  "NE158NY", # Valid postcode
+  "NE158NY", # Valid postcode - mixed case - special characters
+  "NE158NY", # Valid postcode - mixed case - special characters
+  "AA9A9AA", # Homoglyph issue - 7 characters - valid
+  "AA999AA", # Homoglyph issue - 7 characters - valid
+  "SE158NY", # Homoglyph issue - 7 characters - position 1 - 5 instead of S
+  "OE150NY", # Homoglyph issue - 7 characters - position 1 - 0 instead of O
+  "NS158NY", # Homoglyph issue - 7 characters - position 2 - 5 instead of S
+  "NO150NY", # Homoglyph issue - 7 characters - position 2 - 0 instead of O
+  "NE550NY", # Homoglyph issue - 7 characters - position 3 - S instead of 5
+  "NE050NY", # Homoglyph issue - 7 characters - position 3 - O instead of 0
+  "NE150NY", # Homoglyph issue - 7 characters - position 3 - i instead of 1
+  "NE150NY", # Homoglyph issue - 7 characters - position 3 - L instead of 1
+  "NE155NY", # Homoglyph issue - 7 characters - position 5 - S instead of 5
+  "NE150NY", # Homoglyph issue - 7 characters - position 5 - O instead of 0
+  "NE151NY", # Homoglyph issue - 7 characters - position 5 - i instead of 1
+  "NE151NY", # Homoglyph issue - 7 characters - position 5 - L instead of 1
+  "NE158SY", # Homoglyph issue - 7 characters - position 6 - 5 instead of S
+  "NE158OY", # Homoglyph issue - 7 characters - position 6 - 0 instead of O
+  "NE158NS", # Homoglyph issue - 7 characters - position 7- 5 instead of S
+  "NE158NO", # Homoglyph issue - 7 characters - position 7 - 0 instead of O
+  "SO5A1SO", # Homoglyph issue - 7 characters - all positions
+  "A9A9AA", # Homoglyph issue - 6 characters - valid
+  "A999AA", # Homoglyph issue - 6 characters - valid
+  "AA99AA", # Homoglyph issue - 6 characters - valid
+  "SA95AA", # Homoglyph issue - 6 characters - position 1 - 5 instead of S
+  "OA90AA", # Homoglyph issue - 6 characters - position 1 - 0 instead of O
+  "A995AA", # Homoglyph issue - 6 characters - position 4 - S instead of 5
+  "A990AA", # Homoglyph issue - 6 characters - position 4 - O instead of 0
+  "A991AA", # Homoglyph issue - 6 characters - position 4 - i instead of 1
+  "A991AA", # Homoglyph issue - 6 characters - position 4 - L instead of 1
+  "A999SA", # Homoglyph issue - 6 characters - position 5 - 5 instead of S
+  "A999OA", # Homoglyph issue - 6 characters - position 5 - 0 instead of O
+  "A999AS", # Homoglyph issue - 6 characters - position 6 - 5 instead of S
+  "A999AO", # Homoglyph issue - 6 characters - position 6 - 0 instead of O
+  "SA90SO", # Homoglyph issue - 6 characters - all positions
+  "A99AA", # Homoglyph issue - 5 characters - valid
+  "S99AA", # Homoglyph issue - 5 characters - position 1 - 5 instead of S
+  "O99AA", # Homoglyph issue - 5 characters - position 1 - 0 instead of O
+  "A59AA", # Homoglyph issue - 5 characters - position 2 - S instead of 5
+  "A09AA", # Homoglyph issue - 5 characters - position 2 - O instead of 0
+  "A19AA", # Homoglyph issue - 5 characters - position 2 - i instead of 1
+  "A19AA", # Homoglyph issue - 5 characters - position 2 - L instead of 1
+  "A95AA", # Homoglyph issue - 5 characters - position 3 - S instead of 5
+  "A90AA", # Homoglyph issue - 5 characters - position 3 - O instead of 0
+  "A91AA", # Homoglyph issue - 5 characters - position 3 - i instead of 1
+  "A91AA", # Homoglyph issue - 5 characters - position 3 - L instead of 1
+  "A99SA", # Homoglyph issue - 5 characters - position 4 - 5 instead of S
+  "A99OA", # Homoglyph issue - 5 characters - position 4 - 0 instead of O
+  "A99AS", # Homoglyph issue - 5 characters - position 5 - 5 instead of S
+  "A99AO", # Homoglyph issue - 5 characters - position 5 - 0 instead of O
+  "S01SO" # Homoglyph issue - 5 characters - all positions
 )
 
 

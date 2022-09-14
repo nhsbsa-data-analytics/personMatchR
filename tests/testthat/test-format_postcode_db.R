@@ -18,11 +18,13 @@ testthat::test_that("Postcode string formatting", {
   # Process df1
   test_run <- test_run %>%
     format_postcode_db(., POSTCODE) %>%
-    collect()
+    collect() %>%
+    dplyr::arrange(ID)
 
   # Process df2
   expected_results <- expected_results %>%
-    collect()
+    collect() %>%
+    dplyr::arrange(ID)
 
   # Disconnnect
   DBI::dbDisconnect(con)
