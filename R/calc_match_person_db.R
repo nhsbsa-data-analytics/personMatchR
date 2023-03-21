@@ -29,7 +29,7 @@
 #' @return A 'lazyframe' comprising of all potential matches between two datasets, to either be collected or written back to a database.
 #' @export
 #'
-calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
+calc_match_person_db <- function(df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
                                    df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
                                    output_type = c("all", "key", "match"),
                                    inc_no_match = c(TRUE, FALSE),

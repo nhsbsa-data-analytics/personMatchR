@@ -21,7 +21,7 @@ calc_permutations_db(df, forename, surname, postcode, dob)
 a 'lazyframe' object with join permutations added
 }
 \description{
-This is a support function called during the execution of the calc_match_patients function.
+This is a support function called during the execution of the calc_match_person function.
 \cr\cr Calculates permutations of personal information to support joining datasets, allowing
 data to be initially joined only where the permutations of personal information align.
 \cr\cr The permutations range from combinations of full fields to only partial information

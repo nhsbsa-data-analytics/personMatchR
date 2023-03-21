@@ -19,7 +19,7 @@ filter_dob(df, dob_one, dob_two, dob_score_threshold)
 A df filtered to only include suitable combinations of date of birth
 }
 \description{
-This is a support function called during the execution of the calc_match_patients function.
+This is a support function called during the execution of the calc_match_person function.
 \cr\cr Applies a filter on date of birth to limit volume of data from cross-join.
 \cr\cr Limits cross-joins to only include combinations of date of birth where the two dates
 have a minunmum of 6 characters in common. This is similar to an edit distance of 2 on a 8 digit

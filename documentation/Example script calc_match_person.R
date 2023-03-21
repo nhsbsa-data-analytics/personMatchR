@@ -1,4 +1,4 @@
-# personMatchR example code: calc_match_patients() function
+# personMatchR example code: calc_match_person() function
 #
 # created on 2022-10-25
 #
@@ -22,7 +22,7 @@ df_b
 
 
 # Run the personMatchR package to identify matches --------------------------------------------
-df_output <- personMatchR::calc_match_patients(
+df_output <- personMatchR::calc_match_person(
   df_one = df_a, # first dataset
   id_one = ID, # unique id field from first dataset
   forename_one = FORENAME, # forename field from first dataset

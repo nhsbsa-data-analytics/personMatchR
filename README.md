@@ -22,9 +22,9 @@ The personMatchR package has different functions available to handle
 matching, whether the input data is held within data frames or via a
 connection to database tables:
 
-- calc_match_patients
+- calc_match_person
   - suitable for data-frames containing up to one million records
-- calc_match_patients_db
+- calc_match_person_db
   - currently only set up and tested for Oracle database infrastructure
     used by NHSBSA
   - suitable for large volume data-sets
@@ -101,7 +101,7 @@ data-sets:
 Matching these data-sets we would hope that records 1, 2 and 4 are
 matched.
 
-We can pass the data-sets to the calc_match_patients function and review
+We can pass the data-sets to the calc_match_person function and review
 the output. For this example we will set parameters to only return the
 key fields from the matching, format the data prior to matching and
 include records without a match in the output:
@@ -109,7 +109,7 @@ include records without a match in the output:
 ``` r
 library(personMatchR)
 library(dplyr)
-df_output <- personMatchR::calc_match_patients(
+df_output <- personMatchR::calc_match_person(
   df_one = df_A, # first data-set
   id_one = ID, # unique id field from first data-set
   forename_one = FORENAME, # forename field from first data-set

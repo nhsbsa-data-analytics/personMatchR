@@ -17,7 +17,7 @@ filter_name(df, name_one, name_two)
 A df filtered to only include suitable combinations of names
 }
 \description{
-This is a support function called during the execution of the calc_match_patients function.
+This is a support function called during the execution of the calc_match_person function.
 \cr\cr Applies a filter on name to limit volume of data from cross-join.
 \cr\cr Limits cross-joins to only include name-pair instances that share certain characteristics.
 This includes cases where the two names contain the same 1st, 2nd or last letter, or being a

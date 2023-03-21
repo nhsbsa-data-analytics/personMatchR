@@ -32,7 +32,7 @@
 #' @return dataframe comprising of all potential matches between two datasets
 #' @export
 #'
-calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
+calc_match_person <- function(df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
                                 df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
                                 output_type = c("all", "key", "match"),
                                 format_data = c(TRUE, FALSE),

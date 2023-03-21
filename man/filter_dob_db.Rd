@@ -19,7 +19,7 @@ filter_dob_db(df, dob_one, dob_two, dob_score_threshold)
 a 'lazyframe' object filtered to only include suitable combinations of date of birth
 }
 \description{
-This is a support function called during the execution of the calc_match_patients_db function.
+This is a support function called during the execution of the calc_match_person_db function.
 \cr\cr Applies a filter on date of birth to limit volume of data from cross-join.
 \cr\cr Limits cross-joins to only include combinations of date of birth where the two dates
 have a minunmum of 6 characters in common. This is similar to an edit distance of 2 on a 8 digit
