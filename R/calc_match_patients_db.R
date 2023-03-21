@@ -1,25 +1,23 @@
 #' Find all potential person matches between two datasets based on personal identifiable information
 #'
 #' The two input datasets should be 'lazyframes', generated from a connnection to a database.
-#' The first dataset (df_one) containing the people to look for and the second dataset (df2)
+#' The first dataset (df_one) containing the people to look for and the second dataset (df_two)
 #' containing the data to be searched against. Parameters can be used to specify the formatting
 #' of the output dataset and allow some customisation of the match scoring.
 #'
-#' @param df_one dataframe containing person level information representing people to look for
-#' @param id_one unique reference column for df1
-#' @param forename_one forename column for df1
-#' @param surname_one surname column for df1
-#' @param dob_one date of birth column for df1, ideally in dd/mm/yyyy format although others are
+#' @param df_one a 'lazyframe' object containing person level information representing people to look for
+#' @param id_one unique reference column for df_one
+#' @param forename_one forename column for df_one
+#' @param surname_one surname column for df_one
+#' @param dob_one date of birth column for df_one, ideally in date type format
 #' handled
-#' @param postcode_one postcode field for df1
-#' @param df_one dataframe containing person level information representing people to look in for
-#' matches
-#' @param id_two unique reference column for df2
-#' @param forename_two forename column for df2
-#' @param surname_two surname column for df2
-#' @param dob_two date of birth column for df2, ideally in dd/mm/yyyy format although others are
-#' handled
-#' @param postcode_two postcode field for df2
+#' @param postcode_one postcode field for df_one
+#' @param df_two a 'lazyframe' object containing person level information representing people to search within
+#' @param id_two unique reference column for df_two
+#' @param forename_two forename column for df_two
+#' @param surname_two surname column for df_two
+#' @param dob_two date of birth column for df_two, ideally in date type format
+#' @param postcode_two postcode field for df_two
 #' @param output_type One of the following: "key" / "match" / "all"
 #' formatting functions to clean data prior to matching
 #' @param inc_no_match TRUE/FALSE : identifying if the output should include non matches
@@ -31,8 +29,6 @@
 #' @return A 'lazyframe' comprising of all potential matches between two datasets, to either be collected or written back to a database.
 #' @export
 #'
-#' @examples
-#' calc_match_patients_db(df_one, id_one, ...)
 calc_match_patients_db <- function(df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
                                    df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
                                    output_type = c("all", "key", "match"),

@@ -2,22 +2,19 @@
 % Please edit documentation in R/format_date_db.R
 \name{format_date_db}
 \alias{format_date_db}
-\title{Format a DOB within the DB}
+\title{Format the date of birth prior to matching}
 \usage{
 format_date_db(df, date_col)
 }
 \arguments{
-\item{df}{A df to be formatted}
+\item{df}{a 'lazyframe' generated from a database connection with date field to be formatted}
 
-\item{name_col}{a date column}
+\item{date_col}{a date column to be formatted}
 }
 \value{
-A df with cleansed date information, as a 8-digit number
+a 'lazyframe' object with cleansed date of birth field
 }
 \description{
-Format the date of birth prior to matching
-Convert to a string representation in the format YYYYMMDD
-}
-\examples{
-format_db_date(df, date_col)
+Formatting converts date field to numeric format using format YYYYMMDD
+\cr\cr Date should be based on a recognised date type
 }

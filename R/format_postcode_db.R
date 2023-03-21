@@ -1,16 +1,16 @@
 #' Format the postcode strings prior to matching
 #'
-#' Formatting includes conversion to upper case and removal of
-#' non alphanumeric characters
+#' Formatting includes conversion to upper case and removal of non alphanumeric characters
+#' \cr\cr Formatting also includes the switching of homoglyph characters where the postcode format
+#' would suggest the letter/number was incorrect. Homoglyph characters are where numbers and letters
+#' may be commonly mistaken for each other (#' e.g. 0 and o).
 #'
-#' @param df A 'lazyframe' generated from a database connection with postcode to be formatted
+#' @param df a 'lazyframe' generated from a database connection with postcode to be formatted
 #' @param postcode the postcode column to be formatted
 #'
-#' @return A cleansed string
+#' @return a 'lazyframe' object with cleansed postcode data
 #' @export
 #'
-#' @examples
-#' format_postcode_db(df, postcode)
 format_postcode_db <- function(df, postcode) {
 
   # Simple formatting of postcode

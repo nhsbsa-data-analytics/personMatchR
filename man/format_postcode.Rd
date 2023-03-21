@@ -7,15 +7,18 @@
 format_postcode(df, id, postcode)
 }
 \arguments{
-\item{df}{A dataframe to feed into function}
+\item{df}{a dataframe to feed into function}
+
+\item{id}{the field containing a unique reference for each record}
+
+\item{postcode}{the postcode column to be formatted}
 }
 \value{
 A dataframe with cleansed postcode information
 }
 \description{
-Formatting includes conversion to upper case and removal of
-non alphanumeric characters
-}
-\examples{
-format_postcode(df)
+Formatting includes conversion to upper case and removal of non alphanumeric characters
+\cr\cr Formatting also includes the switching of homoglyph characters where the postcode format would
+suggest the letter/number was incorrect. Homoglyph characters are where numbers and letters may
+be commonly mistaken for each other (#' e.g. 0 and o).
 }

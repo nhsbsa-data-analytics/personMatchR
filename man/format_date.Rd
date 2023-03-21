@@ -2,19 +2,19 @@
 % Please edit documentation in R/format_date.R
 \name{format_date}
 \alias{format_date}
-\title{Convert date to character yyyymmdd format.}
+\title{Format the date of birth prior to matching}
 \usage{
 format_date(df, date)
 }
 \arguments{
+\item{df}{a dataframe to feed into function}
+
 \item{dob}{A vector of type character, integer or numeric with date expressions}
 }
 \value{
-A formatted date (yyyymmdd)
+A dataframe with cleansed date (converted to YYYYMMDD) information
 }
 \description{
-Convert date to character yyyymmdd format.
-}
-\examples{
-format_dob(df, dob)
+Formatting converts date field to string using format YYYYMMDD
+\cr\cr Can handle dates supplied in a range of formats
 }

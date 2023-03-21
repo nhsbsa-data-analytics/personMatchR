@@ -2,12 +2,12 @@
 % Please edit documentation in R/calc_permutations_db.R
 \name{calc_permutations_db}
 \alias{calc_permutations_db}
-\title{Calculates 9 permutations for primary-lookup join prior to match scoring}
+\title{Create permutations of personal data for matching}
 \usage{
 calc_permutations_db(df, forename, surname, postcode, dob)
 }
 \arguments{
-\item{df}{A df to be formatted}
+\item{df}{a 'lazyframe' generated from a database connection}
 
 \item{forename}{forename column name}
 
@@ -18,11 +18,12 @@ calc_permutations_db(df, forename, surname, postcode, dob)
 \item{dob}{DOB column name}
 }
 \value{
-A df with 5 'basic' join permutations added
+a 'lazyframe' object with join permutations added
 }
 \description{
-Calculates 9 permutations for primary-lookup join prior to match scoring
-}
-\examples{
-calc_permutations(df, forename, surname, postcode, dob)
+This is a support function called during the execution of the calc_match_patients function.
+\cr\cr Calculates permutations of personal information to support joining datasets, allowing
+data to be initially joined only where the permutations of personal information align.
+\cr\cr The permutations range from combinations of full fields to only partial information
+extracted from each piece of personal information.
 }

@@ -2,24 +2,26 @@
 % Please edit documentation in R/filter_name_db.R
 \name{filter_name_db}
 \alias{filter_name_db}
-\title{Applies a filter on either forename or surname to limit cross-join}
+\title{Filter data on name to limit cross-join}
 \usage{
 filter_name_db(df, name_one, name_two)
 }
 \arguments{
-\item{df}{A df to be formatted}
+\item{df}{a 'lazyframe' generated from a database connection}
 
-\item{name_one}{first name column}
+\item{name_one}{the field containing the first name column}
 
-\item{name_two}{second name column}
+\item{name_two}{the field containing the second name column}
 }
 \value{
-A df with a filtered name-col to limit post cross-join
+a 'lazyframe' object filtered to only include suitable combinations of names
 }
 \description{
-Only contains name-pair instances that share certain characteristsics
-These include same 1st, 2nd or last letter, or being a substring of another
-}
-\examples{
-name_db_filter(df, name_one, name_two)
+This is a support function called during the execution of the calc_match_patients_db function.
+\cr\cr Applies a filter on name to limit volume of data from cross-join.
+\cr\cr Limits cross-joins to only include name-pair instances that share certain characteristics.
+This includes cases where the two names contain the same 1st, 2nd or last letter, or being a
+sub-string of the other name.
+\cr\cr This will prevent any records being considered for matching where the names are notably
+different which would mean no match would be expected.
 }

@@ -1,18 +1,15 @@
-#' Formatting either a Forename or Surname within the DB
+#' Format name strings prior to matching
 #'
-#' Format the name strings prior to matching
-#' Formatting includes conversion to upper case and removal of
-#' non alphabetic characters
+#' Suitable for formatting forename/surname strings prior to matching
+#' \cr\cr Formatting includes conversion to upper case and removal of non-alphabetic characters
 #'
-#' @param df A df to be formatted
-#' @param name_col a patient name column
+#' @param df a 'lazyframe' generated from a database connection with postcode to be formatted
+#' @param name_col a string field to be cleansed
 #'
-#' @return A df with cleansed patient name information
+#' @return a 'lazyframe' object with cleansed name string data
 #'
 #' @export
 #'
-#' @examples
-#' format_db_name(df, name_col)
 format_name_db <- function(df, name_col) {
   df %>%
     dplyr::mutate(

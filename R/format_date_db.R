@@ -1,17 +1,15 @@
-#' Format a DOB within the DB
-#'
 #' Format the date of birth prior to matching
-#' Convert to a string representation in the format YYYYMMDD
 #'
-#' @param df A df to be formatted
-#' @param name_col a date column
+#' Formatting converts date field to numeric format using format YYYYMMDD
+#' \cr\cr Date should be based on a recognised date type
 #'
-#' @return A df with cleansed date information, as a 8-digit number
+#' @param df a 'lazyframe' generated from a database connection with date field to be formatted
+#' @param date_col a date column to be formatted
+#'
+#' @return a 'lazyframe' object with cleansed date of birth field
 #'
 #' @export
 #'
-#' @examples
-#' format_db_date(df, date_col)
 format_date_db <- function(df, date_col) {
   df %>%
     dplyr::mutate(

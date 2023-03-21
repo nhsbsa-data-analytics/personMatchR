@@ -21,12 +21,15 @@ library("DBI")
 # using nhsbsaR package to connect to NHSBSA DALP database
 con <- nhsbsaR::con_nhsbsa(database = "DALP")
 
+# define the user schema to be used to store test data
+user_schema <- "your_schema_name_here"
+
 
 
 # OPTIONAL: Copy test datasets to database environment ----------------------------------------
 # this will copy the test datasets to the database environment as a test case example
 DBI::dbWriteTable(con,
-                  DBI::Id(schema = "STBUC", table = "PERSONMATCHR_INPUT_A"),
+                  DBI::Id(schema = user_schema, table = "PERSONMATCHR_INPUT_A"),
                   readRDS(url("https://github.com/nhsbsa-data-analytics/personMatchR/tree/main/R/documentation/TEST_DF_A.rds")),
                   field.types = c(
                     ID = "number(1,0)",
@@ -37,7 +40,7 @@ DBI::dbWriteTable(con,
                   ))
 
 DBI::dbWriteTable(con,
-                  DBI::Id(schema = "STBUC", table = "PERSONMATCHR_INPUT_B"),
+                  DBI::Id(schema = user_schema, table = "PERSONMATCHR_INPUT_B"),
                   readRDS(url("https://github.com/nhsbsa-data-analytics/personMatchR/tree/main/R/documentation/TEST_DF_B.rds")),
                   field.types = c(
                     ID = "number(1,0)",
@@ -50,8 +53,8 @@ DBI::dbWriteTable(con,
 
 # Import datasets from database ----------------------------------------------------------------
 # establish connection to tables within the DALP database
-df_a <- con |> dplyr::tbl(from = dbplyr::in_schema("STBUC", "PERSONMATCHR_INPUT_A"))
-df_b <- con |> dplyr::tbl(from = dbplyr::in_schema("STBUC", "PERSONMATCHR_INPUT_B"))
+df_a <- con |> dplyr::tbl(from = dbplyr::in_schema(user_schema, "PERSONMATCHR_INPUT_A"))
+df_b <- con |> dplyr::tbl(from = dbplyr::in_schema(user_schema, "PERSONMATCHR_INPUT_B"))
 
 
 # Review the test datasets --------------------------------------------------------------------
@@ -81,8 +84,8 @@ df_b |> dplyr::compute(name = "PERSONMATCHR_INPUT_B_FORMAT", temporary = FALSE)
 
 
 # Establish connection to the formatted tables ------------------------------------------------
-df_a_fmt <- con |> dplyr::tbl(from = dbplyr::in_schema("STBUC", "PERSONMATCHR_INPUT_A_FORMAT"))
-df_b_fmt <- con |> dplyr::tbl(from = dbplyr::in_schema("STBUC", "PERSONMATCHR_INPUT_B_FORMAT"))
+df_a_fmt <- con |> dplyr::tbl(from = dbplyr::in_schema(user_schema, "PERSONMATCHR_INPUT_A_FORMAT"))
+df_b_fmt <- con |> dplyr::tbl(from = dbplyr::in_schema(user_schema, "PERSONMATCHR_INPUT_B_FORMAT"))
 
 
 # Review the formatting test datasets ---------------------------------------------------------
@@ -114,7 +117,7 @@ df_output |> dplyr::compute(name = "PERSONMATCHR_OUTPUT", temporary = FALSE)
 
 # Review the match output ---------------------------------------------------------------------
 con |>
-  dplyr::tbl(from = dbplyr::in_schema("STBUC", "PERSONMATCHR_OUTPUT")) |>
+  dplyr::tbl(from = dbplyr::in_schema(user_schema, "PERSONMATCHR_OUTPUT")) |>
   dplyr::collect()
 
 

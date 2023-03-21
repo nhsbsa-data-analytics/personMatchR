@@ -1,25 +1,25 @@
 #' Find all potential person matches between two datasets based on personal identifiable information
 #'
-#' The two input datasets should be dataframes, with the first dataset (df1) containing the people
-#' to look for and the second dataset (df2) containing the data to be searched against. Parameters
-#' can be used to specify the formatting of the output dataset and allow some customisation of the
-#' match scoring.
+#' The two input datasets should be dataframes, with the first dataset (df_one) containing the people
+#' to look for and the second dataset (df_two) containing the data to be searched against.
+#' \cr\cr Parameters can be used to specify the formatting of the output dataset and allow some
+#' customisation of the match scoring.
 #'
 #' @param df_one dataframe containing person level information representing people to look for
-#' @param id_one unique reference column for df1
-#' @param forename_one forename column for df1
-#' @param surname_one surname column for df1
-#' @param dob_one date of birth column for df1, ideally in dd/mm/yyyy format although others are
+#' @param id_one unique reference column for df_one
+#' @param forename_one forename column for df_one
+#' @param surname_one surname column for df_one
+#' @param dob_one date of birth column for df_one, ideally in dd/mm/yyyy format although others are
 #' handled
-#' @param postcode_one postcode field for df1
+#' @param postcode_one postcode field for df_one
 #' @param df_one dataframe containing person level information representing people to look in for
 #' matches
-#' @param id_two unique reference column for df2
-#' @param forename_two forename column for df2
-#' @param surname_two surname column for df2
-#' @param dob_two date of birth column for df2, ideally in dd/mm/yyyy format although others are
+#' @param id_two unique reference column for df_two
+#' @param forename_two forename column for df_two
+#' @param surname_two surname column for df_two
+#' @param dob_two date of birth column for df_two, ideally in dd/mm/yyyy format although others are
 #' handled
-#' @param postcode_two postcode field for df2
+#' @param postcode_two postcode field for df_two
 #' @param output_type One of the following: "key" / "match" / "all"
 #' @param format_data TRUE/FALSE : identifying if the input datasets should be passed through
 #' formatting functions to clean data prior to matching
@@ -32,8 +32,6 @@
 #' @return dataframe comprising of all potential matches between two datasets
 #' @export
 #'
-#' @examples
-#' calc_match_patients(df_one, id_one, ...)
 calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_one, postcode_one,
                                 df_two, id_two, forename_two, surname_two, dob_two, postcode_two,
                                 output_type = c("all", "key", "match"),
@@ -291,7 +289,7 @@ calc_match_patients <- function(df_one, id_one, forename_one, surname_one, dob_o
     final_matches <- non_matches %>%
       dplyr::full_join(
         y = df_two %>%
-          dplyr::select(df_two_cols),
+          dplyr::select(all_of(df_two_cols)),
         by = character()
       ) %>%
       dplyr::mutate(

@@ -2,20 +2,28 @@
 % Please edit documentation in R/filter_dob_db.R
 \name{filter_dob_db}
 \alias{filter_dob_db}
-\title{Applies all combinations of dob_substr() filters}
+\title{Filter data on date of birth to limit cross-join}
 \usage{
 filter_dob_db(df, dob_one, dob_two, dob_score_threshold)
 }
 \arguments{
-\item{df}{A df with dates to be formatted}
+\item{df}{a 'lazyframe' generated from a database connection}
+
+\item{dob_one}{the field containing the first date of birth column}
+
+\item{dob_two}{the field containing the second date of birth column}
+
+\item{dob_score_threshold}{allows the match score threshold to be adjusted}
 }
 \value{
-A df with relevant dates from both columns
+a 'lazyframe' object filtered to only include suitable combinations of date of birth
 }
 \description{
-Through doing so, it mirrors an edit distance of 2 on an 8-digit string
-For this very particular use case, is faster than LV within SQL
-}
-\examples{
-filter_dob_db(df, dob_one, dob_two, dob_score_threshold)
+This is a support function called during the execution of the calc_match_patients_db function.
+\cr\cr Applies a filter on date of birth to limit volume of data from cross-join.
+\cr\cr Limits cross-joins to only include combinations of date of birth where the two dates
+have a minunmum of 6 characters in common. This is similar to an edit distance of 2 on a 8 digit
+string using Levenshtein distance algorithm.
+\cr\cr This will prevent any records being considered for matching where the date of births are
+notably different which would mean no match would be expected.
 }

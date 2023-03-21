@@ -2,23 +2,19 @@
 % Please edit documentation in R/format_name_db.R
 \name{format_name_db}
 \alias{format_name_db}
-\title{Formatting either a Forename or Surname within the DB}
+\title{Format name strings prior to matching}
 \usage{
 format_name_db(df, name_col)
 }
 \arguments{
-\item{df}{A df to be formatted}
+\item{df}{a 'lazyframe' generated from a database connection with postcode to be formatted}
 
-\item{name_col}{a patient name column}
+\item{name_col}{a string field to be cleansed}
 }
 \value{
-A df with cleansed patient name information
+a 'lazyframe' object with cleansed name string data
 }
 \description{
-Format the name strings prior to matching
-Formatting includes conversion to upper case and removal of
-non alphabetic characters
-}
-\examples{
-format_db_name(df, name_col)
+Suitable for formatting forename/surname strings prior to matching
+\cr\cr Formatting includes conversion to upper case and removal of non-alphabetic characters
 }

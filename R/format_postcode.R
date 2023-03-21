@@ -1,15 +1,18 @@
 #' Format the postcode strings prior to matching
 #'
-#' Formatting includes conversion to upper case and removal of
-#' non alphanumeric characters
+#' Formatting includes conversion to upper case and removal of non alphanumeric characters
+#' \cr\cr Formatting also includes the switching of homoglyph characters where the postcode format would
+#' suggest the letter/number was incorrect. Homoglyph characters are where numbers and letters may
+#' be commonly mistaken for each other (#' e.g. 0 and o).
 #'
-#' @param df A dataframe to feed into function
+#' @param df a dataframe to feed into function
+#' @param id the field containing a unique reference for each record
+#' @param postcode the postcode column to be formatted
+#'
 #'
 #' @return A dataframe with cleansed postcode information
 #' @export
 #'
-#' @examples
-#' format_postcode(df)
 format_postcode <- function(df, id, postcode) {
 
   # Helper function to replace numbers for characters

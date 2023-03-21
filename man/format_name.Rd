@@ -2,21 +2,19 @@
 % Please edit documentation in R/format_name.R
 \name{format_name}
 \alias{format_name}
-\title{Formatting either a Forename or Surname}
+\title{Format name strings prior to matching}
 \usage{
 format_name(df, name)
 }
 \arguments{
-\item{str_name}{A string field to be cleansed}
+\item{df}{a dataframe to feed into function}
+
+\item{name}{a string field to be cleansed}
 }
 \value{
-A cleansed string
+A dataframe with cleansed name string
 }
 \description{
-Format the name strings prior to matching
-Formatting includes conversion to upper case and removal of
-non alphabetic characters
-}
-\examples{
-format_name(str_name)
+Suitable for formatting forename/surname strings prior to matching
+\cr\cr Formatting includes conversion to upper case and removal of non-alphabetic characters
 }
