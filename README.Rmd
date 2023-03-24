@@ -31,8 +31,7 @@ data is held within data frames or via a connection to database tables:
 * calc_match_person_db
   + currently only set up and tested for Oracle database infrastructure used by NHSBSA
   + suitable for large volume data-sets
-  + data formatting will need to be handling prior to matching, with functions in available in 
-  package to support this
+  + data formatting will need to be handled prior to matching, with functions available in the package to support this
 
 
 
@@ -47,16 +46,16 @@ devtools::install_github("nhsbsa-data-analytics/personMatchR")
 
 ## Documentation
 
-In additional to function help files, some additional documentation has been included to provide 
-detail information about the package functions and some examples of the package in use:
+In addition to function help files, some additional documentation has been included to provide 
+detailed information about the package functions and some examples of the package in use:
 
 * [Package Usage Blog](documentation/personMatchR Usage Blog.pdf)
-  + Basic overview of package including example test case
-* [Quality Review](documentation/personMatchR - Quality Review.pdf)
+  + Basic overview of package, including example test case
+* [Quality Review](documentation/PersonMatchR - Quality Review.pdf)
   + Summary of test case used to check quality of matching process
   + From 37 million records checked, the correct person was identified in 99.9% of cases
 * [Example Use Case](documentation/personMatchR - Use Case.pdf)
-  + Summary of real world use case using package to match service users to an additional data-set 
+  + Summary of real world use case, using package to match service users to an additional data-set 
   to supplement data
   + Of 31.5 thousand service users, 99% could be aligned to the secondary data-set
 
@@ -72,15 +71,15 @@ df_B <- readRDS("documentation/TEST_DF_B.rds")
 head(df_B)
 ```
 
-With such a small set of data it is easy to manual compare these two data-sets, where it is clear 
+With such a small set of data it is easy to manually compare these two data-sets, where it is clear 
 that records are similar between both data-sets:
 
 * Record 1 in both data-sets only differs by an apostrophe in the surname field
-* Record 2 in both data-sets has a different version of the forename
+* Record 2 in both data-sets only has a different version of the forename
 * Record 3 in data-set A does not appear anywhere in data-set B
 * Record 4 in both data-sets only differs by the forename and surname being swapped
 
-Matching these data-sets we would hope that records 1, 2 and 4 are matched.
+When matching these data-sets we would hope that records 1, 2 and 4 are matched.
 
 We can pass the data-sets to the calc_match_person function and review the output. For this 
 example we will set parameters to only return the key fields from the matching, format the data 
@@ -116,8 +115,6 @@ head(df_output)
 ### Understanding match output: MATCH_COUNT & MATCH_SCORE
 
 These fields in the output provide context for the match results:
-*The match results show that the results are as we would have expected based on the input data, with the 
-output including some fields to provide additional context:
 
 * MATCH_COUNT
   + Shows the number of matches found for each record (each match will be included in the output)
@@ -125,7 +122,7 @@ output including some fields to provide additional context:
 * MATCH_SCORE
   + Provides a general weighted score for the match which may help compare instances where 
 multiple potential matches are identified. 
-  + please note that this is for guide purposes only and a higher score will not always mean that 
+  + please note that this is for guide purposes only, and a higher score will not always mean that 
   the match is more likely to be correct. Weightings for each part of the matching can be adjusted 
   using parameters in the function call.
 
@@ -135,7 +132,7 @@ multiple potential matches are identified.
 This parameter will determine the number of fields from each data-set returned in the output:
 
 * key
-  + this option will only return the ID fields from each data-set, plus the match outcome and match score.
+  + this option will only return the ID fields from each data-set, plus the match outcome and match score
   + this output could then be used to join to original data-sets as required
 * match
   + this option will return the "key" fields plus the personal information fields used in the matching
@@ -158,7 +155,7 @@ option.
   + do not apply formatting to input data
   + this is likely to limit match results
   + formatting functions (format_name, format_dob, format_dob) could be applied individually 
-  outside of the matching function
+  outside of the matching function, prior to passing data to main matching function
 
 
 ### Match function parameter: inc_no_match
