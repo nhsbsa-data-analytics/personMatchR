@@ -56,7 +56,7 @@ detailed information about the package functions and some examples of the packag
 ## Example
 
 The following basic example shows how to match between two data-frames that are available within 
-the documentation folder for this package.
+the [documentation folder](documentation/) for this package.
 
 ```{r example_data}
 df_A <- readRDS("documentation/TEST_DF_A.rds")

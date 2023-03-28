@@ -53,7 +53,8 @@ functions and some examples of the package in use:
 ## Example
 
 The following basic example shows how to match between two data-frames
-that are available within the documentation folder for this package.
+that are available within the [documentation folder](documentation/) for
+this package.
 
 ``` r
 df_A <- readRDS("documentation/TEST_DF_A.rds")
