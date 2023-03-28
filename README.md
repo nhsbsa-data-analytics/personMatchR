@@ -49,16 +49,6 @@ functions and some examples of the package in use:
 
 - [Package Usage Blog](documentation/personMatchR%20Usage%20Blog.pdf)
   - Basic overview of package, including example test case
-- [Quality
-  Review](documentation/PersonMatchR%20-%20Quality%20Review.pdf)
-  - Summary of test case used to check quality of matching process
-  - From 37 million records checked, the correct person was identified
-    in 99.9% of cases
-- [Example Use Case](documentation/personMatchR%20-%20Use%20Case.pdf)
-  - Summary of real world use case, using package to match service users
-    to an additional data-set to supplement data
-  - Of 31.5 thousand service users, 99% could be aligned to the
-    secondary data-set
 
 ## Example
 
@@ -137,19 +127,25 @@ df_output <- personMatchR::calc_match_person(
     ## 3 4            4            Exact                1        1   
     ## 4 3            <NA>         No Match             0        0
 
+The match results show exact matches for records 1 and 4 as the only
+differences were special characters and transposition of names. For
+record 2 the results show a confident match, as although not identical
+the names were similar enough to pass the confidence thresholds. As
+expected, record 3 does not produce any matches.
+
 ### Understanding match output: MATCH_COUNT & MATCH_SCORE
 
 These fields in the output provide context for the match results:
 
 - MATCH_COUNT
   - Shows the number of matches found for each record (each match will
-    be included in the output)
+    be included in the output).
   - Where this is greater than one, some additional handling may be
-    required to review
+    required to review.
 - MATCH_SCORE
   - Provides a general weighted score for the match which may help
     compare instances where multiple potential matches are identified.
-  - please note that this is for guide purposes only, and a higher score
+  - Please note that this is for guide purposes only, and a higher score
     will not always mean that the match is more likely to be correct.
     Weightings for each part of the matching can be adjusted using
     parameters in the function call.
