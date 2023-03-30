@@ -1,17 +1,15 @@
-#' Formatting either a Forename or Surname
+#' Format name strings prior to matching
 #'
-#' Format the name strings prior to matching
-#' Formatting includes conversion to upper case and removal of
-#' non alphabetic characters
+#' Suitable for formatting forename/surname strings prior to matching
+#' \cr\cr Formatting includes conversion to upper case and removal of non-alphabetic characters
 #'
-#' @param str_name A string field to be cleansed
+#' @param df a dataframe to feed into function
+#' @param name a string field to be cleansed
 #'
-#' @return A cleansed string
+#' @return A dataframe with cleansed name string
 #'
 #' @export
 #'
-#' @examples
-#' format_name(str_name)
 format_name <- function(df, name) {
   df %>%
     dplyr::mutate(

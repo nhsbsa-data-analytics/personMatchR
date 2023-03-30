@@ -1,4 +1,4 @@
-#' Test cases for calc_match_patients function
+#' Test cases for calc_match_person function
 #' Test dataset creation
 #'
 #' BUild the dataframes for the test cases

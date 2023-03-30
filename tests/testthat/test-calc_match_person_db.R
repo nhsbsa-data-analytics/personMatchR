@@ -27,7 +27,7 @@ testthat::test_that("MATCH TEST01: Single exact match (key fields only)", {
     )
 
   # Process df1
-  test_run <- calc_match_patients_db(
+  test_run <- calc_match_person_db(
     input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
     input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
     output_type = "key",
@@ -75,7 +75,7 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
     )
 
   # Process df1
-  test_run <- calc_match_patients_db(
+  test_run <- calc_match_person_db(
     input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
     input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
     output_type = "all",
@@ -148,7 +148,7 @@ testthat::test_that("MATCH TEST03: single exact match, plus no match (match fiel
     )
 
   # Process df1
-  test_run <- calc_match_patients_db(
+  test_run <- calc_match_person_db(
     input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
     input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
     output_type = "match",
@@ -201,7 +201,7 @@ testthat::test_that("MATCH TEST04: single no match (key fields)", {
     )
 
   # Process df1
-  test_run <- calc_match_patients_db(
+  test_run <- calc_match_person_db(
     input_a, ID, FORENAME, SURNAME, DOB, POSTCODE,
     input_b, ID_TWO, FORENAME_TWO, SURNAME_TWO, DOB_TWO, POSTCODE_TWO,
     output_type = "key",

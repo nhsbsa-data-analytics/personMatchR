@@ -7,17 +7,16 @@
 format_postcode_db(df, postcode)
 }
 \arguments{
-\item{df}{A 'lazyframe' generated from a database connection with postcode to be formatted}
+\item{df}{a 'lazyframe' generated from a database connection with postcode to be formatted}
 
 \item{postcode}{the postcode column to be formatted}
 }
 \value{
-A cleansed string
+a 'lazyframe' object with cleansed postcode data
 }
 \description{
-Formatting includes conversion to upper case and removal of
-non alphanumeric characters
-}
-\examples{
-format_postcode_db(df, postcode)
+Formatting includes conversion to upper case and removal of non alphanumeric characters
+\cr\cr Formatting also includes the switching of homoglyph characters where the postcode format
+would suggest the letter/number was incorrect. Homoglyph characters are where numbers and letters
+may be commonly mistaken for each other (#' e.g. 0 and o).
 }

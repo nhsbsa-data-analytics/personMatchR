@@ -1,17 +1,21 @@
-#' Calculates 9 permutations for primary-lookup join prior to match scoring
+#' Create permutations of personal data for matching
 #'
-#' @param df A df to be formatted
+#' This is a support function called during the execution of the calc_match_person function.
+#' \cr\cr Calculates permutations of personal information to support joining datasets, allowing
+#' data to be initially joined only where the permutations of personal information align.
+#' \cr\cr The permutations range from combinations of full fields to only partial information
+#' extracted from each piece of personal information.
+#'
+#' @param df df to be formatted
 #' @param forename forename column name
 #' @param surname surname column name
 #' @param postcode postcode column name
 #' @param dob DOB column name
 #'
-#' @return A df with 5 'basic' join permutations added
+#' @return df with join permutations added
 #'
 #' @export
 #'
-#' @examples
-#' calc_permutations(df, forename, surname, postcode, dob)
 calc_permutations <- function(df, forename, surname, postcode, dob) {
   df %>%
     dplyr::mutate(

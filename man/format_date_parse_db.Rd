@@ -7,19 +7,16 @@
 format_date_parse_db(df, date)
 }
 \arguments{
-\item{df}{A df to be formatted}
+\item{df}{a 'lazyframe' generated from a database connection with date field to be formatted}
 
-\item{name_col}{a date column}
+\item{date}{a date column to be formatted}
 }
 \value{
-A df with cleansed date information, as a 8-digit number
+a 'lazyframe' object with cleansed date of birth field
 }
 \description{
-Format the date of birth prior to matching
-Convert to a string representation in the format YYYYMMDD
-This function will not work with sizeable database tables
-This is due to the having to copy the table in memory
-}
-\examples{
-format_date_parse_db(df, date_col)
+Formatting converts date field to string using format YYYYMMDD
+\cr\cr Can handle dates supplied in a range of formats
+\cr\cr This function will not work with sizeable database tables due to having to copy the table
+in memory
 }

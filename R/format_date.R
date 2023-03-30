@@ -1,12 +1,15 @@
-#' Convert date to character yyyymmdd format.
+#' Format the date of birth prior to matching
 #'
+#' Formatting converts date field to string using format YYYYMMDD
+#' \cr\cr Can handle dates supplied in a range of formats
+#'
+#'
+#' @param df a dataframe to feed into function
 #' @param dob A vector of type character, integer or numeric with date expressions
 #'
-#' @return A formatted date (yyyymmdd)
+#' @return A dataframe with cleansed date (converted to YYYYMMDD) information
 #' @export
 #'
-#' @examples
-#' format_dob(df, dob)
 format_date <- function(df, date) {
   df %>%
     dplyr::mutate({{ date }} := ifelse(
