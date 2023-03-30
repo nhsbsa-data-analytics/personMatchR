@@ -23,12 +23,12 @@ pieces of information:
 - Postcode
 
 The quality of matching accuracy will be heavily influenced by the
-formatting of the input data, and the are processing functions available
-within the package to support this ([see data
+formatting of the input data, and there are processing functions
+available within the package to support this ([see data
 preparation](#data-preparation)).
 
 The personMatchR package has different functions available to handle
-matching, whether the input data is held within data frames or via a
+matching whether the input data is held within data frames or via a
 connection to database tables:
 
 - calc_match_person
