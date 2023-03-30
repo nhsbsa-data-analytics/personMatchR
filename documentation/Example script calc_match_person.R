@@ -12,8 +12,8 @@ library("dbplyr")
 
 
 # Import datasets for matching ----------------------------------------------------------------
-df_a <- readRDS(url("https://github.com/nhsbsa-data-analytics/personMatchR/tree/main/R/documentation/TEST_DF_A.rds"))
-df_b <- readRDS(url("https://github.com/nhsbsa-data-analytics/personMatchR/tree/main/R/documentation/TEST_DF_B.rds"))
+df_a <- personMatchR::TEST_DF_A
+df_b <- personMatchR::TEST_DF_B
 
 
 # Review the test datasets --------------------------------------------------------------------
