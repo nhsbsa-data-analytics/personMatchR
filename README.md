@@ -1,12 +1,16 @@
 
 # personMatchR
 
-Helper package for matching individuals across two data-sets. This R
+Helper package for matching individuals across two datasets. This R
 package has been developed by the NHS Business Services Authority Data
 Science team.
 
+The package is a series of functions that process and then match person
+information fields across two datasets, either in data frames or
+database tables.
+
 The matching functions will identify whether a record containing person
-information can be matched to any records in a second data-set, either
+information can be matched to any records in a second dataset, either
 based on identical person information or a close match based on similar
 information.
 
@@ -18,6 +22,11 @@ pieces of information:
 - Date of Birth
 - Postcode
 
+The quality of matching accuracy will be heavily influenced by the
+formatting of the input data, and the are processing functions available
+within the package to support this ([see data
+preparation](#data-preparation)).
+
 The personMatchR package has different functions available to handle
 matching, whether the input data is held within data frames or via a
 connection to database tables:
@@ -27,7 +36,7 @@ connection to database tables:
 - calc_match_person_db
   - currently only set up and tested for Oracle database infrastructure
     used by NHSBSA
-  - suitable for large volume data-sets
+  - suitable for large volume datasets
   - data formatting will need to be handled prior to matching, with
     functions available in the package to support this
 
@@ -49,6 +58,14 @@ functions and some examples of the package in use:
 
 - [Package Usage Blog](documentation/personMatchR%20Usage%20Blog.pdf)
   - Basic overview of package, including example test case
+
+## Requirements
+
+The datasets being matched each require a forename, surname, DOB and
+postcode field to be present. In addition, each dataset also requires a
+unique identification field to be present. Users will have to generate
+such a field prior to using the matching function if one is not already
+present.
 
 ## Example
 
@@ -79,21 +96,20 @@ head(df_B)
     ## 4  4   Dylan  Neville  A99 9AA 1941-05-24
 
 With such a small set of data it is easy to manually compare these two
-data-sets, where it is clear that records are similar between both
-data-sets:
+datasets, where it is clear that records are similar between both
+datasets:
 
-- Record 1 in both data-sets only differs by an apostrophe in the
-  surname field
-- Record 2 in both data-sets only has a different version of the
-  forename
-- Record 3 in data-set A does not appear anywhere in data-set B
-- Record 4 in both data-sets only differs by the forename and surname
+- Record 1 in both datasets only differs by an apostrophe in the surname
+  field
+- Record 2 in both datasets only has a different version of the forename
+- Record 3 in dataset A does not appear anywhere in dataset B
+- Record 4 in both datasets only differs by the forename and surname
   being swapped
 
-When matching these data-sets we would hope that records 1, 2 and 4 are
+When matching these datasets we would hope that records 1, 2 and 4 are
 matched.
 
-We can pass the data-sets to the calc_match_person function and review
+We can pass the datasets to the calc_match_person function and review
 the output. For this example we will set parameters to only return the
 key fields from the matching, format the data prior to matching and
 include records without a match in the output:
@@ -102,21 +118,21 @@ include records without a match in the output:
 library(personMatchR)
 library(dplyr)
 df_output <- personMatchR::calc_match_person(
-  df_one = df_A, # first data-set
-  id_one = ID, # unique id field from first data-set
-  forename_one = FORENAME, # forename field from first data-set
-  surname_one = SURNAME, # surname field from first data-set
-  dob_one = DOB, # date of birth field from first data-set
-  postcode_one = POSTCODE, # postcode field from first data-set
-  df_two = df_B, # second data-set
-  id_two = ID, # unique id field from second data-set
-  forename_two = FORENAME, # forename field from second data-set
-  surname_two = SURNAME, # surname field from second data-set
-  dob_two = DOB, # date of birth field from second data-set
-  postcode_two = POSTCODE, # postcode field from second data-set
+  df_one = df_A, # first dataset
+  id_one = ID, # unique id field from first dataset
+  forename_one = FORENAME, # forename field from first dataset
+  surname_one = SURNAME, # surname field from first dataset
+  dob_one = DOB, # date of birth field from first dataset
+  postcode_one = POSTCODE, # postcode field from first dataset
+  df_two = df_B, # second dataset
+  id_two = ID, # unique id field from second dataset
+  forename_two = FORENAME, # forename field from second dataset
+  surname_two = SURNAME, # surname field from second dataset
+  dob_two = DOB, # date of birth field from second dataset
+  postcode_two = POSTCODE, # postcode field from second dataset
   output_type = "key", # only return the key match results
-  format_data = TRUE, # format input data-sets prior to matching
-  inc_no_match = TRUE # return records from first data-set without matches
+  format_data = TRUE, # format input datasets prior to matching
+  inc_no_match = TRUE # return records from first dataset without matches
 )
 ```
 
@@ -151,29 +167,74 @@ These fields in the output provide context for the match results:
     Weightings for each part of the matching can be adjusted using
     parameters in the function call.
 
-### Match function parameter: output_type
+## Data preparation
 
-This parameter will determine the number of fields from each data-set
+In the example above the input data was passed through some formatting
+functions as part of the main matching package function call
+(format_data = TRUE). This option is only available when matching across
+data frames using the calc_match_person() function. However, the
+formatting functions could be called individually prior to calling the
+matching function.
+
+There are three matching functions available, with different versions
+available for the database matching function:
+
+- format_name() / format_name_db()
+- format_date() / format_date_db()
+- format_postcode() / format_postcode_db()
+
+The following code shows how these functions could be used to format the
+data prior to matching:
+
+``` r
+df_A = df_A %>% 
+  format_date(date = DOB) %>% 
+  format_name(name = FORENAME) %>% 
+  format_name(name = SURNAME) %>% 
+  format_postcode(id = ID, postcode = POSTCODE)
+head(df_A)
+```
+
+    ## # A tibble: 4 x 5
+    ##   ID    SURNAME FORENAME DOB      POSTCODE
+    ##   <chr> <chr>   <chr>    <chr>    <chr>   
+    ## 1 1     OBRIEN  RICHARD  19420325 AA9A9AA 
+    ## 2 2     BLOGGS  JOE      19990101 A9A9AA  
+    ## 3 3     WATSON  DAVID    20011101 A99AA   
+    ## 4 4     NEVILLE DYLAN    19410524 A999AA
+
+The calc_match_person_db() function **does not** offer the option to
+format the data prior to matching, with users required to carry out the
+processing as above beforehand.
+
+It is **strongly** encouraged that users create new database tables
+after processing these fields. They can then use these freshly created
+tables as the matching function input, which will typically
+significantly improve runtime performance.
+
+## Match function parameter: output_type
+
+This parameter will determine the number of fields from each dataset
 returned in the output:
 
 - key
-  - this option will only return the ID fields from each data-set, plus
+  - this option will only return the ID fields from each dataset, plus
     the match outcome and match score
-  - this output could then be used to join to original data-sets as
+  - this output could then be used to join to original datasets as
     required
 - match
   - this option will return the “key” fields plus the personal
     information fields used in the matching
   - this output would allow the matches to easily be reviewed
 - all
-  - will return the key fields, plus all other fields from both
-    data-sets where a match was found
+  - will return the key fields, plus all other fields from both datasets
+    where a match was found
 
-### Match function parameter: format_data (not used for database match functions)
+## Match function parameter: format_data (not used for database match functions)
 
 This parameter will determine whether or not the data is formatted as it
 is passed to the matching function. Formatting the data can help ensure
-both data-sets are consistently formatted, accounting for things like
+both datasets are consistently formatted, accounting for things like
 case, removal of special characters, date of birth and postcode
 patterns. As formatted data is likely to have better matching outcomes
 it is strongly advised to apply this option.
@@ -187,14 +248,14 @@ it is strongly advised to apply this option.
     applied individually outside of the matching function, prior to
     passing data to main matching function
 
-### Match function parameter: inc_no_match
+## Match function parameter: inc_no_match
 
 This parameter will determine whether or not the output results will
 include details of records where no match could be found:
 
 - TRUE
-  - all records from the initial data-set will be included in the
-    output, even if no match was found
+  - all records from the initial dataset will be included in the output,
+    even if no match was found
 - FALSE
   - the output will only include records where a match could be
     identified
