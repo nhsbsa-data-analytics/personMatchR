@@ -30,7 +30,7 @@ user_schema <- "your_schema_name_here"
 # this will copy the test datasets to the database environment as a test case example
 DBI::dbWriteTable(con,
                   DBI::Id(schema = user_schema, table = "PERSONMATCHR_INPUT_A"),
-                  readRDS(url("https://github.com/nhsbsa-data-analytics/personMatchR/tree/main/R/documentation/TEST_DF_A.rds")),
+                  personMatchR::TEST_DF_A,
                   field.types = c(
                     ID = "number(1,0)",
                     SURNAME = "varchar(26 byte)",
@@ -41,7 +41,7 @@ DBI::dbWriteTable(con,
 
 DBI::dbWriteTable(con,
                   DBI::Id(schema = user_schema, table = "PERSONMATCHR_INPUT_B"),
-                  readRDS(url("https://github.com/nhsbsa-data-analytics/personMatchR/tree/main/R/documentation/TEST_DF_B.rds")),
+                  personMatchR::TEST_DF_B,
                   field.types = c(
                     ID = "number(1,0)",
                     SURNAME = "varchar(26 byte)",

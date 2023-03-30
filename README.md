@@ -74,7 +74,7 @@ that are available within the [documentation folder](documentation/) for
 this package.
 
 ``` r
-df_A <- readRDS("https://github.com/nhsbsa-data-analytics/personMatchR/tree/main/R/documentation/TEST_DF_A.rds")
+df_A <- personMatchR::TEST_DF_A
 head(df_A)
 ```
 
@@ -85,7 +85,7 @@ head(df_A)
     ## 4  4 Neville    Dylan  A99 9AA 1941-05-24
 
 ``` r
-df_B <- readRDS("https://github.com/nhsbsa-data-analytics/personMatchR/tree/main/R/documentation/TEST_DF_B.rds")
+df_B <- personMatchR::TEST_DF_B
 head(df_B)
 ```
 
