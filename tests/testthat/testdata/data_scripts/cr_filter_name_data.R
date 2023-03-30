@@ -30,5 +30,7 @@ TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(NAME_A = "LIZ", NAME_B = "ELIZABETH
 
 
 # Save files to test folder
-saveRDS(TEST_INPUT, file = "./tests/testthat/testdata/test_filter_name_input.rds")
-saveRDS(TEST_OUTPUT, file = "./tests/testthat/testdata/test_filter_name_expected.rds")
+test_filter_name_input <- TEST_INPUT
+save(test_filter_name_input, file = "./tests/testthat/testdata/test_filter_name_input.rda")
+test_filter_name_expected <- TEST_OUTPUT
+save(test_filter_name_expected, file = "./tests/testthat/testdata/test_filter_name_expected.rda")

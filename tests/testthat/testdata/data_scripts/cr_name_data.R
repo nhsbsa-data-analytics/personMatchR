@@ -41,5 +41,7 @@ NAME_RESULT <- c(
 
 
 # Save files to test folder
-saveRDS(data.frame(ID = seq(1:length(NAME_TEST)), NAME = NAME_TEST), file = "./tests/testthat/testdata/test_name_input.rds")
-saveRDS(data.frame(ID = seq(1:length(NAME_RESULT)), NAME = NAME_RESULT), file = "./tests/testthat/testdata/test_name_expected.rds")
+test_name_input <- data.frame(ID = seq(1:length(NAME_TEST)), NAME = NAME_TEST)
+save(test_name_input, file = "./tests/testthat/testdata/test_name_input.rda")
+test_name_expected <- data.frame(ID = seq(1:length(NAME_RESULT)), NAME = NAME_RESULT)
+save(test_name_expected, file = "./tests/testthat/testdata/test_name_expected.rda")

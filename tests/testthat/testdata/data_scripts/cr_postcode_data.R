@@ -223,5 +223,7 @@ POSTCODE_RESULT <- c(
 
 
 # Save files to test folder
-saveRDS(data.frame(ID = seq(1:length(POSTCODE_TEST)), POSTCODE = POSTCODE_TEST), file = "./tests/testthat/testdata/test_postcode_input.rds")
-saveRDS(data.frame(ID = seq(1:length(POSTCODE_RESULT)), POSTCODE = POSTCODE_RESULT), file = "./tests/testthat/testdata/test_postcode_expected.rds")
+test_postcode_input <- data.frame(ID = seq(1:length(POSTCODE_TEST)), POSTCODE = POSTCODE_TEST)
+save(test_postcode_input, file = "./tests/testthat/testdata/test_postcode_input.rda")
+test_postcode_expected <- data.frame(ID = seq(1:length(POSTCODE_RESULT)), POSTCODE = POSTCODE_RESULT)
+save(test_postcode_expected, file = "./tests/testthat/testdata/test_postcode_expected.rda")
