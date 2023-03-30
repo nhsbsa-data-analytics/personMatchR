@@ -21,11 +21,14 @@ save_db_table <- function(file_name, bsa_database) {
   # Set up connection to the DB
   con <- nhsbsaR::con_nhsbsa(database = bsa_database)
 
-  # Read File
-  file <- as.data.frame(readRDS(paste0("./testdata/", file_name)))
+  # load dataset
+  load(paste0("./testdata/", file_name))
+
+  # Read to file
+  file <- get(gsub(".rda", "", file_name))
 
   # Save name
-  db_table_name <- paste0("PERSONMATCHR_", toupper(gsub(".rds", "", file_name)))
+  db_table_name <- paste0("PERSONMATCHR_", toupper(gsub(".rda", "", file_name)))
 
   # apply formatting to data before passing to database
   if (db_table_name %in% c(
@@ -101,7 +104,7 @@ if (test_db == "Y") {
   if (confirm_db_rebuild_data == "Y") {
 
     # Get file names
-    files_to_save <- list.files(path = "./testdata/")[grepl(".rds", list.files("./testdata/"))]
+    files_to_save <- list.files(path = "./testdata/")[grepl(".rda", list.files("./testdata/"))]
 
     # Save all Files
     lapply(X = files_to_save, FUN = save_db_table, bsa_database = db_connection)

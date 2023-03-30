@@ -11,7 +11,7 @@
 # a single record may identify possible issues with the process after an exact match is found
 # if this is exactly matched there will be nothing to pass to the rest of the tests
 
-INPUT_A_SINGLE_CASE <- data.frame(
+match_test_input_a_single <- data.frame(
   ID = "1",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -19,7 +19,7 @@ INPUT_A_SINGLE_CASE <- data.frame(
   DOB = "1972-08-24"
 )
 
-saveRDS(INPUT_A_SINGLE_CASE, file = "./tests/testthat/testdata/match_test_input_a_single.rds")
+save(match_test_input_a_single, file = "./tests/testthat/testdata/match_test_input_a_single.rda")
 
 
 
@@ -27,7 +27,7 @@ saveRDS(INPUT_A_SINGLE_CASE, file = "./tests/testthat/testdata/match_test_input_
 # file for "left hand side" of testing
 # adds an additional test case that will not appear in any of other test cases so will alway "no match"
 
-INPUT_A_MULTIPLE_CASE <- rbind(INPUT_A_SINGLE_CASE, data.frame(
+match_test_input_a_multiple <- rbind(match_test_input_a_single, data.frame(
   ID = "2",
   SURNAME = "BRASI",
   FORENAME = "LUCA",
@@ -35,7 +35,7 @@ INPUT_A_MULTIPLE_CASE <- rbind(INPUT_A_SINGLE_CASE, data.frame(
   DOB = "1972-01-01"
 ))
 
-saveRDS(INPUT_A_MULTIPLE_CASE, file = "./tests/testthat/testdata/match_test_input_a_multiple.rds")
+save(match_test_input_a_multiple, file = "./tests/testthat/testdata/match_test_input_a_multiple.rda")
 
 
 
@@ -43,7 +43,7 @@ saveRDS(INPUT_A_MULTIPLE_CASE, file = "./tests/testthat/testdata/match_test_inpu
 # file for "left hand side" of testing
 # case where there is only a no match
 
-INPUT_A_NO_MATCH_CASE <- data.frame(
+match_test_input_a_no_match <- data.frame(
   ID = "2",
   SURNAME = "BRASI",
   FORENAME = "LUCA",
@@ -51,7 +51,7 @@ INPUT_A_NO_MATCH_CASE <- data.frame(
   DOB = "1972-01-01"
 )
 
-saveRDS(INPUT_A_NO_MATCH_CASE, file = "./tests/testthat/testdata/match_test_input_a_no_match.rds")
+save(match_test_input_a_no_match, file = "./tests/testthat/testdata/match_test_input_a_no_match.rda")
 
 
 
@@ -59,7 +59,7 @@ saveRDS(INPUT_A_NO_MATCH_CASE, file = "./tests/testthat/testdata/match_test_inpu
 # file for "right hand side" of testing
 # will include multiple potential matches
 # including one which is an exact match
-INPUT_B_INC_EXACT_MATCH <- data.frame(
+match_test_input_b_inc_exact_match <- data.frame(
   ID = "1",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -67,7 +67,7 @@ INPUT_B_INC_EXACT_MATCH <- data.frame(
   DOB = "1972-08-24",
   NOTES = "Exact match"
 )
-INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
+match_test_input_b_inc_exact_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
   ID = "2",
   SURNAME = "CORLEON",
   FORENAME = "MICHAEL",
@@ -75,7 +75,7 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   DOB = "1972-08-24",
   NOTES = "Confident - surname close"
 ))
-INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
+match_test_input_b_inc_exact_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
   ID = "3",
   SURNAME = "CORLEONE",
   FORENAME = "MICHEAL",
@@ -83,7 +83,7 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   DOB = "1972-08-24",
   NOTES = "Confident - forename close"
 ))
-INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
+match_test_input_b_inc_exact_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
   ID = "4",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -91,7 +91,7 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   DOB = "1972-08-24",
   NOTES = "Confident - postcode close"
 ))
-INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
+match_test_input_b_inc_exact_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
   ID = "5",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -99,7 +99,7 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   DOB = "1972-08-25",
   NOTES = "Confident - DOB 1 out"
 ))
-INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
+match_test_input_b_inc_exact_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
   ID = "6",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -107,7 +107,7 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   DOB = "1973-08-25",
   NOTES = "Confident - DOB 2 out"
 ))
-INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
+match_test_input_b_inc_exact_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
   ID = "7",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -115,7 +115,7 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   DOB = "1972-08-24",
   NOTES = "Confident - postcode missing"
 ))
-INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
+match_test_input_b_inc_exact_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
   ID = "8",
   SURNAME = NA,
   FORENAME = "MICHAEL",
@@ -123,7 +123,7 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   DOB = "1972-08-24",
   NOTES = "Confident - surname missing"
 ))
-INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
+match_test_input_b_inc_exact_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
   ID = "9",
   SURNAME = "CORLEON",
   FORENAME = "MICHEAL",
@@ -131,7 +131,7 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   DOB = "1972-08-24",
   NOTES = "Confident - DOB match and others close"
 ))
-INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
+match_test_input_b_inc_exact_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
   ID = "10",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -139,7 +139,7 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   DOB = "1973-09-25",
   NOTES = "No match - DOB out by 3+"
 ))
-INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
+match_test_input_b_inc_exact_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
   ID = "11",
   SURNAME = "CORLEONE",
   FORENAME = "FREDO",
@@ -147,7 +147,7 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   DOB = "1972-08-24",
   NOTES = "No match - forename different"
 ))
-INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
+match_test_input_b_inc_exact_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
   ID = "12",
   SURNAME = "HAGAN",
   FORENAME = "TOM",
@@ -156,7 +156,7 @@ INPUT_B_INC_EXACT_MATCH <- rbind(INPUT_B_INC_EXACT_MATCH, data.frame(
   NOTES = "No match - all different"
 ))
 
-saveRDS(INPUT_B_INC_EXACT_MATCH, file = "./tests/testthat/testdata/match_test_input_b_inc_exact_match.rds")
+save(match_test_input_b_inc_exact_match, file = "./tests/testthat/testdata/match_test_input_b_inc_exact_match.rda")
 
 
 # INPUT_B_EXCL_EXACT_MATCH --------------------------------------------------------------------
@@ -164,10 +164,10 @@ saveRDS(INPUT_B_INC_EXACT_MATCH, file = "./tests/testthat/testdata/match_test_in
 # will include multiple potential matches
 # none of these will be an exact match though
 
-INPUT_B_EXCL_EXACT_MATCH <- INPUT_B_INC_EXACT_MATCH %>%
+match_test_input_b_excl_exact_match <- match_test_input_b_inc_exact_match %>%
   dplyr::filter(ID != "1")
 
-saveRDS(INPUT_B_EXCL_EXACT_MATCH, file = "./tests/testthat/testdata/match_test_input_b_excl_exact_match.rds")
+save(match_test_input_b_excl_exact_match, file = "./tests/testthat/testdata/match_test_input_b_excl_exact_match.rda")
 
 
 
@@ -175,7 +175,7 @@ saveRDS(INPUT_B_EXCL_EXACT_MATCH, file = "./tests/testthat/testdata/match_test_i
 # file for "right hand side" of testing
 # will include multiple potential matches
 # all should be an exact match but only with different formatting of the DOB string
-INPUT_B_DATE_FORMAT_MIX <- data.frame(
+match_test_input_b_date_format_mix <- data.frame(
   ID = "1",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -183,7 +183,7 @@ INPUT_B_DATE_FORMAT_MIX <- data.frame(
   DOB = "1972-08-24",
   NOTES = "Exact match"
 )
-INPUT_B_DATE_FORMAT_MIX <- rbind(INPUT_B_DATE_FORMAT_MIX, data.frame(
+match_test_input_b_date_format_mix <- rbind(match_test_input_b_date_format_mix, data.frame(
   ID = "2",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -191,7 +191,7 @@ INPUT_B_DATE_FORMAT_MIX <- rbind(INPUT_B_DATE_FORMAT_MIX, data.frame(
   DOB = "1972-24-08",
   NOTES = "Exact match"
 ))
-INPUT_B_DATE_FORMAT_MIX <- rbind(INPUT_B_DATE_FORMAT_MIX, data.frame(
+match_test_input_b_date_format_mix <- rbind(match_test_input_b_date_format_mix, data.frame(
   ID = "3",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -199,7 +199,7 @@ INPUT_B_DATE_FORMAT_MIX <- rbind(INPUT_B_DATE_FORMAT_MIX, data.frame(
   DOB = "24/08/1972",
   NOTES = "Exact match"
 ))
-INPUT_B_DATE_FORMAT_MIX <- rbind(INPUT_B_DATE_FORMAT_MIX, data.frame(
+match_test_input_b_date_format_mix <- rbind(match_test_input_b_date_format_mix, data.frame(
   ID = "4",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -207,7 +207,7 @@ INPUT_B_DATE_FORMAT_MIX <- rbind(INPUT_B_DATE_FORMAT_MIX, data.frame(
   DOB = "24-aug-1972",
   NOTES = "Exact match"
 ))
-INPUT_B_DATE_FORMAT_MIX <- rbind(INPUT_B_DATE_FORMAT_MIX, data.frame(
+match_test_input_b_date_format_mix <- rbind(match_test_input_b_date_format_mix, data.frame(
   ID = "5",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -215,7 +215,7 @@ INPUT_B_DATE_FORMAT_MIX <- rbind(INPUT_B_DATE_FORMAT_MIX, data.frame(
   DOB = "08-24-1972",
   NOTES = "Exact match"
 ))
-INPUT_B_DATE_FORMAT_MIX <- rbind(INPUT_B_DATE_FORMAT_MIX, data.frame(
+match_test_input_b_date_format_mix <- rbind(match_test_input_b_date_format_mix, data.frame(
   ID = "6",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -224,7 +224,7 @@ INPUT_B_DATE_FORMAT_MIX <- rbind(INPUT_B_DATE_FORMAT_MIX, data.frame(
   NOTES = "Exact match"
 ))
 
-saveRDS(INPUT_B_DATE_FORMAT_MIX, file = "./tests/testthat/testdata/match_test_input_b_date_format_mix.rds")
+save(match_test_input_b_date_format_mix, file = "./tests/testthat/testdata/match_test_input_b_date_format_mix.rda")
 
 
 
@@ -233,7 +233,7 @@ saveRDS(INPUT_B_DATE_FORMAT_MIX, file = "./tests/testthat/testdata/match_test_in
 # will include multiple potential matches
 # all should be an exact match but only with different formatting of the POSTCODE string
 
-INPUT_B_POSTCODE_FORMAT_MIX <- data.frame(
+match_test_input_b_postcode_format_mix <- data.frame(
   ID = "1",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -241,7 +241,7 @@ INPUT_B_POSTCODE_FORMAT_MIX <- data.frame(
   DOB = "1972-08-24",
   NOTES = "Exact match"
 )
-INPUT_B_POSTCODE_FORMAT_MIX <- rbind(INPUT_B_POSTCODE_FORMAT_MIX, data.frame(
+match_test_input_b_postcode_format_mix <- rbind(match_test_input_b_postcode_format_mix, data.frame(
   ID = "2",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -249,7 +249,7 @@ INPUT_B_POSTCODE_FORMAT_MIX <- rbind(INPUT_B_POSTCODE_FORMAT_MIX, data.frame(
   DOB = "1972-08-24",
   NOTES = "Exact match"
 ))
-INPUT_B_POSTCODE_FORMAT_MIX <- rbind(INPUT_B_POSTCODE_FORMAT_MIX, data.frame(
+match_test_input_b_postcode_format_mix <- rbind(match_test_input_b_postcode_format_mix, data.frame(
   ID = "3",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -257,7 +257,7 @@ INPUT_B_POSTCODE_FORMAT_MIX <- rbind(INPUT_B_POSTCODE_FORMAT_MIX, data.frame(
   DOB = "1972-08-24",
   NOTES = "Exact match"
 ))
-INPUT_B_POSTCODE_FORMAT_MIX <- rbind(INPUT_B_POSTCODE_FORMAT_MIX, data.frame(
+match_test_input_b_postcode_format_mix <- rbind(match_test_input_b_postcode_format_mix, data.frame(
   ID = "4",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -265,7 +265,7 @@ INPUT_B_POSTCODE_FORMAT_MIX <- rbind(INPUT_B_POSTCODE_FORMAT_MIX, data.frame(
   DOB = "1972-08-24",
   NOTES = "Exact match"
 ))
-INPUT_B_POSTCODE_FORMAT_MIX <- rbind(INPUT_B_POSTCODE_FORMAT_MIX, data.frame(
+match_test_input_b_postcode_format_mix <- rbind(match_test_input_b_postcode_format_mix, data.frame(
   ID = "5",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -273,7 +273,7 @@ INPUT_B_POSTCODE_FORMAT_MIX <- rbind(INPUT_B_POSTCODE_FORMAT_MIX, data.frame(
   DOB = "1972-08-24",
   NOTES = "Exact match"
 ))
-INPUT_B_POSTCODE_FORMAT_MIX <- rbind(INPUT_B_POSTCODE_FORMAT_MIX, data.frame(
+match_test_input_b_postcode_format_mix <- rbind(match_test_input_b_postcode_format_mix, data.frame(
   ID = "6",
   SURNAME = "CORLEONE",
   FORENAME = "MICHAEL",
@@ -282,14 +282,14 @@ INPUT_B_POSTCODE_FORMAT_MIX <- rbind(INPUT_B_POSTCODE_FORMAT_MIX, data.frame(
   NOTES = "Exact match"
 ))
 
-saveRDS(INPUT_B_POSTCODE_FORMAT_MIX, file = "./tests/testthat/testdata/match_test_input_b_postcode_format_mix.rds")
+save(match_test_input_b_postcode_format_mix, file = "./tests/testthat/testdata/match_test_input_b_postcode_format_mix.rda")
 
 
 
 
 # OUTPUT TEST01- INPUT_A_SINGLE_CASE v INPUT_B_INC_EXACT_MATCH --------------------------------
 # output will be a single row showing the exact match
-OUTPUT_TEST01 <- data.frame(
+match_test_output_test01 <- data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "1",
   MATCH_TYPE = "Exact",
@@ -298,17 +298,17 @@ OUTPUT_TEST01 <- data.frame(
 )
 
 # format dataset
-OUTPUT_TEST01 <- OUTPUT_TEST01 %>%
+match_test_output_test01 <- match_test_output_test01 %>%
   mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
-saveRDS(OUTPUT_TEST01, file = "./tests/testthat/testdata/match_test_output_test01.rds")
+save(match_test_output_test01, file = "./tests/testthat/testdata/match_test_output_test01.rda")
 
 
 # OUTPUT TEST02- INPUT_A_SINGLE_CASE v INPUT_B_EXCL_EXACT_MATCH --------------------------------
 # output will be multiple rows for all the confident matches
 # output dataset will include all fields from both datasets
-OUTPUT_TEST02 <- data.frame(
+match_test_output_test02 <- data.frame(
   DF1_INPUT_ID = "1",
   DF1_INPUT_FORENAME = "MICHAEL",
   DF1_INPUT_SURNAME = "CORLEONE",
@@ -328,7 +328,7 @@ OUTPUT_TEST02 <- data.frame(
   POSTCODE_SCORE = 1.0000,
   DF2_NOTES = "Confident - surname close"
 )
-OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
+match_test_output_test02 <- rbind(match_test_output_test02, data.frame(
   DF1_INPUT_ID = "1",
   DF1_INPUT_FORENAME = "MICHAEL",
   DF1_INPUT_SURNAME = "CORLEONE",
@@ -348,7 +348,7 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_SCORE = 1.0000,
   DF2_NOTES = "Confident - forename close"
 ))
-OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
+match_test_output_test02 <- rbind(match_test_output_test02, data.frame(
   DF1_INPUT_ID = "1",
   DF1_INPUT_FORENAME = "MICHAEL",
   DF1_INPUT_SURNAME = "CORLEONE",
@@ -368,7 +368,7 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_SCORE = 0.7143,
   DF2_NOTES = "Confident - postcode close"
 ))
-OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
+match_test_output_test02 <- rbind(match_test_output_test02, data.frame(
   DF1_INPUT_ID = "1",
   DF1_INPUT_FORENAME = "MICHAEL",
   DF1_INPUT_SURNAME = "CORLEONE",
@@ -388,7 +388,7 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_SCORE = 1.0000,
   DF2_NOTES = "Confident - DOB 1 out"
 ))
-OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
+match_test_output_test02 <- rbind(match_test_output_test02, data.frame(
   DF1_INPUT_ID = "1",
   DF1_INPUT_FORENAME = "MICHAEL",
   DF1_INPUT_SURNAME = "CORLEONE",
@@ -408,7 +408,7 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_SCORE = 1.0000,
   DF2_NOTES = "Confident - DOB 2 out"
 ))
-OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
+match_test_output_test02 <- rbind(match_test_output_test02, data.frame(
   DF1_INPUT_ID = "1",
   DF1_INPUT_FORENAME = "MICHAEL",
   DF1_INPUT_SURNAME = "CORLEONE",
@@ -428,7 +428,7 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_SCORE = NA,
   DF2_NOTES = "Confident - postcode missing"
 ))
-OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
+match_test_output_test02 <- rbind(match_test_output_test02, data.frame(
   DF1_INPUT_ID = "1",
   DF1_INPUT_FORENAME = "MICHAEL",
   DF1_INPUT_SURNAME = "CORLEONE",
@@ -448,7 +448,7 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
   POSTCODE_SCORE = 1.0000,
   DF2_NOTES = "Confident - surname missing"
 ))
-OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
+match_test_output_test02 <- rbind(match_test_output_test02, data.frame(
   DF1_INPUT_ID = "1",
   DF1_INPUT_FORENAME = "MICHAEL",
   DF1_INPUT_SURNAME = "CORLEONE",
@@ -470,16 +470,16 @@ OUTPUT_TEST02 <- rbind(OUTPUT_TEST02, data.frame(
 ))
 
 # format dataset
-OUTPUT_TEST02 <- OUTPUT_TEST02 %>%
+match_test_output_test02 <- match_test_output_test02 %>%
   mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
-saveRDS(OUTPUT_TEST02, file = "./tests/testthat/testdata/match_test_output_test02.rds")
+save(match_test_output_test02, file = "./tests/testthat/testdata/match_test_output_test02.rda")
 
 
 # OUTPUT TEST03- INPUT_A_MULTIPLE_CASE v INPUT_B_INC_EXACT_MATCH --------------------------------
 # output will be a single row showing the exact match
-OUTPUT_TEST03 <- data.frame(
+match_test_output_test03 <- data.frame(
   DF1_INPUT_ID = "1",
   DF1_INPUT_FORENAME = "MICHAEL",
   DF1_INPUT_SURNAME = "CORLEONE",
@@ -494,7 +494,7 @@ OUTPUT_TEST03 <- data.frame(
   MATCH_COUNT = 1,
   MATCH_SCORE = 1
 )
-OUTPUT_TEST03 <- rbind(OUTPUT_TEST03, data.frame(
+match_test_output_test03 <- rbind(match_test_output_test03, data.frame(
   DF1_INPUT_ID = "2",
   DF1_INPUT_FORENAME = "LUCA",
   DF1_INPUT_SURNAME = "BRASI",
@@ -511,16 +511,16 @@ OUTPUT_TEST03 <- rbind(OUTPUT_TEST03, data.frame(
 ))
 
 # format dataset
-OUTPUT_TEST03 <- OUTPUT_TEST03 %>%
+match_test_output_test03 <- match_test_output_test03 %>%
   mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
-saveRDS(OUTPUT_TEST03, file = "./tests/testthat/testdata/match_test_output_test03.rds")
+save(match_test_output_test03, file = "./tests/testthat/testdata/match_test_output_test03.rda")
 
 
 # OUTPUT TEST04- INPUT_A_NO_MATCH_CASE v INPUT_B_INC_EXACT_MATCH --------------------------------
 # output will be a single row showing the exact match
-OUTPUT_TEST04 <- data.frame(
+match_test_output_test04 <- data.frame(
   DF1_INPUT_ID = "2",
   DF2_INPUT_ID = NA,
   MATCH_TYPE = "No Match",
@@ -529,51 +529,51 @@ OUTPUT_TEST04 <- data.frame(
 )
 
 # format dataset
-OUTPUT_TEST04 <- OUTPUT_TEST04 %>%
+match_test_output_test04 <- match_test_output_test04 %>%
   mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
-saveRDS(OUTPUT_TEST04, file = "./tests/testthat/testdata/match_test_output_test04.rds")
+save(match_test_output_test04, file = "./tests/testthat/testdata/match_test_output_test04.rda")
 
 
 # OUTPUT TEST05- INPUT_A_SINGLE_CASE v INPUT_B_FORMAT_DATES --------------------------------
 # output will be a single row showing the exact match
-OUTPUT_TEST05 <- data.frame(
+match_test_output_test05 <- data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "1",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 )
-OUTPUT_TEST05 <- rbind(OUTPUT_TEST05, data.frame(
+match_test_output_test05 <- rbind(match_test_output_test05, data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "2",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
-OUTPUT_TEST05 <- rbind(OUTPUT_TEST05, data.frame(
+match_test_output_test05 <- rbind(match_test_output_test05, data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "3",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
-OUTPUT_TEST05 <- rbind(OUTPUT_TEST05, data.frame(
+match_test_output_test05 <- rbind(match_test_output_test05, data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "4",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
-OUTPUT_TEST05 <- rbind(OUTPUT_TEST05, data.frame(
+match_test_output_test05 <- rbind(match_test_output_test05, data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "5",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
-OUTPUT_TEST05 <- rbind(OUTPUT_TEST05, data.frame(
+match_test_output_test05 <- rbind(match_test_output_test05, data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "6",
   MATCH_TYPE = "Exact",
@@ -582,51 +582,51 @@ OUTPUT_TEST05 <- rbind(OUTPUT_TEST05, data.frame(
 ))
 
 # format dataset
-OUTPUT_TEST05 <- OUTPUT_TEST05 %>%
+match_test_output_test05 <- match_test_output_test05 %>%
   mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
-saveRDS(OUTPUT_TEST05, file = "./tests/testthat/testdata/match_test_output_test05.rds")
+save(match_test_output_test05, file = "./tests/testthat/testdata/match_test_output_test05.rda")
 
 
 # OUTPUT TEST05- INPUT_A_SINGLE_CASE v INPUT_B_FORMAT_DATES --------------------------------
 # output will be a single row showing the exact match
-OUTPUT_TEST06 <- data.frame(
+match_test_output_test06 <- data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "1",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 )
-OUTPUT_TEST06 <- rbind(OUTPUT_TEST06, data.frame(
+match_test_output_test06 <- rbind(match_test_output_test06, data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "2",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
-OUTPUT_TEST06 <- rbind(OUTPUT_TEST06, data.frame(
+match_test_output_test06 <- rbind(match_test_output_test06, data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "3",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
-OUTPUT_TEST06 <- rbind(OUTPUT_TEST06, data.frame(
+match_test_output_test06 <- rbind(match_test_output_test06, data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "4",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
-OUTPUT_TEST06 <- rbind(OUTPUT_TEST06, data.frame(
+match_test_output_test06 <- rbind(match_test_output_test06, data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "5",
   MATCH_TYPE = "Exact",
   MATCH_COUNT = 6,
   MATCH_SCORE = 1
 ))
-OUTPUT_TEST06 <- rbind(OUTPUT_TEST06, data.frame(
+match_test_output_test06 <- rbind(match_test_output_test06, data.frame(
   DF1_INPUT_ID = "1",
   DF2_INPUT_ID = "6",
   MATCH_TYPE = "Exact",
@@ -635,8 +635,8 @@ OUTPUT_TEST06 <- rbind(OUTPUT_TEST06, data.frame(
 ))
 
 # format dataset
-OUTPUT_TEST06 <- OUTPUT_TEST06 %>%
+match_test_output_test06 <- match_test_output_test06 %>%
   mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
-saveRDS(OUTPUT_TEST06, file = "./tests/testthat/testdata/match_test_output_test06.rds")
+save(match_test_output_test06, file = "./tests/testthat/testdata/match_test_output_test06.rda")

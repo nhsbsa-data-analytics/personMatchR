@@ -93,5 +93,7 @@ DOB_RESULT <- c(
 
 
 # Save files to test folder
-saveRDS(data.frame(ID = seq(1:length(DOB_TEST)), DOB = DOB_TEST), file = "./tests/testthat/testdata/test_date_input.rds")
-saveRDS(data.frame(ID = seq(1:length(DOB_RESULT)), DOB = DOB_RESULT), file = "./tests/testthat/testdata/test_date_expected.rds")
+test_date_input <- data.frame(ID = seq(1:length(DOB_TEST)), DOB = DOB_TEST)
+save(test_date_input, file = "./tests/testthat/testdata/test_date_input.rda")
+test_date_expected <- data.frame(ID = seq(1:length(DOB_RESULT)), DOB = DOB_RESULT)
+save(test_date_expected, file = "./tests/testthat/testdata/test_date_expected.rda")

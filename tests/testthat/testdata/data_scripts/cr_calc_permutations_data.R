@@ -7,7 +7,7 @@
 
 # Test Case Dataset ---------------------------------------------------------------------------
 # create initial test case
-TEST_INPUT <- data.frame(
+test_calc_permutations_input <- data.frame(
   ID = 1,
   FORENAME = "MICHAEL",
   SURNAME = "CORLEONE",
@@ -16,7 +16,7 @@ TEST_INPUT <- data.frame(
 )
 
 # create expect output
-TEST_OUTPUT <- data.frame(
+test_calc_permutations_expected <- data.frame(
   ID = 1,
   FORENAME = "MICHAEL",
   SURNAME = "CORLEONE",
@@ -61,5 +61,5 @@ TEST_OUTPUT <- data.frame(
 
 
 # Save files to test folder
-saveRDS(TEST_INPUT, file = "./tests/testthat/testdata/test_calc_permutations_input.rds")
-saveRDS(TEST_OUTPUT, file = "./tests/testthat/testdata/test_calc_permutations_expected.rds")
+save(test_calc_permutations_input, file = "./tests/testthat/testdata/test_calc_permutations_input.rda")
+save(test_calc_permutations_expected, file = "./tests/testthat/testdata/test_calc_permutations_expected.rda")

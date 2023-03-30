@@ -1,6 +1,8 @@
 test_that("Match permutation string formatting", {
-  test_run <- calc_permutations(readRDS("./testdata/test_calc_permutations_input.rds"), FORENAME, SURNAME, POSTCODE, DOB)
-  expected_results <- readRDS("./testdata/test_calc_permutations_expected.rds")
+  load("./testdata/test_calc_permutations_input.rda")
+  test_run <- calc_permutations(test_calc_permutations_input, FORENAME, SURNAME, POSTCODE, DOB)
+  load("./testdata/test_calc_permutations_expected.rda")
+  expected_results <- test_calc_permutations_expected
 
   expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
 })

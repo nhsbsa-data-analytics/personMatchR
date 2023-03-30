@@ -53,5 +53,7 @@ TEST_OUTPUT <- rbind(TEST_OUTPUT, data.frame(DOB_A = "20001225", DOB_B = "202212
 
 
 # Save files to test folder
-saveRDS(TEST_INPUT, file = "./tests/testthat/testdata/test_filter_dob_input.rds")
-saveRDS(TEST_OUTPUT, file = "./tests/testthat/testdata/test_filter_dob_expected.rds")
+test_filter_dob_input <- TEST_INPUT
+save(test_filter_dob_input, file = "./tests/testthat/testdata/test_filter_dob_input.rda")
+test_filter_dob_expected <- TEST_OUTPUT
+save(test_filter_dob_expected, file = "./tests/testthat/testdata/test_filter_dob_expected.rda")
