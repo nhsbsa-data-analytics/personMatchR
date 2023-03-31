@@ -4,5 +4,5 @@ test_that("Name string formatting", {
   load("./testdata/test_name_expected.rda")
   expected_results <- test_name_expected
 
-  expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })

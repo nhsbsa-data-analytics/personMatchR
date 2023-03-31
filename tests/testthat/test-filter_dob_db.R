@@ -28,5 +28,5 @@ testthat::test_that("DOB filter function for similar dates", {
   DBI::dbDisconnect(con)
 
   # Cheeck if equal
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })

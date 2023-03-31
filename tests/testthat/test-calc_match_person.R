@@ -19,7 +19,7 @@ test_that("MATCH TEST01: Single exact match (key fields only)", {
   load("./testdata/match_test_output_test01.rda")
   expected_results <- match_test_output_test01
 
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })
 
 
@@ -60,7 +60,7 @@ test_that("MATCH TEST02: multiple confident matches (all fields)", {
   load("./testdata/match_test_output_test02.rda")
   expected_results <- match_test_output_test02
 
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })
 
 
@@ -92,7 +92,7 @@ test_that("MATCH TEST03: single exact match, plus no match (match fields)", {
   load("./testdata/match_test_output_test03.rda")
   expected_results <- match_test_output_test03
 
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })
 
 
@@ -125,7 +125,7 @@ test_that("MATCH TEST04: single no match (key fields)", {
   load("./testdata/match_test_output_test04.rda")
   expected_results <- match_test_output_test04
 
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })
 
 
@@ -157,7 +157,7 @@ test_that("MATCH TEST05: date formats - multiple exact matches (key fields)", {
   load("./testdata/match_test_output_test05.rda")
   expected_results <- match_test_output_test05
 
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })
 
 
@@ -189,7 +189,7 @@ test_that("MATCH TEST06: postcode formats - multiple exact matches (key fields)"
   load("./testdata/match_test_output_test06.rda")
   expected_results <- match_test_output_test06
 
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })
 
 

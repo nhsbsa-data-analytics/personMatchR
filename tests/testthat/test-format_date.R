@@ -4,5 +4,5 @@ test_that("Date string formatting", {
   load("./testdata/test_date_expected.rda")
   expected_results <- test_date_expected
 
-  expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })

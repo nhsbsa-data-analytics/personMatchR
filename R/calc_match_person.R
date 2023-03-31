@@ -287,10 +287,9 @@ calc_match_person <- function(df_one, id_one, forename_one, surname_one, dob_one
 
     # Final cross-join matches, with corss-join threshold in place
     final_matches <- non_matches %>%
-      dplyr::full_join(
+      dplyr::cross_join(
         y = df_two %>%
-          dplyr::select(all_of(df_two_cols)),
-        by = character()
+          dplyr::select(all_of(df_two_cols))
       ) %>%
       dplyr::mutate(
         # If single character forename handle differently, otherwise JW
