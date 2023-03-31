@@ -329,6 +329,15 @@ calc_match_person <- function(df_one, id_one, forename_one, surname_one, dob_one
             (ifelse(is.na(DOB_SCORE), 0, DOB_SCORE) * sw_dob) +
             (ifelse(is.na(JW_POSTCODE), 0, JW_POSTCODE) * sw_postcode)
         ))
+    } else {
+      # create empty fields for missing match output
+      # align structure of final_matches to that of matches
+      final_matches <- final_matches %>%
+        dplyr::mutate(JW_SURNAME = as.numeric(NA),
+                      JW_POSTCODE = as.numeric(NA),
+                      MATCH_TYPE = as.character(NA),
+                      MATCH_SCORE = as.numeric(NA)
+        )
     }
 
     # Re-determine non-matches
@@ -361,6 +370,13 @@ calc_match_person <- function(df_one, id_one, forename_one, surname_one, dob_one
       MATCH_TYPE = "No Match",
       MATCH_SCORE = 0
     )
+
+  # trim matches and non_matches to only include required columns
+  key_columns = c("ID_ONE", "FORENAME_ONE", "SURNAME_ONE", "DOB_ONE", "POSTCODE_ONE",
+                  "ID_TWO", "FORENAME_TWO", "SURNAME_TWO", "DOB_TWO", "POSTCODE_TWO",
+                  "JW_FORENAME", "JW_SURNAME", "JW_POSTCODE", "DOB_SCORE", "MATCH_TYPE", "MATCH_SCORE")
+  matches <- matches %>% dplyr::select(key_columns)
+  non_matches <- non_matches %>% dplyr::select(key_columns)
 
   # combine the matches and non-matches if determined by the function parameter
   # handle cases where either of the datasets may be empty
