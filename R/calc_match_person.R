@@ -375,8 +375,8 @@ calc_match_person <- function(df_one, id_one, forename_one, surname_one, dob_one
   key_columns = c("ID_ONE", "FORENAME_ONE", "SURNAME_ONE", "DOB_ONE", "POSTCODE_ONE",
                   "ID_TWO", "FORENAME_TWO", "SURNAME_TWO", "DOB_TWO", "POSTCODE_TWO",
                   "JW_FORENAME", "JW_SURNAME", "JW_POSTCODE", "DOB_SCORE", "MATCH_TYPE", "MATCH_SCORE")
-  matches <- matches %>% dplyr::select(key_columns)
-  non_matches <- non_matches %>% dplyr::select(key_columns)
+  matches <- matches %>% dplyr::select(all_of(key_columns))
+  non_matches <- non_matches %>% dplyr::select(all_of(key_columns))
 
   # combine the matches and non-matches if determined by the function parameter
   # handle cases where either of the datasets may be empty
