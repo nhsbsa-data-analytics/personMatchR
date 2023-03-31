@@ -5,12 +5,17 @@
 #'
 #'
 #' @param df a dataframe to feed into function
-#' @param dob A vector of type character, integer or numeric with date expressions
+#' @param dob A vector of type date, character or integer with date expressions
 #'
 #' @return A dataframe with cleansed date (converted to YYYYMMDD) information
 #' @export
 #'
 format_date <- function(df, date) {
+  # convert non-character to character
+  df <- df %>%
+    dplyr::mutate({{ date }} := as.character({{ date }}))
+
+  # handle formatting
   df %>%
     dplyr::mutate({{ date }} := ifelse(
       test = is.na({{ date }}) | is.null({{ date }}) | {{ date }} == "",

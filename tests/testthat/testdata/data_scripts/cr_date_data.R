@@ -91,9 +91,46 @@ DOB_RESULT <- c(
   NA # ""
 )
 
+DOB_TEST_INTEGER <- c(
+  20002512,
+  20000131,
+  20003101,
+  20003131,
+  251220,
+  NA
+)
+
+DOB_RESULT_INTEGER <- c(
+  "20001225",
+  "20000131",
+  "20000131",
+  NA,
+  "20201225",
+  NA
+)
+
+DOB_TEST_DATE <- c(
+  as.Date("20001225","%Y%m%d"),
+  NA
+)
+
+DOB_RESULT_DATE <- c(
+  "20001225",
+  NA
+)
 
 # Save files to test folder
 test_date_input <- data.frame(ID = seq(1:length(DOB_TEST)), DOB = DOB_TEST)
 save(test_date_input, file = "./tests/testthat/testdata/test_date_input.rda")
 test_date_expected <- data.frame(ID = seq(1:length(DOB_RESULT)), DOB = DOB_RESULT)
 save(test_date_expected, file = "./tests/testthat/testdata/test_date_expected.rda")
+
+test_date_input_integer <- data.frame(ID = seq(1:length(DOB_TEST_INTEGER)), DOB = DOB_TEST_INTEGER)
+save(test_date_input_integer, file = "./tests/testthat/testdata/test_date_input_integer.rda")
+test_date_expected_integer <- data.frame(ID = seq(1:length(DOB_RESULT_INTEGER)), DOB = DOB_RESULT_INTEGER)
+save(test_date_expected_integer, file = "./tests/testthat/testdata/test_date_expected_integer.rda")
+
+test_date_input_date <- data.frame(ID = seq(1:length(DOB_TEST_DATE)), DOB = DOB_TEST_DATE)
+save(test_date_input_date, file = "./tests/testthat/testdata/test_date_input_date.rda")
+test_date_expected_date <- data.frame(ID = seq(1:length(DOB_RESULT_DATE)), DOB = DOB_RESULT_DATE)
+save(test_date_expected_date, file = "./tests/testthat/testdata/test_date_expected_date.rda")

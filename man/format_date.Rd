@@ -9,7 +9,7 @@ format_date(df, date)
 \arguments{
 \item{df}{a dataframe to feed into function}
 
-\item{dob}{A vector of type character, integer or numeric with date expressions}
+\item{dob}{A vector of type date, character or integer with date expressions}
 }
 \value{
 A dataframe with cleansed date (converted to YYYYMMDD) information
