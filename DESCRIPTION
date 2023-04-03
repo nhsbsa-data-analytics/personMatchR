@@ -38,7 +38,7 @@ Depends:
     R (>= 4.1.0)
 RoxygenNote: 7.2.1
 Imports: 
-    dplyr,
+    dplyr (>= 1.1.0),
     dbplyr,
     stringr,
     stringdist,
