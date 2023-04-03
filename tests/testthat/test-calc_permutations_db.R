@@ -28,5 +28,5 @@ testthat::test_that("Match permutation string formatting", {
   DBI::dbDisconnect(con)
 
   # Check if equal
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })

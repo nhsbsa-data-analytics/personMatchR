@@ -44,7 +44,7 @@ testthat::test_that("MATCH TEST01: Single exact match (key fields only)", {
   DBI::dbDisconnect(con)
 
   # Check if equal
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })
 
 # Test Two ---------------------------------------------------------------------
@@ -117,7 +117,7 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
   DBI::dbDisconnect(con)
 
   # Check if equal
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })
 
 # Test Three -------------------------------------------------------------------
@@ -170,7 +170,7 @@ testthat::test_that("MATCH TEST03: single exact match, plus no match (match fiel
   DBI::dbDisconnect(con)
 
   # Check if equal
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })
 
 # Test Four --------------------------------------------------------------------
@@ -224,5 +224,5 @@ testthat::test_that("MATCH TEST04: single no match (key fields)", {
   DBI::dbDisconnect(con)
 
   # Check if equal
-  testthat::expect_equal(dplyr::all_equal(test_run, expected_results), TRUE)
+  testthat::expect_equal(all.equal(as.data.frame(test_run), as.data.frame(expected_results)), TRUE)
 })
