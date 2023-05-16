@@ -58,7 +58,7 @@ calc_match_person_db <- function(df_one, id_one, forename_one, surname_one, dob_
   }
 
   # show warning prompt to user to make sure they have applied the formatting functions
-  cat("\nWARNING: Input datasets should have been formatted using available functions and output saved:\n\n")
+  cat("\nREMINDER: Have input datasets been formatted using available functions and output saved?:\n\n")
   cat("df_one <- df_one %>%\n")
   cat("   personMatchR::format_name_db(., forename) %>%\n")
   cat("   personMatchR::format_name_db(., surname) %>%\n")
@@ -275,7 +275,7 @@ calc_match_person_db <- function(df_one, id_one, forename_one, surname_one, dob_
 
     # Determine missing non-match fields
     non_matches <- df_one %>%
-      dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE)) %>%
+      dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE), by = "ID_ONE") %>%
       dplyr::mutate(
         ID_TWO = NA,
         FORENAME_TWO = NA,

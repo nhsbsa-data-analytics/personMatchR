@@ -269,7 +269,7 @@ calc_match_person <- function(df_one, id_one, forename_one, surname_one, dob_one
 
   # Determine non-matches
   non_matches <- df_one %>%
-    dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE))
+    dplyr::anti_join(y = matches %>% dplyr::select(ID_ONE), by = "ID_ONE")
 
   # Final cross-join tally
   non_match_rows <- nrow(non_matches) / 1000
@@ -282,8 +282,8 @@ calc_match_person <- function(df_one, id_one, forename_one, surname_one, dob_one
   if (cross_join_size > 0 & cross_join_size <= 10) {
 
     # Message
-    print("Final cross-join performed as less than 10m rows")
-    print(paste0("Cross-join size: ", cross_join_size, " million rows"))
+    print("Final cross-join performed to maximise potential matches as would require less than 10m rows")
+    #print(paste0("Cross-join size: ", cross_join_size, " million rows"))
 
     # Final cross-join matches, with corss-join threshold in place
     final_matches <- non_matches %>%
@@ -341,17 +341,20 @@ calc_match_person <- function(df_one, id_one, forename_one, surname_one, dob_one
 
     # Re-determine non-matches
     non_matches <- non_matches %>%
-      dplyr::anti_join(y = final_matches %>% dplyr::select(ID_ONE))
+      dplyr::anti_join(y = final_matches %>% dplyr::select(ID_ONE), by = "ID_ONE")
 
     # Re-determine total matches df
     matches <- matches %>%
       # Add exact matches
       dplyr::union_all(final_matches)
   } else {
+    # at this point no cross-join  is required as either all matched or would be too many records
+    if(cross_join_size > 10){
+      # Message if the cross-join is not viable
+      print("Final cross-join not viable as would require produce dataset greater than 10m rows")
+      print(paste0("Cross-join size: ", cross_join_size, " million rows"))
+    }
 
-    # Message
-    print("Final cross-join not performed as greater than 10m rows")
-    print(paste0("Cross-join size: ", cross_join_size, " million rows"))
   }
 
   # Determine missing non-match fields
