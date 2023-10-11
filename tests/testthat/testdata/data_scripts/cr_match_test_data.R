@@ -299,7 +299,7 @@ match_test_output_test01 <- data.frame(
 
 # format dataset
 match_test_output_test01 <- match_test_output_test01 %>%
-  mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
+  dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
 save(match_test_output_test01, file = "./tests/testthat/testdata/match_test_output_test01.rda")
@@ -471,7 +471,7 @@ match_test_output_test02 <- rbind(match_test_output_test02, data.frame(
 
 # format dataset
 match_test_output_test02 <- match_test_output_test02 %>%
-  mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
+  dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
 save(match_test_output_test02, file = "./tests/testthat/testdata/match_test_output_test02.rda")
@@ -512,7 +512,7 @@ match_test_output_test03 <- rbind(match_test_output_test03, data.frame(
 
 # format dataset
 match_test_output_test03 <- match_test_output_test03 %>%
-  mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
+  dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
 save(match_test_output_test03, file = "./tests/testthat/testdata/match_test_output_test03.rda")
@@ -530,7 +530,7 @@ match_test_output_test04 <- data.frame(
 
 # format dataset
 match_test_output_test04 <- match_test_output_test04 %>%
-  mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
+  dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
 save(match_test_output_test04, file = "./tests/testthat/testdata/match_test_output_test04.rda")
@@ -583,7 +583,7 @@ match_test_output_test05 <- rbind(match_test_output_test05, data.frame(
 
 # format dataset
 match_test_output_test05 <- match_test_output_test05 %>%
-  mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
+  dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
 save(match_test_output_test05, file = "./tests/testthat/testdata/match_test_output_test05.rda")
@@ -636,7 +636,7 @@ match_test_output_test06 <- rbind(match_test_output_test06, data.frame(
 
 # format dataset
 match_test_output_test06 <- match_test_output_test06 %>%
-  mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
+  dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT))
 
 # save output
 save(match_test_output_test06, file = "./tests/testthat/testdata/match_test_output_test06.rda")

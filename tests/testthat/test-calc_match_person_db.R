@@ -90,7 +90,7 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
 
   # round score values
   test_run <- test_run %>%
-    mutate(
+    dplyr::mutate(
       MATCH_SCORE = round(MATCH_SCORE, 4),
       FORENAME_SCORE = round(FORENAME_SCORE, 4),
       SURNAME_SCORE = round(SURNAME_SCORE, 4),
@@ -105,7 +105,7 @@ testthat::test_that("MATCH TEST02: multiple confident matches (all fields)", {
 
   # Process expected results
   expected_results <- expected_results %>%
-    mutate(
+    dplyr::mutate(
       MATCH_SCORE = round(MATCH_SCORE, 4),
       FORENAME_SCORE = round(FORENAME_SCORE, 4),
       SURNAME_SCORE = round(SURNAME_SCORE, 4),
@@ -154,7 +154,7 @@ testthat::test_that("MATCH TEST03: single exact match, plus no match (match fiel
     output_type = "match",
     inc_no_match = TRUE
   ) %>%
-    collect()
+    dplyr::collect()
 
   # order outputs and apply consistent formatting
   test_run <- test_run %>%
