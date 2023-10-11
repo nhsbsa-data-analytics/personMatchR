@@ -39,7 +39,7 @@ format_postcode <- function(df, id, postcode) {
     dplyr::group_by({{ id }}) %>%
     # Determine total chars and char position per postcode
     dplyr::mutate(
-      ROW = row_number(),
+      ROW = dplyr::row_number(),
       LEN = max(ROW)
     ) %>%
     dplyr::ungroup() %>%
@@ -78,6 +78,6 @@ format_postcode <- function(df, id, postcode) {
     dplyr::distinct() %>%
     # convert "NA" to NA
     dplyr::mutate(
-      {{ postcode }} := na_if({{ postcode }}, "NA")
+      {{ postcode }} := dplyr::na_if({{ postcode }}, "NA")
     )
 }

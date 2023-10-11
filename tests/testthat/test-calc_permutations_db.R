@@ -18,11 +18,11 @@ testthat::test_that("Match permutation string formatting", {
   # Process df1
   test_run <- test_run %>%
     calc_permutations_db(., FORENAME, SURNAME, POSTCODE, DOB) %>%
-    collect()
+    dplyr::collect()
 
   # Process df2
   expected_results <- expected_results %>%
-    collect()
+    dplyr::collect()
 
   # Disconnnect
   DBI::dbDisconnect(con)

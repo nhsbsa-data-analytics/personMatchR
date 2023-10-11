@@ -18,11 +18,11 @@ testthat::test_that("Name string formatting", {
   # Process df1
   test_run <- test_run %>%
     format_name_db(., NAME) %>%
-    collect()
+    dplyr::collect()
 
   # Process df2
   expected_results <- expected_results %>%
-    collect()
+    dplyr::collect()
 
   # Disconnnect
   DBI::dbDisconnect(con)
