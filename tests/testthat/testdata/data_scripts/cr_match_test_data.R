@@ -640,3 +640,301 @@ match_test_output_test06 <- match_test_output_test06 %>%
 
 # save output
 save(match_test_output_test06, file = "./tests/testthat/testdata/match_test_output_test06.rda")
+
+# OUTPUT TEST - TEST DATA FOR CALC_MATCH_PERSON_SELF --------------------------------
+# attach an additional record to the match_test_input_b_inc_exact_match dataset
+match_test_input_self_match <- rbind(match_test_input_b_inc_exact_match, data.frame(
+  ID = "13",
+  SURNAME = "CORLEONE",
+  FORENAME = "MICHAEL",
+  POSTCODE = "NE15 8NY",
+  DOB = "1972-08-24",
+  NOTES = "Exact match"
+))
+
+# create the expected match output results (all matches : key fields)
+match_test_output_self_match_all_key <- match_test_input_self_match |>
+  dplyr::select(DF1_INPUT_ID = ID)
+
+match_test_output_self_match_all_key <- match_test_output_self_match_all_key |>
+  # ID 1 should match to 13 exactly and 2-9 confidently
+  dplyr::inner_join(
+    match_test_input_self_match |>
+      dplyr::filter(ID %in% c(2,3,4,5,6,7,8,9,13)) |>
+      dplyr::select(DF2_INPUT_ID = ID) |>
+      dplyr::mutate(DF1_INPUT_ID = "1") |>
+      dplyr::mutate(MATCH_TYPE = dplyr::case_when(DF2_INPUT_ID == 13 ~ "Exact",
+                                                  TRUE ~ "Confident"),
+                    MATCH_COUNT = 9,
+                    MATCH_SCORE = dplyr::case_when(DF2_INPUT_ID == 2 ~ 0.9962,
+                                                   DF2_INPUT_ID == 3 ~ 0.9914,
+                                                   DF2_INPUT_ID == 4 ~ 0.9571,
+                                                   DF2_INPUT_ID == 5 ~ 0.9520,
+                                                   DF2_INPUT_ID == 6 ~ 0.9000,
+                                                   DF2_INPUT_ID == 7 ~ 0.8500,
+                                                   DF2_INPUT_ID == 8 ~ 0.8500,
+                                                   DF2_INPUT_ID == 9 ~ 0.9834,
+                                                   DF2_INPUT_ID == 13 ~ 1.0000,
+                                                   TRUE ~ 0.0000000
+                                                   )
+                    ),
+    by = "DF1_INPUT_ID")
+# ID 2 should match to 1,3,8,9 and 13 confidently
+match_test_output_self_match_all_key <-
+  rbind(match_test_output_self_match_all_key,
+        match_test_input_self_match |>
+          dplyr::select(DF1_INPUT_ID = ID) |>
+          dplyr::inner_join(
+            match_test_input_self_match |>
+              dplyr::filter(ID %in% c(1,3,8,9,13)) |>
+              dplyr::select(DF2_INPUT_ID = ID) |>
+              dplyr::mutate(DF1_INPUT_ID = "2") |>
+              dplyr::mutate(MATCH_TYPE = "Confident",
+                            MATCH_COUNT = 5,
+                            MATCH_SCORE = dplyr::case_when(DF2_INPUT_ID == 1 ~ 0.9962,
+                                                           DF2_INPUT_ID == 3 ~ 0.9877,
+                                                           DF2_INPUT_ID == 8 ~ 0.8500,
+                                                           DF2_INPUT_ID == 9 ~ 0.9871,
+                                                           DF2_INPUT_ID == 13 ~ 0.9962,
+                                                           TRUE ~ 0.0000000
+                            )
+              ),
+            by = "DF1_INPUT_ID")
+  )
+# ID 3 should match to 1,2,9 and 13 confidently
+match_test_output_self_match_all_key <-
+  rbind(match_test_output_self_match_all_key,
+        match_test_input_self_match |>
+          dplyr::select(DF1_INPUT_ID = ID) |>
+          dplyr::inner_join(
+            match_test_input_self_match |>
+              dplyr::filter(ID %in% c(1,2,9,13)) |>
+              dplyr::select(DF2_INPUT_ID = ID) |>
+              dplyr::mutate(DF1_INPUT_ID = "3") |>
+              dplyr::mutate(MATCH_TYPE = "Confident",
+                            MATCH_COUNT = 4,
+                            MATCH_SCORE = dplyr::case_when(DF2_INPUT_ID == 1 ~ 0.9914,
+                                                           DF2_INPUT_ID == 2 ~ 0.9877,
+                                                           DF2_INPUT_ID == 9 ~ 0.9920,
+                                                           DF2_INPUT_ID == 13 ~ 0.9914,
+                                                           TRUE ~ 0.0000000
+                            )
+              ),
+            by = "DF1_INPUT_ID")
+  )
+# ID 4 should match to 1,7 and 13 confidently
+match_test_output_self_match_all_key <-
+  rbind(match_test_output_self_match_all_key,
+        match_test_input_self_match |>
+          dplyr::select(DF1_INPUT_ID = ID) |>
+          dplyr::inner_join(
+            match_test_input_self_match |>
+              dplyr::filter(ID %in% c(1,7,13)) |>
+              dplyr::select(DF2_INPUT_ID = ID) |>
+              dplyr::mutate(DF1_INPUT_ID = "4") |>
+              dplyr::mutate(MATCH_TYPE = "Confident",
+                            MATCH_COUNT = 3,
+                            MATCH_SCORE = dplyr::case_when(DF2_INPUT_ID == 1 ~ 0.9571,
+                                                           DF2_INPUT_ID == 7 ~ 0.8500,
+                                                           DF2_INPUT_ID == 13 ~ 0.9571,
+                                                           TRUE ~ 0.0000000
+                            )
+              ),
+            by = "DF1_INPUT_ID")
+  )
+# ID 5 should match to 1,6,10 and 13 confidently
+match_test_output_self_match_all_key <-
+  rbind(match_test_output_self_match_all_key,
+        match_test_input_self_match |>
+          dplyr::select(DF1_INPUT_ID = ID) |>
+          dplyr::inner_join(
+            match_test_input_self_match |>
+              dplyr::filter(ID %in% c(1,6,10,13)) |>
+              dplyr::select(DF2_INPUT_ID = ID) |>
+              dplyr::mutate(DF1_INPUT_ID = "5") |>
+              dplyr::mutate(MATCH_TYPE = "Confident",
+                            MATCH_COUNT = 4,
+                            MATCH_SCORE = dplyr::case_when(DF2_INPUT_ID == 1 ~ 0.952,
+                                                           DF2_INPUT_ID == 6 ~ 0.952,
+                                                           DF2_INPUT_ID == 10 ~ 0.900,
+                                                           DF2_INPUT_ID == 13 ~ 0.952,
+                                                           TRUE ~ 0.0000000
+                            )
+              ),
+            by = "DF1_INPUT_ID")
+  )
+# ID 6 should match to 1,5,10 and 13 confidently
+match_test_output_self_match_all_key <-
+  rbind(match_test_output_self_match_all_key,
+        match_test_input_self_match |>
+          dplyr::select(DF1_INPUT_ID = ID) |>
+          dplyr::inner_join(
+            match_test_input_self_match |>
+              dplyr::filter(ID %in% c(1,5,10,13)) |>
+              dplyr::select(DF2_INPUT_ID = ID) |>
+              dplyr::mutate(DF1_INPUT_ID = "6") |>
+              dplyr::mutate(MATCH_TYPE = "Confident",
+                            MATCH_COUNT = 4,
+                            MATCH_SCORE = dplyr::case_when(DF2_INPUT_ID == 1 ~ 0.900,
+                                                           DF2_INPUT_ID == 5 ~ 0.952,
+                                                           DF2_INPUT_ID == 10 ~ 0.952,
+                                                           DF2_INPUT_ID == 13 ~ 0.900,
+                                                           TRUE ~ 0.0000000
+                            )
+              ),
+            by = "DF1_INPUT_ID")
+  )
+# ID 7 should match to 1,4 and 13 confidently
+match_test_output_self_match_all_key <-
+  rbind(match_test_output_self_match_all_key,
+        match_test_input_self_match |>
+          dplyr::select(DF1_INPUT_ID = ID) |>
+          dplyr::inner_join(
+            match_test_input_self_match |>
+              dplyr::filter(ID %in% c(1,4,13)) |>
+              dplyr::select(DF2_INPUT_ID = ID) |>
+              dplyr::mutate(DF1_INPUT_ID = "7") |>
+              dplyr::mutate(MATCH_TYPE = "Confident",
+                            MATCH_COUNT = 3,
+                            MATCH_SCORE = dplyr::case_when(DF2_INPUT_ID == 1 ~ 0.850,
+                                                           DF2_INPUT_ID == 4 ~ 0.850,
+                                                           DF2_INPUT_ID == 13 ~ 0.850,
+                                                           TRUE ~ 0.0000000
+                            )
+              ),
+            by = "DF1_INPUT_ID")
+  )
+# ID 8 should match to 1,2 and 13 confidently
+match_test_output_self_match_all_key <-
+  rbind(match_test_output_self_match_all_key,
+        match_test_input_self_match |>
+          dplyr::select(DF1_INPUT_ID = ID) |>
+          dplyr::inner_join(
+            match_test_input_self_match |>
+              dplyr::filter(ID %in% c(1,2,13)) |>
+              dplyr::select(DF2_INPUT_ID = ID) |>
+              dplyr::mutate(DF1_INPUT_ID = "8") |>
+              dplyr::mutate(MATCH_TYPE = "Confident",
+                            MATCH_COUNT = 3,
+                            MATCH_SCORE = dplyr::case_when(DF2_INPUT_ID == 1 ~ 0.850,
+                                                           DF2_INPUT_ID == 2 ~ 0.850,
+                                                           DF2_INPUT_ID == 13 ~ 0.850,
+                                                           TRUE ~ 0.0000000
+                            )
+              ),
+            by = "DF1_INPUT_ID")
+  )
+# ID 9 should match to 1,2,3 and 13 confidently
+match_test_output_self_match_all_key <-
+  rbind(match_test_output_self_match_all_key,
+        match_test_input_self_match |>
+          dplyr::select(DF1_INPUT_ID = ID) |>
+          dplyr::inner_join(
+            match_test_input_self_match |>
+              dplyr::filter(ID %in% c(1,2,3,13)) |>
+              dplyr::select(DF2_INPUT_ID = ID) |>
+              dplyr::mutate(DF1_INPUT_ID = "9") |>
+              dplyr::mutate(MATCH_TYPE = "Confident",
+                            MATCH_COUNT = 4,
+                            MATCH_SCORE = dplyr::case_when(DF2_INPUT_ID == 1 ~ 0.9834,
+                                                           DF2_INPUT_ID == 2 ~ 0.9871,
+                                                           DF2_INPUT_ID == 3 ~ 0.9920,
+                                                           DF2_INPUT_ID == 13 ~ 0.9834,
+                                                           TRUE ~ 0.0000000
+                            )
+              ),
+            by = "DF1_INPUT_ID")
+  )
+# ID 10 should match to 5 and 6 confidently
+match_test_output_self_match_all_key <-
+  rbind(match_test_output_self_match_all_key,
+        match_test_input_self_match |>
+          dplyr::select(DF1_INPUT_ID = ID) |>
+          dplyr::inner_join(
+            match_test_input_self_match |>
+              dplyr::filter(ID %in% c(5,6)) |>
+              dplyr::select(DF2_INPUT_ID = ID) |>
+              dplyr::mutate(DF1_INPUT_ID = "10") |>
+              dplyr::mutate(MATCH_TYPE = "Confident",
+                            MATCH_COUNT = 2,
+                            MATCH_SCORE = dplyr::case_when(DF2_INPUT_ID == 5 ~ 0.900,
+                                                           DF2_INPUT_ID == 6 ~ 0.952,
+                                                           TRUE ~ 0.0000000
+                            )
+              ),
+            by = "DF1_INPUT_ID")
+  )
+# IDs 11 and 12 should have no matches
+match_test_output_self_match_all_key <-
+  rbind(match_test_output_self_match_all_key,
+        match_test_input_self_match |>
+          dplyr::filter(ID %in% c(11,12)) |>
+          dplyr::select(DF1_INPUT_ID = ID) |>
+          dplyr::mutate(DF2_INPUT_ID = NA,
+                        MATCH_TYPE = "No Match",
+                        MATCH_COUNT = 0,
+                        MATCH_SCORE = 0
+          )
+  )
+# ID 13 should match to 1 exactly and 2-9 confidently
+match_test_output_self_match_all_key <-
+  rbind(match_test_output_self_match_all_key,
+        match_test_input_self_match |>
+          dplyr::select(DF1_INPUT_ID = ID) |>
+          dplyr::inner_join(
+            match_test_input_self_match |>
+              dplyr::filter(ID %in% c(1,2,3,4,5,6,7,8,9)) |>
+              dplyr::select(DF2_INPUT_ID = ID) |>
+              dplyr::mutate(DF1_INPUT_ID = "13") |>
+              dplyr::mutate(MATCH_TYPE = dplyr::case_when(DF2_INPUT_ID == 1 ~ "Exact",
+                                                          TRUE ~ "Confident"),
+                            MATCH_COUNT = 9,
+                            MATCH_SCORE = dplyr::case_when(DF2_INPUT_ID == 1 ~ 1.0000,
+                                                           DF2_INPUT_ID == 2 ~ 0.9962,
+                                                           DF2_INPUT_ID == 3 ~ 0.9914,
+                                                           DF2_INPUT_ID == 4 ~ 0.9571,
+                                                           DF2_INPUT_ID == 5 ~ 0.9520,
+                                                           DF2_INPUT_ID == 6 ~ 0.9000,
+                                                           DF2_INPUT_ID == 7 ~ 0.8500,
+                                                           DF2_INPUT_ID == 8 ~ 0.8500,
+                                                           DF2_INPUT_ID == 9 ~ 0.9834,
+                                                           TRUE ~ 0.0000000
+                            )
+              ),
+            by = "DF1_INPUT_ID")
+  )
+
+# format dataset
+match_test_output_self_match_all_key <- match_test_output_self_match_all_key |>
+  dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) |>
+  dplyr::arrange(DF1_INPUT_ID, DF2_INPUT_ID)
+
+# create the expected match output results (unique match combinations : key fields)
+# take unique combinations from the full dataset
+match_test_output_self_match_unique_combos_key <- match_test_output_self_match_all_key |>
+  dplyr::rowwise() |>
+  dplyr::mutate(
+    min_id = min(ifelse(is.na(DF1_INPUT_ID),0,as.numeric(DF1_INPUT_ID)), ifelse(is.na(DF2_INPUT_ID),0,as.numeric(DF2_INPUT_ID))),
+    max_id = max(ifelse(is.na(DF1_INPUT_ID),0,as.numeric(DF1_INPUT_ID)), ifelse(is.na(DF2_INPUT_ID),0,as.numeric(DF2_INPUT_ID))),
+  ) |>
+  dplyr::ungroup() |>
+  dplyr::group_by(min_id, max_id) |>
+  dplyr::mutate(combo_id = dplyr::row_number(DF1_INPUT_ID)) |>
+  dplyr::ungroup() |>
+  dplyr::filter(combo_id == 1) |>
+  dplyr::select(-min_id, -max_id, -combo_id) |>
+  # recalculate the number of matches
+  dplyr::group_by(DF1_INPUT_ID) |>
+  dplyr::mutate(MATCH_COUNT = n_distinct(DF2_INPUT_ID, na.rm = TRUE)) |>
+  dplyr::ungroup()
+
+
+# format dataset
+match_test_output_self_match_unique_combos_key <- match_test_output_self_match_unique_combos_key |>
+  dplyr::mutate(MATCH_COUNT = as.integer(MATCH_COUNT)) |>
+  dplyr::arrange(DF1_INPUT_ID, DF2_INPUT_ID)
+
+# save output
+save(match_test_input_self_match, file = "./tests/testthat/testdata/match_test_input_self_match.rda")
+save(match_test_output_self_match_all_key, file = "./tests/testthat/testdata/match_test_output_self_match_all_key.rda")
+save(match_test_output_self_match_unique_combos_key, file = "./tests/testthat/testdata/match_test_output_self_match_unique_combos_key.rda")

@@ -39,6 +39,20 @@ connection to database tables:
   - suitable for large volume datasets
   - data formatting will need to be handled prior to matching, with
     functions available in the package to support this
+- calc_match_person_self (added in version 1.1.0.0)
+  - suitable for data-frames containing up to one million records
+  - allows a single data-frame to be matched against itself
+  - will include both exact and confident matches for each record
+    (excluding same ID)
+- calc_match_person_self_db (added in version 1.1.0.0)
+  - currently only set up and tested for Oracle database infrastructure
+    used by NHSBSA
+  - suitable for large volume datasets
+  - data formatting will need to be handled prior to matching, with
+    functions available in the package to support this
+  - allows a single data-frame to be matched against itself
+  - will include both exact and confident matches for each record
+    (excluding same ID)
 
 ## Installation
 
@@ -136,7 +150,7 @@ df_output <- personMatchR::calc_match_person(
 )
 ```
 
-    ## # A tibble: 4 x 5
+    ## # A tibble: 4 × 5
     ##   DF1_INPUT_ID DF2_INPUT_ID MATCH_TYPE MATCH_COUNT MATCH_SCORE
     ##   <chr>        <chr>        <chr>            <dbl>       <dbl>
     ## 1 2            2            Confident            1        0.96
@@ -195,7 +209,7 @@ df_A = df_A %>%
 head(df_A)
 ```
 
-    ## # A tibble: 4 x 5
+    ## # A tibble: 4 × 5
     ##   ID    SURNAME FORENAME DOB      POSTCODE
     ##   <chr> <chr>   <chr>    <chr>    <chr>   
     ## 1 1     OBRIEN  RICHARD  19420325 AA9A9AA 
@@ -259,3 +273,22 @@ include details of records where no match could be found:
 - FALSE
   - the output will only include records where a match could be
     identified
+
+## Match function parameter: unique_combinations_only (self join only)
+
+This parameter will determine whether or not the output results will
+include unique combinations or both versions of a potential match (e.g
+A=B & B=A).
+
+The MATCH_COUNT value will represent the number of matches remaining
+after the data has been limited to unique combinations of potential
+matches.
+
+- TRUE
+  - Results will be limited so that each match pair will only be
+    included once in the output
+  - This may be useful to prevent the same potential match appearing
+    twice
+- FALSE
+  - Both versions of each potential match (e.g. A=B and B=A) will be
+    included in the output
