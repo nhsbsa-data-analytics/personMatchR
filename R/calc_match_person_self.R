@@ -22,7 +22,7 @@
 #' @param sw_dob (default = 0.40) proportion weighting value (0.0-1.0) to be applied to the dob part of the match score
 #' @param sw_postcode (default = 0.15) proportion weighting value (0.0-1.0) to be applied to the postcode part of the match score
 #'
-#' @return dataframe comprising of all potential matches between two datasets
+#' @return dataframe comprising of all potential matches within the dataset
 #' @export
 #'
 calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
@@ -34,6 +34,9 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
 
   # Match arguments
   match.arg(output_type)
+
+  # Parameter Check ---------------------------------------------------------
+  # check input parameters meet requirements
 
   # check if the match score weightings add up to 100% or any of the parameters have been entered as a non numeric value
   if (!is.numeric(sw_forename) || !is.numeric(sw_surname) || !is.numeric(sw_dob) || !is.numeric(sw_postcode)) {
@@ -94,7 +97,10 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
     )
   }
 
-  # Rename columns
+  # Dataset Setup -----------------------------------------------------------
+  # create the datasets that will be used for matching
+
+  # Create version of dataset for left hand side of matching, renaming columns
   df_one <- df  |>
     dplyr::mutate(
       ID_ONE := {{ id }},
@@ -104,7 +110,7 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
       POSTCODE_ONE := {{ postcode }}
     )
 
-  # Rename columns
+  # Create version of dataset for right hand side of matching, renaming columns
   df_two <- df  |>
     dplyr::mutate(
       ID_TWO := {{ id }},
@@ -113,8 +119,6 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
       DOB_TWO := {{ dob }},
       POSTCODE_TWO := {{ postcode }}
     )
-
-
 
   # Format data depending on function input selection
   if (format_data == TRUE) {
@@ -137,7 +141,10 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
   df_one_cols <- colnames(df_one)
   df_two_cols <- colnames(df_two)
 
-  # Exact matches
+  # Exact Matches -----------------------------------------------------------
+  # identify exact matches between the datasets
+
+  # Identify exact matches (all key fields match)
   exact_matches <- df_one |>
     dplyr::inner_join(
       y = df_two,
@@ -151,7 +158,7 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
       relationship = "many-to-many"
     )
 
-  # Reverse exact matches
+  # Identify reverse exact matches (forename = surname & surname = forename)
   exact_matches_reverse <- df_one |>
     dplyr::inner_join(
       y = df_two,
@@ -165,7 +172,7 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
       relationship = "many-to-many"
     )
 
-  # Union exact matches
+  # Union exact matches to get a single dataset of matches and format output
   exact_matches <- exact_matches |>
     dplyr::union_all(exact_matches_reverse) |>
     dplyr::distinct() |>
@@ -184,20 +191,22 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
     # exclude where the IDs match (prevent self-join)
     dplyr::filter(ID_ONE != ID_TWO)
 
+  # Partial Match (permutation based) ---------------------------------------
+  # identify matches where there is a close match between datasets
 
-  # Remaining records
-  remain <- calc_permutations(df_one, FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
+  # Add match permutations to the LHS dataset
+  df_one <- calc_permutations(df_one, FORENAME_ONE, SURNAME_ONE, POSTCODE_ONE, DOB_ONE)
 
-  # Select columns and calculate permutations
+  # Add match permutations to the RHS dataset
   df_two <- calc_permutations(df_two, FORENAME_TWO, SURNAME_TWO, POSTCODE_TWO, DOB_TWO)
 
   # List of permutation-join columns
   perm_num <- paste0("PERM", 1:9)
 
-  # Distinct list of ID perm-join pairs
+  # Combine datasets based on any matching pair of permutation-join columns
   id_pairs <- perm_num |>
     purrr::map(~ {
-      remain |>
+      df_one |>
         dplyr::select(all_of(df_one_cols), {{ .x }}) |>
         dplyr::inner_join(
           df_two |>
@@ -210,7 +219,7 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
     purrr::reduce(function(x, y) dplyr::bind_rows(x, y)) |>
     dplyr::distinct()
 
-  # Filter pairs to remove identified exact matches
+  # Filter match pairs to remove previously identified exact matches
   id_pairs <- id_pairs |>
     dplyr::anti_join(y = exact_matches, by = c("ID_ONE" = "ID_ONE","ID_TWO" = "ID_TWO"))
 
@@ -218,27 +227,32 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
   id_pairs <- id_pairs |>
     dplyr::filter(ID_ONE != ID_TWO)
 
-  # Generate list of feasible dob-pairs with 6 identical characters
-  cross <- filter_name(id_pairs, FORENAME_ONE, FORENAME_TWO)
-  cross <- filter_dob(cross, DOB_ONE, DOB_TWO, 0.75)
+  # Filter the potential matches to remove any that are unfeasible based on forename or DOB matches
+  id_pairs <- filter_name(id_pairs, FORENAME_ONE, FORENAME_TWO)
+  id_pairs <- filter_dob(id_pairs, DOB_ONE, DOB_TWO, 0.75)
 
 
-  # Generate a list
-  matches <- cross |>
+  # Perform match scoring to limit to confident matches only
+  matches <- id_pairs |>
     dplyr::mutate(
-      # If single character forename handle differently, otherwise JW
+      # handle forename matching based on the length of the forename
       JW_FORENAME = dplyr::case_when(
-        length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
+        # If forenames match then score as 1
         FORENAME_ONE == FORENAME_TWO ~ 1,
+        # for initial only forenames, if this matches first character then score as 0.75
+        length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
+        # otherwise use Jaro-Winkler string matching function
         T ~ stringdist::stringsim(FORENAME_ONE, FORENAME_TWO, method = "jw", p = 0.1)
       )
     ) |>
+    # limit to matches with a minimum match score of 0.75 for forename
     dplyr::filter(JW_FORENAME >= 0.75) |>
+    # score the surname and postcode matches and identify match type based on match rules
     dplyr::mutate(
-      # JW match, bypassing exact string matches (DOB_SCORE already calculated)
+      # If the surname/postcode are exact match score as 1 otherwise use Jaro-Winkler  string matching
       JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, stringdist::stringsim(SURNAME_ONE, SURNAME_TWO, method = "jw", p = 0.1)),
       JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, stringdist::stringsim(POSTCODE_ONE, POSTCODE_TWO, method = "jw", p = 0.1)),
-      # Generate confident matches
+      # Flag the match type based on the combination of match scores for each of the key fields
       MATCH_TYPE = dplyr::case_when(
         (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DOB_SCORE == 1) ~ "Exact",
         (JW_SURNAME == 1 & JW_FORENAME == 1 & DOB_SCORE == 1) ~ "Confident",
@@ -258,30 +272,32 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
         (ifelse(is.na(DOB_SCORE), 0, DOB_SCORE) * sw_dob) +
         (ifelse(is.na(JW_POSTCODE), 0, JW_POSTCODE) * sw_postcode)
     )) |>
-
     # Add exact matches
     dplyr::union_all(exact_matches)
 
   # Determine non-matches
   non_matches <- df_one |>
+    # drop the match permutations
+    dplyr::select(-PERM1, -PERM2, -PERM3, -PERM4, -PERM5, -PERM6, -PERM7, -PERM8, -PERM9) |>
     dplyr::anti_join(y = matches |> dplyr::select(ID_ONE), by = "ID_ONE")
 
-  # Final cross-join tally
-  non_match_rows <- nrow(non_matches) / 1000
-  match_rows <- nrow(df_one) / 1000
 
-  # Cross-join size in 1000s
-  cross_join_size <- non_match_rows * match_rows
+  # Additional Cross Join ---------------------------------------------------
+  # depending on the dataset size it may be feasible to perform a cross join
+  # this will join all LHS records to all RHS records to get maximum chance of matches
+  # only feasible if this would produce less than 10m records to compare
 
-  # Less than 1 billion then attempt cross join
+  # Calculate the potential size of a cross join on non matched records
+  cross_join_size <- (nrow(non_matches) / 1000) * (nrow(df_one) / 1000)
+
+  # Less than 10 million then attempt cross join (as long as something left to join)
   if (cross_join_size > 0 & cross_join_size <= 10) {
 
-    # Message
+    # Display update message to user
     print("Final cross-join performed to maximise potential matches as would require less than 10m rows")
-    #print(paste0("Cross-join size: ", cross_join_size, " million rows"))
 
-    # Final cross-join matches, with corss-join threshold in place
-    final_matches <- non_matches |>
+    # Perform cross join to link remaining "non_matches" to all records in "df_two"
+    cross_join_matches <- non_matches |>
       dplyr::cross_join(
         y = df_two |>
           dplyr::select(all_of(df_two_cols))
@@ -289,24 +305,30 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
       # exclude where the IDs match (prevent self-join)
       dplyr::filter(ID_ONE != ID_TWO) |>
       dplyr::mutate(
-        # If single character forename handle differently, otherwise JW
+        # handle forename matching based on the length of the forename
         JW_FORENAME = dplyr::case_when(
-          length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
+          # If forenames match then score as 1
           FORENAME_ONE == FORENAME_TWO ~ 1,
+          # for initial only forenames, if this matches first character then score as 0.75
+          length(FORENAME_ONE) == 1 & FORENAME_ONE == substr(FORENAME_TWO, 1, 1) ~ 0.75,
+          # otherwise use Jaro-Winkler string matching function
           T ~ stringdist::stringsim(FORENAME_ONE, FORENAME_TWO, method = "jw", p = 0.1)
         )
       ) |>
+      # limit to matches with a minimum match score of 0.75 for forename
       dplyr::filter(JW_FORENAME >= 0.75)
 
-    final_matches <- filter_dob(final_matches, DOB_ONE, DOB_TWO, 0.75)
+    # limit to records based on DOB comparison (up to two characters different)
+    cross_join_matches <- filter_dob(cross_join_matches, DOB_ONE, DOB_TWO, 0.75)
 
-    if (nrow(final_matches) > 0) {
-      final_matches <- final_matches |>
+    # Perform match scoring to limit to confident matches only
+    if (nrow(cross_join_matches) > 0) {
+      cross_join_matches <- cross_join_matches |>
         dplyr::mutate(
-          # JW match, bypassing exact string matches (DOB_SCORE already calculated)
+          # If the surname/postcode are exact match score as 1 otherwise use Jaro-Winkler  string matching
           JW_SURNAME = ifelse(SURNAME_ONE == SURNAME_TWO, 1, stringdist::stringsim(SURNAME_ONE, SURNAME_TWO, method = "jw", p = 0.1)),
           JW_POSTCODE = ifelse(POSTCODE_ONE == POSTCODE_TWO, 1, stringdist::stringsim(POSTCODE_ONE, POSTCODE_TWO, method = "jw", p = 0.1)),
-          # Generate confident matches
+          # Flag the match type based on the combination of match scores for each of the key fields
           MATCH_TYPE = dplyr::case_when(
             (JW_SURNAME == 1 & JW_FORENAME == 1 & JW_POSTCODE == 1 & DOB_SCORE == 1) ~ "Exact",
             (JW_SURNAME == 1 & JW_FORENAME == 1 & DOB_SCORE == 1) ~ "Confident",
@@ -328,8 +350,8 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
         ))
     } else {
       # create empty fields for missing match output
-      # align structure of final_matches to that of matches
-      final_matches <- final_matches |>
+      # align structure of cross_join_matches to that of matches
+      cross_join_matches <- cross_join_matches |>
         dplyr::mutate(JW_SURNAME = as.numeric(NA),
                       JW_POSTCODE = as.numeric(NA),
                       MATCH_TYPE = as.character(NA),
@@ -339,16 +361,17 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
 
     # Re-determine non-matches
     non_matches <- non_matches |>
-      dplyr::anti_join(y = final_matches |> dplyr::select(ID_ONE), by = "ID_ONE")
+      dplyr::anti_join(y = cross_join_matches |> dplyr::select(ID_ONE), by = "ID_ONE")
 
     # Re-determine total matches df
     matches <- matches |>
-      # Add exact matches
-      dplyr::union_all(final_matches)
+      # Add cross-join matches
+      dplyr::union_all(cross_join_matches)
+
   } else {
-    # at this point no cross-join  is required as either all matched or would be too many records
+    # at this point no cross-join is required as either all matched or would be too many records
     if(cross_join_size > 10){
-      # Message if the cross-join is not viable
+      # Message if the cross-join is not viable due to number of records
       print("Final cross-join not viable as would require produce dataset greater than 10m rows")
       print(paste0("Cross-join size: ", cross_join_size, " million rows"))
     }
@@ -378,7 +401,10 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
   matches <- matches |> dplyr::select(all_of(key_columns))
   non_matches <- non_matches |> dplyr::select(all_of(key_columns))
 
-  # Handle removal of duplicate combinations if required
+  # Handle duplicate matches ------------------------------------------------
+  # Matching within a single dataset will produce some duplication (A=B and B=A)
+  # A parameter will define if these should be included or excluded from the output
+
   if (unique_combinations_only == TRUE) {
     # identify the unique pairs of records and retain only one of them
     matches <- matches |>
@@ -395,8 +421,10 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
       dplyr::select(-min_id, -max_id, -combo_id)
   }
 
+  # Handle non-matches ------------------------------------------------------
   # combine the matches and non-matches if determined by the function parameter
   # handle cases where either of the datasets may be empty
+
   if (inc_no_match == FALSE) {
     all_matches <- matches
   } else if (nrow(matches) > 0 & nrow(non_matches) > 0) {
@@ -407,6 +435,9 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
   } else if (nrow(matches) == 0 & nrow(non_matches) > 0) {
     all_matches <- non_matches
   }
+
+  # Handle match output -----------------------------------------------------
+  # format the final output based on parameters
 
   # Calculate match_count per primary df ID
   all_matches <- all_matches |>
@@ -428,6 +459,7 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
         MATCH_COUNT,
         MATCH_SCORE
       )
+
   } else if (output_type == "match") {
 
     # Only select key columns
@@ -447,6 +479,7 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
         MATCH_COUNT,
         MATCH_SCORE
       )
+
   } else if (output_type == "all") {
 
     # Only select key columns
@@ -471,8 +504,8 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
         POSTCODE_SCORE = JW_POSTCODE
       )
 
-    # join back to df1 and df2 to get any missing columns
-    # remove any of the key columns from df1 and df2 to stop duplicates
+    # join back to input df to get any missing columns
+    # remove any of the key columns from df_one and df_two to stop duplicates
     # prefix the additional columns with an identifier for the source dataset
     all_matches <- all_matches |>
       dplyr::left_join(
@@ -487,7 +520,8 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
       dplyr::left_join(
         df_two |>
           dplyr::select(
-            -{{ forename }}, -{{ surname }}, -{{ dob }}, -{{ postcode }},
+            -{{ id }}, -{{ forename }}, -{{ surname }}, -{{ dob }}, -{{ postcode }},
+            -FORENAME_TWO, -SURNAME_TWO, -DOB_TWO, -POSTCODE_TWO,
             -PERM1, -PERM2, -PERM3, -PERM4, -PERM5, -PERM6, -PERM7, -PERM8, -PERM9
           ) |>
           dplyr::rename_all(list(~ paste0("DF2_", .))),
