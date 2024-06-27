@@ -18,11 +18,11 @@ testthat::test_that("DOB filter function for similar dates", {
   # Process df1
   test_run <- test_run %>%
     filter_dob_db(., DOB_A, DOB_B, 0.75) %>%
-    collect()
+    dplyr::collect()
 
   # Process df2
   expected_results <- expected_results %>%
-    collect()
+    dplyr::collect()
 
   # Disconnnect
   DBI::dbDisconnect(con)
