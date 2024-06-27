@@ -2,6 +2,8 @@
 
 export(calc_match_person)
 export(calc_match_person_db)
+export(calc_match_person_self)
+export(calc_match_person_self_db)
 export(calc_permutations)
 export(calc_permutations_db)
 export(filter_dob)
