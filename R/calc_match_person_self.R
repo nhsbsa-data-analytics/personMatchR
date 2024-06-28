@@ -512,7 +512,8 @@ calc_match_person_self <- function(df, id, forename, surname, dob, postcode,
         df_one |>
           dplyr::select(
             -{{ id }}, -{{ forename }}, -{{ surname }}, -{{ dob }}, -{{ postcode }},
-            -FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE
+            -FORENAME_ONE, -SURNAME_ONE, -DOB_ONE, -POSTCODE_ONE,
+            -PERM1, -PERM2, -PERM3, -PERM4, -PERM5, -PERM6, -PERM7, -PERM8, -PERM9
           ) |>
           dplyr::rename_all(list(~ paste0("DF1_", .))),
         by = c("ID_ONE" = "DF1_ID_ONE")
