@@ -157,6 +157,12 @@ calc_match_person_self_db <- function(df, id, forename, surname, dob, postcode,
       ),
       na_matches = "never",
       relationship = "many-to-many"
+    ) |>
+    dplyr::mutate(
+      FORENAME_TWO = FORENAME_ONE,
+      SURNAME_TWO = SURNAME_ONE,
+      DOB_TWO = DOB_ONE,
+      POSTCODE_TWO = POSTCODE_ONE,
     )
 
   # Identify reverse exact matches (forename = surname & surname = forename)
@@ -171,6 +177,12 @@ calc_match_person_self_db <- function(df, id, forename, surname, dob, postcode,
       ),
       na_matches = "never",
       relationship = "many-to-many"
+    ) |>
+    dplyr::mutate(
+      FORENAME_TWO = SURNAME_ONE,
+      SURNAME_TWO = FORENAME_ONE,
+      DOB_TWO = DOB_ONE,
+      POSTCODE_TWO = POSTCODE_ONE,
     )
 
   # Union exact matches to get a single dataset of matches and format output
@@ -178,10 +190,6 @@ calc_match_person_self_db <- function(df, id, forename, surname, dob, postcode,
     dplyr::union_all(exact_matches_reverse) |>
     dplyr::distinct() |>
     dplyr::mutate(
-      FORENAME_TWO = FORENAME_ONE,
-      SURNAME_TWO = SURNAME_ONE,
-      DOB_TWO = DOB_ONE,
-      POSTCODE_TWO = POSTCODE_ONE,
       JW_FORENAME = 1,
       JW_SURNAME = 1,
       JW_POSTCODE = 1,

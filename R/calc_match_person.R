@@ -164,6 +164,12 @@ calc_match_person <- function(df_one, id_one, forename_one, surname_one, dob_one
         "POSTCODE_ONE" = "POSTCODE_TWO"
       ),
       na_matches = "never"
+    ) |>
+    dplyr::mutate(
+      FORENAME_TWO = FORENAME_ONE,
+      SURNAME_TWO = SURNAME_ONE,
+      DOB_TWO = DOB_ONE,
+      POSTCODE_TWO = POSTCODE_ONE,
     )
 
   # Reverse exact matches
@@ -177,6 +183,12 @@ calc_match_person <- function(df_one, id_one, forename_one, surname_one, dob_one
         "POSTCODE_ONE" = "POSTCODE_TWO"
       ),
       na_matches = "never"
+    ) |>
+    dplyr::mutate(
+      FORENAME_TWO = SURNAME_ONE,
+      SURNAME_TWO = FORENAME_ONE,
+      DOB_TWO = DOB_ONE,
+      POSTCODE_TWO = POSTCODE_ONE,
     )
 
   # Union exact matches
@@ -184,10 +196,6 @@ calc_match_person <- function(df_one, id_one, forename_one, surname_one, dob_one
     dplyr::union_all(exact_matches_reverse) %>%
     dplyr::distinct() %>%
     dplyr::mutate(
-      FORENAME_TWO = FORENAME_ONE,
-      SURNAME_TWO = SURNAME_ONE,
-      DOB_TWO = DOB_ONE,
-      POSTCODE_TWO = POSTCODE_ONE,
       JW_FORENAME = 1,
       JW_SURNAME = 1,
       JW_POSTCODE = 1,
